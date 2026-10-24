@@ -168,7 +168,7 @@
     var meinVersuch = ++versuch;
     var schluessel = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
     kanal = client.channel("klasse:" + c, { config: { private: true, presence: { key: schluessel } } });
-    kanal.subscribe(function (status) {
+    kanal.subscribe(function (status, fehler) {
       if (meinVersuch !== versuch) return;
       if (status === "SUBSCRIBED") {
         verbunden = true;
@@ -176,7 +176,9 @@
         zeige("Mit der Klasse verbunden (anonym)", "ok", true);
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         verbunden = false;
-        zeige("Live-Verbindung gestört. Das Tool funktioniert trotzdem.", "fehler", true);
+        var grund = status === "TIMED_OUT" ? "Zeitüberschreitung" : (fehler && fehler.message ? String(fehler.message).slice(0, 140) : "");
+        if (window.console) console.warn("Klassencode: Live-Verbindung gestört", status, fehler);
+        zeige("Live-Verbindung gestört. Das Tool funktioniert trotzdem." + (grund ? " (" + grund + ")" : ""), "fehler", true);
       }
     });
     pruefTimer = setInterval(function () {
