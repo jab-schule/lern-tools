@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lern-Tools</title>
+<style>
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --ink:#172126; --muted:#56646a; --line:#d6dde0;
+  --accent:#155e6b; --accent-ink:#ffffff; --accent-soft:#e2edef;
+  --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.5}
+.wrap{max-width:780px;margin:0 auto;padding-block:36px 72px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2{font-family:var(--font-display);font-weight:600;line-height:1.2;margin:0}
+h1{font-size:2rem} h2{font-size:1.25rem}
+p{margin:0}
+.lead{color:var(--muted);max-width:60ch}
+.codebox{display:grid;gap:8px}
+.codebox label{font-size:.92rem;color:var(--muted)}
+.coderow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.coderow input{font:inherit;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:1.3rem;letter-spacing:.15em;text-transform:uppercase;
+  width:12ch;min-height:50px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.coderow .hint{font-size:.9rem;color:var(--muted)}
+.btn{font:inherit;font-weight:600;min-height:46px;padding:10px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
+ul.tools{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+ul.tools a{display:grid;gap:4px;padding:18px 20px;min-height:64px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
+ul.tools a:hover{border-color:var(--accent)}
+ul.tools .fach{font-size:.85rem;color:var(--muted)}
+ul.tools .name{font-family:var(--font-display);font-size:1.2rem;font-weight:600}
+ul.tools .desc{color:var(--muted);font-size:.95rem}
+a:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{font-size:.85rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Lern-Tools</h1>
+    <p class="lead">Interaktive Übungen für den Unterricht. Alle Tools funktionieren ohne Anmeldung. Dein Fortschritt bleibt nur auf diesem Gerät.</p>
+  </header>
+
+  <div class="codebox">
+    <label for="code">Klassencode (nur wenn deine Lehrkraft einen nennt)</label>
+    <div class="coderow">
+      <input id="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="------">
+      <button type="button" class="btn" id="clear" hidden>Entfernen</button>
+      <span class="hint" id="hint"></span>
+    </div>
+  </div>
+
+  <section style="display:grid;gap:12px">
+    <h2>Tools</h2>
+    <ul class="tools" id="list"><li class="lead">Wird geladen …</li></ul>
+  </section>
+
+  <footer>
+    <span>Keine Namen, keine Konten. Mit Klassencode sieht die Lehrkraft nur anonym, an welcher Station gearbeitet wird.</span>
+    <a href="lehrer.html">Für Lehrkräfte</a>
+  </footer>
+</div>
+<script>
+(function(){
+"use strict";
+const OK=/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
+const inp=document.getElementById('code'), hint=document.getElementById('hint'), clr=document.getElementById('clear');
+let tools=[];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function code(){const c=inp.value.trim().toUpperCase();return OK.test(c)?c:''}
+function render(){
+  const c=code();
+  hint.textContent=inp.value&&!c?(inp.value.length<6?'':'Dieser Code ist nicht gültig.'):(c?'Wähle jetzt das Tool, das deine Lehrkraft genannt hat.':'');
+  clr.hidden=!inp.value;
+  document.getElementById('list').innerHTML=tools.map(t=>
+    `<li><a href="${esc(t.pfad)}${c?'#'+c:''}"><span class="fach">${esc(t.fach||'')}</span><span class="name">${esc(t.name)}</span>${t.beschreibung?`<span class="desc">${esc(t.beschreibung)}</span>`:''}</a></li>`).join('')
+    ||'<li class="lead">Noch keine Tools vorhanden.</li>';
+}
+inp.addEventListener('input',()=>{inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');render()});
+clr.onclick=()=>{inp.value='';render();inp.focus()};
+fetch('tools.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>{tools=d;render()}).catch(()=>{document.getElementById('list').innerHTML='<li class="lead">Die Liste konnte nicht geladen werden.</li>'});
+})();
+</script>
+</body>
+</html>

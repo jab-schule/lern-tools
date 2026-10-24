@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Lehrerseite – Lern-Tools</title>
+<style>
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --ink:#172126; --muted:#56646a; --line:#d6dde0;
+  --accent:#155e6b; --accent-ink:#ffffff; --accent-soft:#e2edef;
+  --ok:#2c7646; --ok-soft:#e3f1e7; --bad:#ad3a2d; --bad-soft:#f6e5e2;
+  --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding-block:28px 72px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.2;margin:0}
+h1{font-size:1.9rem} h2{font-size:1.35rem} h3{font-size:1.1rem}
+p{margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.top .sub{color:var(--muted);font-size:.95rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px}
+.stack{display:grid;gap:20px}
+label.f{display:grid;gap:6px;font-size:.92rem;color:var(--muted)}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:46px;width:100%}
+.btn{font:inherit;font-weight:600;min-height:46px;padding:10px 18px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.warn{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.row>.grow{flex:1 1 240px}
+.msg{padding:10px 12px;border-radius:8px}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.msg.info{background:var(--accent-soft)}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+#login{max-width:440px}
+
+/* laufende Stunde */
+.lesson{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px 28px;align-items:start}
+.code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:3rem;font-weight:700;letter-spacing:.12em;line-height:1.1}
+.link{font-size:.95rem;word-break:break-all;color:var(--ink)}
+.qr{background:#fff;padding:12px;border-radius:10px;border:1px solid var(--line);width:220px;height:220px}
+.qr svg,.qr img{display:block;width:100%;height:100%}
+.facts{display:grid;gap:6px}
+@media (max-width:640px){.lesson{grid-template-columns:1fr}.qr{justify-self:start}}
+
+/* Live-Übersicht */
+.live-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.total{font-family:var(--font-display);font-size:2.4rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.bar{width:40%}
+.bar span{display:block;height:10px;border-radius:5px;background:var(--accent);min-width:2px}
+.bar span.zero{background:var(--line)}
+.state{display:inline-flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
+.state i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.state.ok i{background:var(--ok)} .state.bad i{background:var(--bad)}
+
+/* Beameransicht */
+body.beamer .hide-beamer{display:none}
+body.beamer .lesson{grid-template-columns:1fr;justify-items:center;text-align:center}
+body.beamer .facts{justify-items:center}
+body.beamer .code{font-size:clamp(3rem,10vw,7rem)}
+body.beamer .qr{width:min(60vh,80vw);height:min(60vh,80vw)}
+body.beamer .link{font-size:1.2rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top hide-beamer">
+    <div>
+      <h1>Lehrerseite</h1>
+      <p class="sub">Klassencode für Lern-Tools</p>
+    </div>
+    <div class="row" id="account" hidden>
+      <span class="muted small" id="who"></span>
+      <button type="button" class="btn sec" id="logout">Abmelden</button>
+    </div>
+  </header>
+
+  <div id="setup-msg" class="msg bad" hidden>Die Datei config.js enthält noch keine Supabase-Adresse. Bitte zuerst die Anleitung (ANLEITUNG.md) befolgen.</div>
+
+  <!-- Anmeldung -->
+  <form id="login" class="card" hidden autocomplete="on">
+    <h2>Anmelden</h2>
+    <label class="f">E-Mail-Adresse<input type="email" id="email" autocomplete="username" required></label>
+    <label class="f">Passwort<input type="password" id="password" autocomplete="current-password" required></label>
+    <button type="submit" class="btn" id="login-btn">Anmelden</button>
+    <p id="login-msg" class="msg bad" hidden></p>
+  </form>
+
+  <div id="app" class="stack" hidden>
+    <!-- Stunde starten -->
+    <section id="start" class="card hide-beamer">
+      <h2>Stunde starten</h2>
+      <div class="row">
+        <label class="f grow">Tool<select id="tool"></select></label>
+        <button type="button" class="btn" id="start-btn">Stunde starten</button>
+      </div>
+      <p class="muted small">Der Code gilt bis „Stunde beenden“, höchstens 90 Minuten. Eine noch laufende Stunde wird dabei beendet.</p>
+      <p id="start-msg" class="msg bad" hidden></p>
+    </section>
+
+    <!-- Laufende Stunde -->
+    <section id="lesson" class="card" hidden>
+      <div class="lesson">
+        <div class="facts">
+          <p class="muted small" id="lesson-tool"></p>
+          <p class="code" id="code" aria-label="Klassencode"></p>
+          <a class="link" id="link" target="_blank" rel="noopener"></a>
+          <p class="muted small hide-beamer" id="valid"></p>
+          <div class="row hide-beamer" style="margin-top:8px">
+            <button type="button" class="btn sec" id="copy">Link kopieren</button>
+            <button type="button" class="btn sec" id="beamer">Beameransicht</button>
+            <button type="button" class="btn warn" id="end">Stunde beenden</button>
+          </div>
+          <div class="row" id="beamer-off-row" hidden><button type="button" class="btn sec" id="beamer-off">Beameransicht schließen</button></div>
+        </div>
+        <div class="qr" id="qr" role="img" aria-label="QR-Code mit dem Link zur Stunde"></div>
+      </div>
+    </section>
+
+    <!-- Live-Übersicht -->
+    <section id="live" class="card hide-beamer" hidden>
+      <div class="live-head">
+        <h2>Live-Übersicht</h2>
+        <span class="state" id="live-state"><i></i><span>verbinde …</span></span>
+      </div>
+      <div class="row" style="align-items:baseline">
+        <span class="total" id="total">0</span><span class="muted">Geräte verbunden</span>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Position</th><th class="num">Geräte</th><th></th><th class="num">richtig (Summe)</th><th class="num">Fehlversuche (Summe)</th></tr></thead>
+        <tbody id="by-pos"></tbody>
+      </table></div>
+      <details>
+        <summary class="small muted" style="cursor:pointer;min-height:32px">Einzelne Geräte (anonym)</summary>
+        <div class="tablewrap" style="margin-top:8px"><table>
+          <thead><tr><th>Gerät</th><th>Position</th><th class="num">richtig</th><th class="num">Fehlversuche</th></tr></thead>
+          <tbody id="by-dev"></tbody>
+        </table></div>
+      </details>
+      <p class="muted small">Es werden keine Namen übertragen und nichts gespeichert. Ein Gerät verschwindet aus der Liste, sobald das Tool geschlossen wird.</p>
+    </section>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const cfg=window.LERN_TOOLS_CONFIG||{};
+const ready=cfg.supabaseUrl&&cfg.supabaseKey&&!cfg.supabaseUrl.includes('DEIN-PROJEKT')&&!cfg.supabaseKey.startsWith('DEIN-');
+if(!ready){$('setup-msg').hidden=false;return}
+
+const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{detectSessionInUrl:false}});
+let TOOLS=[];
+let lesson=null;        // {code, tool, gueltig_bis}
+let channel=null, expiryTimer=null, clockTimer=null;
+const devNames=new Map(); let devCounter=0;
+
+function show(el,on){el.hidden=!on}
+function msg(el,text){el.textContent=text||'';el.hidden=!text}
+const toolInfo=k=>TOOLS.find(t=>t.kurzname===k)||{kurzname:k,name:k,pfad:k+'/'};
+const fmtTime=d=>new Date(d).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+
+async function loadTools(){
+  try{const r=await fetch('tools.json',{cache:'no-cache'});TOOLS=await r.json()}catch(e){TOOLS=[]}
+  $('tool').innerHTML=TOOLS.map(t=>`<option value="${esc(t.kurzname)}">${esc(t.name)}</option>`).join('');
+  $('start-btn').disabled=!TOOLS.length;
+}
+
+/* ---------- Anmeldung ---------- */
+$('login').addEventListener('submit',async e=>{
+  e.preventDefault(); msg($('login-msg'),''); $('login-btn').disabled=true;
+  const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+  $('login-btn').disabled=false;
+  if(error){msg($('login-msg'),'Anmeldung fehlgeschlagen. Bitte E-Mail-Adresse und Passwort prüfen.');return}
+  $('password').value='';
+  await afterLogin();
+});
+$('logout').onclick=async()=>{await stopLive();await sb.auth.signOut();lesson=null;render();showLogin()};
+
+function showLogin(){show($('login'),true);show($('app'),false);show($('account'),false)}
+
+async function afterLogin(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){showLogin();return}
+  $('who').textContent=session.user.email||'';
+  show($('login'),false);show($('account'),true);show($('app'),true);
+  await loadTools();
+  await loadRunning();
+}
+
+/* ---------- Stunde ---------- */
+async function loadRunning(){
+  const {data,error}=await sb.from('sitzungen').select('code,tool,gueltig_bis')
+    .is('beendet_am',null).gt('gueltig_bis',new Date().toISOString())
+    .order('gestartet_am',{ascending:false}).limit(1);
+  lesson=(!error&&data&&data[0])?data[0]:null;
+  render(); if(lesson)startLive();
+}
+
+$('start-btn').onclick=async()=>{
+  msg($('start-msg'),''); $('start-btn').disabled=true;
+  const {data,error}=await sb.rpc('stunde_starten',{p_tool:$('tool').value});
+  $('start-btn').disabled=false;
+  if(error||!data||!data[0]){msg($('start-msg'),'Die Stunde konnte nicht gestartet werden'+(error?': '+error.message:'.'));return}
+  await stopLive(); lesson=data[0]; devNames.clear(); devCounter=0; render(); startLive();
+};
+
+$('end').onclick=async()=>{
+  if(!lesson)return;
+  if(!confirm('Stunde jetzt beenden? Der Code wird ungültig.'))return;
+  const {error}=await sb.rpc('stunde_beenden',{p_code:lesson.code});
+  if(error){alert('Beenden fehlgeschlagen: '+error.message);return}
+  await stopLive(); lesson=null; setBeamer(false); render();
+};
+
+function lessonUrl(){
+  const t=toolInfo(lesson.tool);
+  return new URL(t.pfad,location.href).href.split('#')[0]+'#'+lesson.code;
+}
+
+function render(){
+  clearInterval(clockTimer);
+  show($('lesson'),!!lesson); show($('live'),!!lesson);
+  $('start-btn').textContent=lesson?'Neue Stunde starten':'Stunde starten';
+  if(!lesson)return;
+  const t=toolInfo(lesson.tool), url=lessonUrl();
+  $('lesson-tool').textContent=t.name;
+  $('code').textContent=lesson.code;
+  $('link').textContent=url; $('link').href=url;
+  const q=qrcode(0,'M'); q.addData(url); q.make();
+  $('qr').innerHTML=q.createSvgTag({cellSize:4,margin:0,scalable:true});
+  const tick=()=>{const left=Math.max(0,Math.round((new Date(lesson.gueltig_bis)-Date.now())/60000));
+    $('valid').textContent=`Gültig bis ${fmtTime(lesson.gueltig_bis)} Uhr (noch ${left} min)`};
+  tick(); clockTimer=setInterval(tick,30000);
+  if([...$('tool').options].some(o=>o.value===t.kurzname))$('tool').value=t.kurzname;
+}
+
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(lessonUrl());$('copy').textContent='Kopiert';}
+  catch(e){$('copy').textContent='Kopieren nicht möglich'}
+  setTimeout(()=>$('copy').textContent='Link kopieren',1800);
+};
+function setBeamer(on){document.body.classList.toggle('beamer',on);show($('beamer-off-row'),on)}
+$('beamer').onclick=()=>setBeamer(true);
+$('beamer-off').onclick=()=>setBeamer(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')setBeamer(false)});
+
+/* ---------- Live-Übersicht ---------- */
+function liveState(cls,text){const s=$('live-state');s.className='state '+cls;s.lastElementChild.textContent=text}
+
+async function startLive(){
+  await stopLive();
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)await sb.realtime.setAuth(session.access_token);
+  liveState('','verbinde …');
+  channel=sb.channel('klasse:'+lesson.code,{config:{private:true}});
+  channel.on('presence',{event:'sync'},()=>renderLive(channel.presenceState()));
+  channel.subscribe(status=>{
+    if(status==='SUBSCRIBED')liveState('ok','live');
+    else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')liveState('bad','Verbindung gestört');
+    else if(status==='CLOSED')liveState('','getrennt');
+  });
+  renderLive({});
+  clearTimeout(expiryTimer);
+  expiryTimer=setTimeout(async()=>{await stopLive();lesson=null;setBeamer(false);render()},Math.max(0,new Date(lesson.gueltig_bis)-Date.now())+1000);
+}
+async function stopLive(){
+  clearTimeout(expiryTimer);
+  /* nicht auf die Abmeldung vom Kanal warten: bei Netzproblemen würde die Seite sonst hängen */
+  if(channel){const c=channel;channel=null;sb.removeChannel(c).catch(()=>{})}
+}
+
+function renderLive(state){
+  const t=lesson?toolInfo(lesson.tool):{};
+  const devs=[];
+  Object.entries(state).forEach(([key,metas])=>{
+    const m=metas[metas.length-1]||{};
+    if(lesson&&m.tool&&m.tool!==lesson.tool)return;
+    if(!devNames.has(key))devNames.set(key,++devCounter);
+    devs.push({nr:devNames.get(key),pos:String(m.position||'ohne Angabe'),r:+m.richtig||0,f:+m.falsch||0,hasR:typeof m.richtig==='number',hasF:typeof m.falsch==='number'});
+  });
+  $('total').textContent=devs.length;
+  const order=[...(t.positionen||[])];
+  devs.forEach(d=>{if(!order.includes(d.pos))order.push(d.pos)});
+  const max=Math.max(1,...order.map(p=>devs.filter(d=>d.pos===p).length));
+  $('by-pos').innerHTML=order.map(p=>{
+    const g=devs.filter(d=>d.pos===p), n=g.length;
+    const r=g.reduce((a,d)=>a+d.r,0), f=g.reduce((a,d)=>a+d.f,0);
+    return `<tr><td>${esc(p)}</td><td class="num">${n}</td><td class="bar"><span class="${n?'':'zero'}" style="width:${n/max*100}%"></span></td><td class="num">${n?r:'–'}</td><td class="num">${n?f:'–'}</td></tr>`;
+  }).join('')||`<tr><td colspan="5" class="muted">Noch keine Geräte verbunden.</td></tr>`;
+  devs.sort((a,b)=>a.nr-b.nr);
+  $('by-dev').innerHTML=devs.map(d=>`<tr><td>Gerät ${d.nr}</td><td>${esc(d.pos)}</td><td class="num">${d.hasR?d.r:'–'}</td><td class="num">${d.hasF?d.f:'–'}</td></tr>`).join('')
+    ||`<tr><td colspan="4" class="muted">Noch keine Geräte verbunden.</td></tr>`;
+}
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+sb.auth.onAuthStateChange((ev,session)=>{
+  if(ev==='SIGNED_OUT'){stopLive();lesson=null;render();showLogin()}
+  if(ev==='TOKEN_REFRESHED'&&session)sb.realtime.setAuth(session.access_token);
+});
+
+afterLogin();
+})();
+</script>
+</body>
+</html>

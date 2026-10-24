@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lernpfad Reaktionsgleichungen</title>
+<style>
+/* Layout: eine ruhige Lesespalte, oben die Stationsfolge, je Station Erklärung und danach Übungen. */
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --ink:#172126; --muted:#56646a; --line:#d6dde0;
+  --accent:#155e6b; --accent-ink:#ffffff; --accent-soft:#e2edef;
+  --ok:#2c7646; --ok-soft:#e3f1e7; --bad:#ad3a2d; --bad-soft:#f6e5e2;
+  --mark:#fbe7a6; --mark-ink:#172126;
+  --metal:#cbd8e7; --metal-ink:#18293a; --nonmetal:#f2d8a4; --nonmetal-ink:#3b2a0a; --semi:#dcdfd0; --semi-ink:#2b2e22;
+  --ext:#8a5a12; --ext-ink:#ffffff; --ext-soft:#f6ecdb; --ext-line:#e2cfa8;
+  --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d;
+  --mark:#6b5a1f; --mark-ink:#fff6d8; --metal:#2c4157; --metal-ink:#dce8f4; --nonmetal:#5b4520; --nonmetal-ink:#f8e7c4; --semi:#3e4337; --semi-ink:#e3e7d9; --ext:#e2b46c; --ext-ink:#1d1608; --ext-soft:#2c2416; --ext-line:#5a4826; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d;
+  --mark:#6b5a1f; --mark-ink:#fff6d8; --metal:#2c4157; --metal-ink:#dce8f4; --nonmetal:#5b4520; --nonmetal-ink:#f8e7c4; --semi:#3e4337; --semi-ink:#e3e7d9; --ext:#e2b46c; --ext-ink:#1d1608; --ext-soft:#2c2416; --ext-line:#5a4826; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6}
+.wrap{max-width:780px;margin:0 auto;padding-block:32px 72px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:2rem}
+h2{font-size:1.6rem}
+h3{font-size:1.15rem}
+p{margin:0}
+sub{font-size:.72em;line-height:0}
+.lead{color:var(--muted);max-width:62ch}
+header.top{display:grid;gap:10px;margin-bottom:28px}
+.kicker{font-size:.85rem;color:var(--muted);letter-spacing:.02em}
+
+/* Stationsliste */
+nav.stations ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+nav.stations button{width:100%;text-align:left;font:inherit;font-size:.95rem;line-height:1.3;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;
+  display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+nav.stations button .n{grid-row:span 2;font-family:var(--font-display);font-size:1.25rem;color:var(--muted);font-variant-numeric:tabular-nums}
+nav.stations button .p{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+nav.stations button[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+nav.stations button[aria-current="true"] .n{color:var(--accent)}
+nav.stations button.complete .p{color:var(--ok)}
+button:focus-visible,input:focus-visible,label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+
+main{margin-top:36px;display:grid;gap:40px}
+section.station{display:grid;gap:22px}
+.st-head{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.part-title{font-family:var(--font-display);font-size:1.25rem;font-weight:600;margin-top:8px}
+.text{display:grid;gap:12px;max-width:66ch}
+
+/* Tabellen */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+td.num,th.num{text-align:center;font-variant-numeric:tabular-nums}
+.same{color:var(--ok);font-weight:600}
+.diff{color:var(--bad);font-weight:600}
+
+/* Merke */
+.merke{background:var(--accent-soft);border-radius:8px;padding:16px 18px;display:grid;gap:6px;max-width:66ch}
+.merke b.lbl{font-weight:700;color:var(--accent)}
+
+/* Schrittfolge */
+.steps{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.steps-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.step{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.step:last-of-type{border-bottom:0}
+.step .sn{font-family:var(--font-display);font-weight:600;color:var(--accent);font-size:1.05rem;min-width:1.6em}
+.step .sb{display:grid;gap:10px;min-width:0}
+.step .st{font-weight:600}
+.steps-foot{padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line)}
+
+/* Gleichungen und Teilchen */
+.eqbox{overflow-x:auto;padding:4px 0}
+.eq{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;column-gap:14px;row-gap:8px;align-items:start;justify-content:start;width:max-content}
+.eq .nm{font-size:.85rem;color:var(--muted);text-align:center}
+.eq .fm{font-size:1.25rem;text-align:center;white-space:nowrap}
+.eq .op{font-size:1.2rem;text-align:center;color:var(--muted)}
+.eq .pt{display:flex;flex-direction:column;align-items:center;gap:5px}
+.eq .ctl{display:flex;justify-content:center}
+.coef{font-weight:700;margin-right:.18em}
+mark.k{background:var(--mark);color:var(--mark-ink);padding:0 .15em;border-radius:3px}
+.coef.ph{color:var(--muted);font-weight:400}
+.unit{display:inline-flex;align-items:center;padding:2px 4px;border:1px dashed var(--muted);border-radius:999px}
+.unit .atom+.atom{margin-left:-3px}
+.atom{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;font-weight:700;
+  border:1px solid rgba(0,0,0,.35);font-family:var(--font-body);flex:none}
+.branch{position:relative;display:inline-block;width:70px;height:52px}
+.branch>span{position:absolute;display:block;line-height:0}
+
+/* Vereinfachtes Periodensystem */
+.pse-wrap{overflow-x:auto;padding-bottom:4px}
+.pse{display:grid;grid-template-columns:auto repeat(9,minmax(40px,1fr));gap:4px;min-width:470px;max-width:640px;font-variant-numeric:tabular-nums}
+.pse .gh,.pse .ph{font-size:.75rem;color:var(--muted);display:grid;place-items:center}
+.pse .ph{padding-right:4px}
+.pse .el{border-radius:5px;padding:9px 2px;text-align:center;font-weight:700;font-size:.95rem;line-height:1.1;border:1px solid transparent}
+.pse .el small{display:block;font-weight:400;font-size:.62rem;opacity:.85}
+.pse .m{background:var(--metal);color:var(--metal-ink)}
+.pse .nm{background:var(--nonmetal);color:var(--nonmetal-ink)}
+.pse .hm{background:var(--semi);color:var(--semi-ink)}
+.pse .ng{background:var(--metal);color:var(--metal-ink);border-radius:5px;font-size:.72rem;line-height:1.25;padding:6px 4px;display:grid;place-items:center;text-align:center}
+.pse-key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;align-items:center}
+.pse-key span{display:inline-flex;gap:6px;align-items:center}
+.pse-key i{display:inline-block;width:14px;height:14px;border-radius:3px}
+.merke table{font-size:.95rem}
+.merke td,.merke th{border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
+.navsep{grid-column:1/-1;display:grid;gap:2px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.navsep b{font-family:var(--font-display);font-weight:600;font-size:1.05rem;color:var(--ext)}
+.navsep span{font-size:.88rem;color:var(--muted)}
+nav.stations button.ext{background:var(--ext-soft);border-color:var(--ext-line)}
+nav.stations button.ext[aria-current="true"]{border-color:var(--ext);background:var(--ext-soft);box-shadow:0 0 0 1px var(--ext)}
+nav.stations button.ext[aria-current="true"] .n{color:var(--ext)}
+section.station.ext .st-head{background:var(--ext-soft);border:1px solid var(--ext-line);border-radius:10px;padding:16px 18px}
+section.station.ext .kicker{color:var(--ext);font-weight:600}
+section.station.ext .part-title{color:var(--ext)}
+.extnote{display:grid;gap:4px;padding:12px 16px;border:1px dashed var(--ext);border-radius:8px;max-width:66ch}
+.extnote b{color:var(--ext)}
+.pse .wk{font-size:.85rem;font-weight:700;color:var(--ext);background:var(--ext-soft);border-radius:4px;display:grid;place-items:center;padding:3px 0}
+.pse .wkl{font-size:.7rem;color:var(--ext);font-weight:600;display:grid;place-items:center;padding-right:4px}
+.formctl{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
+.formctl .fc{display:grid;gap:4px;font-size:.88rem;color:var(--muted)}
+.formres{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.bigf{font-size:1.7rem;white-space:nowrap}
+.part{display:grid;gap:12px}
+.part+.part{padding-top:16px;border-top:1px solid var(--line)}
+.part .st{font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* Übungen */
+.ex-list{display:grid;gap:16px}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px}
+.ex.done{border-color:var(--ok)}
+.ex-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.ex-no{font-weight:700;font-size:.9rem;color:var(--muted)}
+.ex-state{font-size:.85rem;color:var(--ok);font-weight:600}
+.ex-q{max-width:66ch}
+.opts{display:grid;gap:8px}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-height:48px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.sortrow{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:8px 14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sortrow:last-child{border-bottom:0}
+.sortrow.wrong .item{color:var(--bad)}
+.sortrow.right .item{color:var(--ok)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;padding:10px 14px;font-size:.92rem;border-left:1px solid var(--line)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:520px){.sortrow{grid-template-columns:1fr}}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input.numin{font:inherit;width:9em;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.btn{font:inherit;font-size:.95rem;font-weight:600;min-height:44px;padding:8px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{padding:10px 12px;border-radius:8px;max-width:66ch}
+.fb.ok{background:var(--ok-soft);color:var(--ok)}
+.fb.bad{background:var(--bad-soft);color:var(--bad)}
+.fb.info{background:var(--accent-soft);color:var(--ink)}
+.fb b{font-weight:700}
+
+/* Stepper im Gleichungs-Werkzeug */
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.stepper button{font:inherit;font-size:1.2rem;width:44px;height:44px;border:0;background:transparent;color:var(--accent);cursor:pointer}
+.stepper button:disabled{color:var(--line);cursor:default}
+.stepper output{min-width:28px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+
+.pager{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--line)}
+.small{font-size:.88rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.step{animation:fade .25s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">Chemie Klasse 8/9 · Lernpfad</p>
+    <h1>Reaktionsgleichungen aufstellen</h1>
+    <p class="lead">Du lernst in sieben Stationen, wie aus einem Reaktionsschema eine Reaktionsgleichung wird. Bearbeite die Stationen der Reihe nach. Jede Station beginnt mit einer Erklärung, danach folgen Übungen mit Rückmeldung. In Station 1 bis 7 sind alle Formeln vorgegeben. In der Erweiterung (Station 8 und 9) stellst du die Verhältnisformeln selbst auf.</p>
+  </header>
+  <nav class="stations" aria-label="Stationen"><ol id="nav"></ol></nav>
+  <main id="main"></main>
+</div>
+
+<script src="../config.js"></script>
+<script src="../klassencode.js"></script>
+<script>
+/* ---------- Daten zu Elementen (Farben wie im Teilchenmodell) ---------- */
+const EL={
+  Al:{f:'#b8c4cf',t:'#1b2328'}, S:{f:'#f0c23e',t:'#1b2328'}, O:{f:'#e45f37',t:'#ffffff'},
+  Mg:{f:'#3d7cc0',t:'#ffffff'}, Fe:{f:'#a3a8ad',t:'#1b2328'}, Cu:{f:'#c27646',t:'#ffffff'},
+  C:{f:'#3b3d40',t:'#ffffff'}, H:{f:'#f3f4f5',t:'#1b2328'}, N:{f:'#5a6fd4',t:'#ffffff'},
+  Ag:{f:'#dde2e6',t:'#1b2328'}, Zn:{f:'#8db3a7',t:'#1b2328'}, Na:{f:'#a48ed4',t:'#ffffff'},
+  Cl:{f:'#79c277',t:'#1b2328'}, P:{f:'#e39a3b',t:'#1b2328'},
+  Li:{f:'#c9a3d9',t:'#1b2328'}, K:{f:'#7d5fb8',t:'#ffffff'}, Ba:{f:'#9fc6a1',t:'#1b2328'},
+  Br:{f:'#8c2f22',t:'#ffffff'}, F:{f:'#b9e0a0',t:'#1b2328'}, I:{f:'#5a2e6e',t:'#ffffff'}, Ne:{f:'#d58bc4',t:'#1b2328'}, Ca:{f:'#e6e0c8',t:'#1b2328'}
+};
+const parse=f=>{const r=[];f.replace(/([A-Z][a-z]?)(\d*)/g,(m,e,n)=>{r.push([e,n?+n:1])});return r};
+const F=f=>f.replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>');
+const atom=e=>{const c=EL[e]||{f:'#ccc',t:'#111'};return `<span class="atom" style="background:${c.f};color:${c.t}" title="${e}-Atom">${e}</span>`};
+/* Reihenfolge der Atome im Teilchenmodell, wo sie nicht der Formel entspricht */
+const ARRANGE={
+  H2O:['H','O','H'], CO2:['O','C','O'],
+  Fe2O3:['O','Fe','O','Fe','O'], Al2O3:['O','Al','O','Al','O'], Al2S3:['S','Al','S','Al','S'],
+  Cu2S:['Cu','S','Cu'], Ag2S:['Ag','S','Ag'], Na2S:['Na','S','Na'], Cu2O:['Cu','O','Cu'],
+  H2S:['H','S','H'], SO2:['O','S','O'], Fe3O4:['O','Fe','O','Fe','O','Fe','O']
+};
+function unitHTML(f){
+  const BR={NH3:['N','H',3],PCl3:['P','Cl',3],CH4:['C','H',4]};
+  if(BR[f]){ /* Zentralatom in der Mitte, die übrigen Atome daran gebunden */
+    const [c,l,n]=BR[f];
+    const pos=n===3?[[0,12],[44,12],[22,26]]:[[22,0],[0,22],[44,22],[22,44]];
+    const cp=n===3?[22,0]:[22,22];
+    return `<span class="unit" title="${f}"><span class="branch" style="height:${n===3?52:70}px">${pos.map(([x,y])=>`<span style="left:${x}px;top:${y}px">${atom(l)}</span>`).join('')}<span style="left:${cp[0]}px;top:${cp[1]}px;z-index:1">${atom(c)}</span></span></span>`;
+  }
+  let list=ARRANGE[f];
+  if(!list){
+    const pp=parse(f); list=[];
+    if(pp.length===2){ /* zwei Atomarten: abwechselnd anordnen, die häufigere außen */
+      let [[e1,n1],[e2,n2]]=pp; if(n2>n1){[e1,n1,e2,n2]=[e2,n2,e1,n1]}
+      while(n1||n2){if(n1){list.push(e1);n1--} if(n2){list.push(e2);n2--}}
+    } else pp.forEach(([e,n])=>{for(let i=0;i<n;i++)list.push(e)});
+  }
+  const atoms=list.map(atom);
+  return atoms.length===1?atoms[0]:`<span class="unit" title="${f}">${atoms.join('')}</span>`;
+}
+function particles(f,k){if(!k)return '';let s='';for(let i=0;i<Math.min(k,12);i++)s+=unitHTML(f);return s}
+function counts(species,coefs){const c={};species.forEach((s,i)=>parse(s).forEach(([e,n])=>{c[e]=(c[e]||0)+n*(coefs[i]??1)}));return c}
+function order(species){const o=[];species.forEach(s=>parse(s).forEach(([e])=>{if(!o.includes(e))o.push(e)}));return o}
+function coefHTML(k,hl){if(k==null||k===1)return '';return hl?`<mark class="k coef">${k}</mark>`:`<span class="coef">${k}</span>`}
+
+/* Statische Gleichung mit Teilchen. coefs: Array (null = nicht angegeben); hl: Indizes mit Markierung */
+function eq(left,right,coefs,opt={}){
+  const sp=[...left,...right]; coefs=coefs||sp.map(()=>null);
+  const arrow=opt.arrow||'→'; const show=opt.particles!==false; const hl=opt.hl||[];
+  let col=1, cells='';
+  const put=(row,html,cls)=>{cells+=`<div class="${cls}" style="grid-row:${row};grid-column:${col}">${html}</div>`};
+  sp.forEach((s,i)=>{
+    if(i>0){const op=i===left.length?arrow:'+';
+      if(opt.names)put(1,i===left.length?arrow:'+','op');
+      put(2,op,'op'); col++;}
+    if(opt.names)put(1,opt.names[i],'nm');
+    put(2,coefHTML(coefs[i],hl.includes(i))+F(s),'fm');
+    if(show)put(3,particles(s,coefs[i]==null?1:coefs[i]),'pt');
+    col++;
+  });
+  return `<div class="eqbox"><div class="eq">${cells}</div></div>`;
+}
+function countTable(left,right,coefs){
+  const sp=[...left,...right]; const c=coefs.map(k=>k??1);
+  const L=counts(left,c.slice(0,left.length)), R=counts(right,c.slice(left.length));
+  const rows=order(sp).map(e=>{const ok=L[e]===R[e];
+    return `<tr><td>${e}-Atome</td><td class="num">${L[e]||0}</td><td class="num">${R[e]||0}</td><td class="${ok?'same':'diff'}">${ok?'gleich':'ungleich'}</td></tr>`}).join('');
+  return `<div class="tablewrap"><table><thead><tr><th>Atomart</th><th class="num">links (vor der Reaktion)</th><th class="num">rechts (nach der Reaktion)</th><th>Vergleich</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function legend(els){return `<div class="legend">${els.map(e=>`<span>${atom(e)} ${e}-Atom</span>`).join('')}</div>`}
+
+/* Vereinfachtes Periodensystem: Hauptgruppen I–VIII, Perioden 1–6, Nebengruppen zusammengefasst */
+function pse(wk){
+  const o=wk?1:0;
+  const P=[
+    [['H','Wasserstoff','nm'],null,null,null,null,null,null,['He','Helium','nm']],
+    [['Li','Lithium','m'],['Be','Beryllium','m'],['B','Bor','hm'],['C','Kohlenstoff','nm'],['N','Stickstoff','nm'],['O','Sauerstoff','nm'],['F','Fluor','nm'],['Ne','Neon','nm']],
+    [['Na','Natrium','m'],['Mg','Magnesium','m'],['Al','Aluminium','m'],['Si','Silicium','hm'],['P','Phosphor','nm'],['S','Schwefel','nm'],['Cl','Chlor','nm'],['Ar','Argon','nm']],
+    [['K','Kalium','m'],['Ca','Calcium','m'],['Ga','Gallium','m'],['Ge','Germanium','hm'],['As','Arsen','hm'],['Se','Selen','nm'],['Br','Brom','nm'],['Kr','Krypton','nm']],
+    [['Rb','Rubidium','m'],['Sr','Strontium','m'],['In','Indium','m'],['Sn','Zinn','m'],['Sb','Antimon','hm'],['Te','Tellur','hm'],['I','Iod','nm'],['Xe','Xenon','nm']],
+    [['Cs','Caesium','m'],['Ba','Barium','m'],['Tl','Thallium','m'],['Pb','Blei','m'],['Bi','Bismut','m'],['Po','Polonium','m'],['At','Astat','nm'],['Rn','Radon','nm']]
+  ];
+  const G=['I','II','','III','IV','V','VI','VII','VIII'];
+  let h=`<div class="pse" role="img" aria-label="Vereinfachtes Periodensystem: Metalle links und unten, Nichtmetalle rechts oben, Halbmetalle dazwischen"><span></span>`;
+  G.forEach((g,c)=>h+=`<span class="gh" style="grid-row:1;grid-column:${c+2}">${g?g:''}</span>`);
+  if(wk){const W=['1','2','','3','4','3','2','1','–'];h+=`<span class="wkl" style="grid-row:2;grid-column:1">Wertig&shy;keit</span>`;
+    W.forEach((w,c)=>{if(w)h+=`<span class="wk" style="grid-row:2;grid-column:${c+2}">${w}</span>`})}
+  P.forEach((row,r)=>{
+    h+=`<span class="ph" style="grid-row:${r+2+o};grid-column:1">${r+1}</span>`;
+    row.forEach((e,i)=>{if(!e)return;const col=i<2?i+2:i+3;
+      h+=`<span class="el ${e[2]}" style="grid-row:${r+2+o};grid-column:${col}" title="${e[1]}">${e[0]}</span>`});
+  });
+  h+=`<span class="ng" style="grid-row:${5+o} / span 3;grid-column:4">Neben&shy;gruppen: alles Metalle, z.&nbsp;B. Fe, Cu, Zn, Ag</span></div>`;
+  return `<div class="pse-wrap">${h}</div><div class="pse-key"><span><i style="background:var(--metal)"></i>Metalle</span><span><i style="background:var(--nonmetal)"></i>Nichtmetalle (einschließlich Edelgase)</span><span><i style="background:var(--semi)"></i>Halbmetalle</span></div>`;
+}
+
+/* ---------- Inhalte ---------- */
+const STATIONS=[
+{ id:'s1', title:'Atome, Moleküle und Ionen',
+  intro:'Bevor du Reaktionsgleichungen aufstellst, musst du wissen, aus welchen kleinsten Teilchen ein Stoff besteht.',
+  blocks:[
+    {type:'text',html:`<p>Alle Stoffe bestehen aus kleinsten Teilchen. Es gibt drei Arten von kleinsten Teilchen: <b>Atome</b>, <b>Moleküle</b> und <b>Ionen</b>. Welche Art vorliegt, hängt von der Stoffklasse ab.</p>`},
+    {type:'table',html:`<div class="tablewrap"><table><thead><tr><th>Stoffklasse</th><th>Beispiele</th><th>kleinste Teilchen</th></tr></thead><tbody>
+      <tr><td>Metalle</td><td>Silber, Kupfer, Eisen</td><td>Atome</td></tr>
+      <tr><td>Edelgase</td><td>Helium, Neon</td><td>Atome</td></tr>
+      <tr><td>Molekulare Stoffe</td><td>Sauerstoff, Wasser, Kohlenstoffdioxid</td><td>Moleküle</td></tr>
+      <tr><td>Salzartige Stoffe</td><td>Kochsalz, Magnesiumoxid</td><td>Ionen</td></tr></tbody></table></div>`},
+    {type:'text',html:`<h3>Metalle und Nichtmetalle im Periodensystem</h3><p>Ob ein Stoff aus Atomen, Molekülen oder Ionen besteht, erkennst du oft daran, ob er aus <b>Metallen</b> oder <b>Nichtmetallen</b> aufgebaut ist. Das vereinfachte Periodensystem zeigt dir, wo sie stehen: Die Metalle stehen links und unten, die Nichtmetalle rechts oben. Dazwischen liegen die Halbmetalle.</p>${pse()}`},
+    {type:'steps',title:'Die drei Teilchenarten im Einzelnen',items:[
+      {t:'Atome',h:`<p>Die kleinsten Teilchen der <b>Metalle</b> und der <b>Edelgase</b> sind einzelne Atome. Kupfer besteht zum Beispiel nur aus Kupfer-Atomen.</p>${legend(['Cu','Ne'])}`},
+      {t:'Moleküle',h:`<p>Ein Molekül besteht aus zwei oder mehr Atomen, die <b>fest miteinander verbunden</b> sind. Moleküle bestehen fast immer nur aus Atomen von <b>Nichtmetallen</b>. Molekulare Stoffe sind deshalb meistens <b>Nichtmetall-Nichtmetall-Verbindungen</b>, zum Beispiel Wasser (H und O) oder Kohlenstoffdioxid (C und O).</p><p>Auch manche elementaren Stoffe bestehen aus Molekülen. Im Sauerstoff sind jeweils zwei Sauerstoff-Atome zu einem Molekül verbunden.</p>${eq(['O2','H2O','CO2'],[],null,{names:['Sauerstoff','Wasser','Kohlenstoffdioxid']}).replace(/<div class="op"[^>]*>\+<\/div>/g,'')}`},
+      {t:'Die Summenformel',h:`<p>Die Summenformel eines Moleküls gibt an, <b>welche</b> Atome und <b>wie viele</b> davon fest verbunden sind. Die kleine tiefgestellte Zahl heißt <b>Index</b>.</p><p>${F('CO2')} bedeutet: ein Kohlenstoff-Atom und zwei Sauerstoff-Atome sind zu einem Molekül verbunden. Steht keine Zahl, ist der Index 1.</p>`},
+      {t:'Ionen',h:`<p>Die kleinsten Teilchen der <b>salzartigen Stoffe</b> sind Ionen. Ionen sind elektrisch positiv oder negativ geladene Atome oder Atomgruppen. Salzartige Stoffe sind meist <b>Metall-Nichtmetall-Verbindungen</b>, zum Beispiel Kupfersulfid oder Magnesiumoxid.</p>`},
+      {t:'Die Verhältnisformel',h:`<p>Bei salzartigen Stoffen gibt die Verhältnisformel das <b>Anzahlverhältnis</b> der Ionen an. ${F('Cu2S')} bedeutet: Auf zwei Kupfer-Ionen kommt ein Sulfid-Ion.</p><p>Eine solche kleinste Gruppe, wie sie die Formel angibt, nennt man <b>Elementargruppe</b>. Im Teilchenmodell zeichnen wir sie umrandet:</p>${eq(['Cu2S','MgO'],[],null,{}).replace(/<div class="op"[^>]*>\+<\/div>/g,'')}`}
+    ]},
+    {type:'merke',html:`<p>Alle Stoffe bestehen aus Atomen, Molekülen oder Ionen. Schau im Periodensystem nach, aus welchen Elementen ein Stoff aufgebaut ist:</p>
+      <div class="tablewrap"><table><thead><tr><th>Aufbau des Stoffes</th><th>Stoffklasse</th><th>kleinste Teilchen</th></tr></thead><tbody>
+      <tr><td>nur ein Metall</td><td>Metall</td><td>Atome</td></tr>
+      <tr><td>ein Edelgas</td><td>Edelgas</td><td>Atome</td></tr>
+      <tr><td><b>Nichtmetall + Nichtmetall</b> (auch O<sub>2</sub>, N<sub>2</sub>, H<sub>2</sub>)</td><td><b>molekularer Stoff</b></td><td><b>Moleküle</b></td></tr>
+      <tr><td>Metall + Nichtmetall</td><td>salzartiger Stoff</td><td>Ionen</td></tr></tbody></table></div>
+      <p>Molekulare Stoffe sind also meistens <b>Nichtmetall-Nichtmetall-Verbindungen</b>. Salzartige Stoffe sind meistens Metall-Nichtmetall-Verbindungen.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Metall oder Nichtmetall? Nutze das vereinfachte Periodensystem oben.',
+     options:['Metall','Nichtmetall'],
+     items:[['Natrium (Na)',0],['Schwefel (S)',1],['Kupfer (Cu)',0],['Sauerstoff (O)',1],['Magnesium (Mg)',0],['Chlor (Cl)',1],['Kohlenstoff (C)',1],['Aluminium (Al)',0]],
+     hint:'Metalle stehen im Periodensystem links und unten, Nichtmetalle rechts oben. Kupfer steht in den Nebengruppen, dort gibt es nur Metalle.',
+     okText:'Metalle stehen links und unten im Periodensystem, Nichtmetalle rechts oben.'},
+    {type:'sort',q:'Aus welcher Art von kleinsten Teilchen bestehen diese Stoffe? Wähle für jeden Stoff aus.',
+     options:['Atome','Moleküle','Ionen'],
+     items:[['Kupfer (Cu)',0],['Wasser (H<sub>2</sub>O)',1],['Neon (Ne)',0],['Kupferoxid (CuO)',2],['Zinksulfid (ZnS)',2],['Schwefeldioxid (SO<sub>2</sub>)',1],['Sauerstoff (O<sub>2</sub>)',1],['Magnesiumoxid (MgO)',2]],
+     hint:'Prüfe zuerst: Ist es ein Metall oder Edelgas? Dann Atome. Ist es eine Verbindung aus Metall und Nichtmetall? Dann Ionen. Besteht es nur aus Nichtmetallen? Dann Moleküle.',
+     okText:'Metalle und Edelgase bestehen aus Atomen, Metall-Nichtmetall-Verbindungen aus Ionen, Nichtmetall-Nichtmetall-Verbindungen und Nichtmetalle wie O<sub>2</sub> aus Molekülen.'},
+    {type:'mc',q:`Die Summenformel des Sauerstoff-Moleküls ist ${F('O2')}. Was bedeutet die 2?`,
+     options:['Zwei Sauerstoff-Atome sind in einem Molekül fest verbunden.','Es liegen zwei Sauerstoff-Moleküle vor.','Das Sauerstoff-Atom ist zweifach geladen.'],correct:0,
+     explain:'Die tiefgestellte Zahl (der Index) gibt an, wie viele Atome dieser Art im Molekül verbunden sind.'},
+    {type:'mc',q:`Woraus besteht ein Kohlenstoffdioxid-Molekül (${F('CO2')})?`,
+     options:['Aus einem Kohlenstoff-Atom und einem Sauerstoff-Molekül','Aus einem Kohlenstoff-Atom und zwei Sauerstoff-Atomen','Aus zwei Kohlenstoff-Atomen und einem Sauerstoff-Atom'],correct:1,
+     explain:'C steht ohne Index, also 1 Kohlenstoff-Atom. O hat den Index 2, also 2 Sauerstoff-Atome. Diese Atome sind fest verbunden; ein O₂-Molekül ist darin nicht enthalten.'},
+    {type:'num',q:`Wie viele Atome enthält ein Wasser-Molekül (${F('H2O')}) insgesamt?`,ans:3,
+     explain:'2 Wasserstoff-Atome und 1 Sauerstoff-Atom ergeben 3 Atome.'},
+    {type:'mc',q:`Was gibt die Verhältnisformel ${F('Al2S3')} von Aluminiumsulfid an?`,
+     options:['Ein Aluminiumsulfid-Molekül besteht aus 5 Atomen.','Im Aluminiumsulfid kommen auf 2 Aluminium-Ionen 3 Sulfid-Ionen.','Es reagieren 2 Gramm Aluminium mit 3 Gramm Schwefel.'],correct:1,
+     explain:'Aluminiumsulfid ist ein salzartiger Stoff. Die Verhältnisformel gibt das Anzahlverhältnis der Ionen an: 2 : 3.'}
+  ]},
+
+{ id:'s2', title:'Koeffizient und Index',
+  intro:'Ein Reaktionsschema sagt, welche Stoffe reagieren. Eine Reaktionsgleichung sagt zusätzlich, in welchem Anzahlverhältnis die Teilchen reagieren.',
+  blocks:[
+    {type:'steps',title:'Vom Reaktionsschema zur Reaktionsgleichung',items:[
+      {t:'Das Reaktionsschema',h:`<p>Bisher hast du Reaktionen mit Stoffnamen beschrieben:</p><p style="font-size:1.15rem">Kupfer + Schwefel → Kupfersulfid</p><p>Darin fehlt die Information, in welchem <b>Anzahlverhältnis</b> die Teilchen reagieren.</p>`},
+      {t:'Was die Formel verrät',h:`<p>Die Verhältnisformel von Kupfersulfid ist ${F('Cu2S')}. Auf <b>zwei</b> Kupfer-Atome kommt also <b>ein</b> Schwefel-Atom.</p><p>Damit alle Atome reagieren, müssen sie auch vor der Reaktion im Verhältnis 2 : 1 vorliegen.</p>`},
+      {t:'Der Koeffizient',h:`<p>Um das anzugeben, schreibt man eine große Zahl <b>vor</b> das Symbol oder die Formel. Diese Zahl heißt <b>Koeffizient</b>. Der Koeffizient 1 wird weggelassen.</p>${eq(['Cu','S'],['Cu2S'],[2,1,1],{hl:[0]})}${countTable(['Cu','S'],['Cu2S'],[2,1,1])}<p>Links und rechts stehen gleich viele Atome jeder Art. Deshalb ist das eine Reaktionsgleichung.</p>`},
+      {t:'Koeffizient und Index unterscheiden',h:`<div class="tablewrap"><table><thead><tr><th></th><th>Index</th><th>Koeffizient</th></tr></thead><tbody>
+        <tr><td>Aussehen</td><td>klein, tiefgestellt, rechts unten</td><td>groß, vor der Formel</td></tr>
+        <tr><td>Beispiel</td><td>die 2 in ${F('Cu2S')}</td><td>die 2 in 2 Cu</td></tr>
+        <tr><td>Bedeutung</td><td>Anzahl dieser Atome in einem Teilchen bzw. einer Elementargruppe</td><td>Anzahl der Teilchen bzw. Elementargruppen</td></tr>
+        <tr><td>Beim Einrichten</td><td><b>darf nie verändert werden</b></td><td>wird angepasst</td></tr></tbody></table></div>`},
+      {t:'Atome zählen',h:`<p>Der Koeffizient gilt für die <b>ganze</b> Formel. Du multiplizierst ihn mit jedem Index.</p>${eq(['Al2S3'],[],[3],{})}<p>3 ${F('Al2S3')} enthält 3 · 2 = <b>6</b> Aluminium-Atome und 3 · 3 = <b>9</b> Schwefel-Atome.</p>`}
+    ]},
+    {type:'merke',html:`<p>In einer Reaktionsgleichung ist die Anzahl der Atome jeder Atomart links und rechts vom Reaktionspfeil gleich. Ausgeglichen wird nur mit Koeffizienten. Die Indizes in den Formeln bleiben unverändert.</p>`}
+  ],
+  exercises:[
+    {type:'mc',q:'In „2 Cu“ ist die 2 …',options:['ein Koeffizient','ein Index'],correct:0,explain:'Die 2 steht groß vor dem Symbol. Sie gibt an: zwei Kupfer-Atome.'},
+    {type:'mc',q:`In ${F('Cu2S')} ist die 2 …`,options:['ein Koeffizient','ein Index'],correct:1,explain:'Die 2 steht klein und tiefgestellt. Sie gehört zur Formel und ist festgelegt.'},
+    {type:'num',q:`Wie viele Aluminium-Atome stecken in 2 ${F('Al2S3')}?`,ans:4,explain:'2 · 2 = 4 Aluminium-Atome.'},
+    {type:'num',q:`Wie viele Schwefel-Atome stecken in 2 ${F('Al2S3')}?`,ans:6,explain:'2 · 3 = 6 Schwefel-Atome.'},
+    {type:'num',q:`Wie viele Sauerstoff-Atome stecken in 3 ${F('Fe2O3')}?`,ans:9,explain:'3 · 3 = 9 Sauerstoff-Atome.'},
+    {type:'num',q:`Wie viele Sauerstoff-Atome stecken in 2 ${F('O2')}?`,ans:4,explain:'2 Moleküle mit je 2 Atomen: 2 · 2 = 4 Sauerstoff-Atome.'},
+    {type:'mc',q:`Das Schema Al + S | ${F('Al2S3')} ist noch nicht ausgeglichen. Was darfst du verändern?`,
+     options:['Nur die Koeffizienten vor den Symbolen und Formeln',`Die Indizes, zum Beispiel ${F('Al2S3')} zu AlS`,'Beides'],correct:0,
+     explain:'Die Formel einer Verbindung ist durch das Anzahlverhältnis festgelegt. Wer einen Index ändert, beschreibt einen anderen Stoff.'},
+    {type:'mc',q:`Ist 2 Cu + S → ${F('Cu2S')} eine Reaktionsgleichung?`,
+     options:['Ja. Links und rechts stehen je 2 Cu-Atome und 1 S-Atom.','Nein. Vor S fehlt der Koeffizient.','Nein. Rechts fehlt der Koeffizient 2.'],correct:0,
+     explain:'Der Koeffizient 1 wird nicht geschrieben. Die Atomanzahlen stimmen auf beiden Seiten überein.'}
+  ]},
+
+{ id:'s3', title:'Einrichten in drei Schritten',
+  intro:'Hier lernst du das Verfahren, mit dem du jede Reaktionsgleichung aufstellen kannst. Beispiel: Aluminium reagiert mit Schwefel zu Aluminiumsulfid.',
+  blocks:[
+    {type:'steps',title:'Beispiel: Bildung von Aluminiumsulfid',items:[
+      {t:'Schritt 1: Reaktionsschema aufstellen',h:`<p>Schreibe die Namen der Ausgangsstoffe (Edukte) links und der Produkte rechts vom Pfeil:</p><p style="font-size:1.15rem">Aluminium + Schwefel → Aluminiumsulfid</p>`},
+      {t:'Schritt 2: Symbole und Formeln zuordnen',h:`<p>Schreibe unter jeden Namen das Elementsymbol bzw. die Formel. Die Formel von Aluminiumsulfid ist vorgegeben: ${F('Al2S3')}.</p>${eq(['Al','S'],['Al2S3'],null,{arrow:'|',names:['Aluminium','Schwefel','Aluminiumsulfid']})}<p>Statt des Pfeils steht hier noch ein senkrechter Strich. Das ist noch <b>keine</b> Reaktionsgleichung, denn die Atomanzahlen stimmen nicht:</p>${countTable(['Al','S'],['Al2S3'],[1,1,1])}`},
+      {t:'Schritt 3a: Bei der größten Formel beginnen',h:`<p>Beginne mit der Formel, die die meisten Atome enthält. Das ist ${F('Al2S3')}. Sie bekommt zunächst den Koeffizienten 1.</p><p>Rechts stehen <b>2</b> Aluminium-Atome. Links muss also auch 2 Al stehen:</p>${eq(['Al','S'],['Al2S3'],[2,1,1],{arrow:'|',hl:[0]})}`},
+      {t:'Schritt 3b: Die nächste Atomart',h:`<p>Rechts stehen <b>3</b> Schwefel-Atome. Links muss also 3 S stehen:</p>${eq(['Al','S'],['Al2S3'],[2,3,1],{hl:[0,1]})}`},
+      {t:'Schritt 4: Kontrollieren',h:`<p>Zähle alle Atome noch einmal. Erst wenn jede Atomart übereinstimmt, setzt du den Pfeil.</p>${countTable(['Al','S'],['Al2S3'],[2,3,1])}<p style="font-size:1.2rem">2 Al + 3 S → ${F('Al2S3')}</p>`}
+    ]},
+    {type:'merke',html:`<p>1. Reaktionsschema mit Namen aufstellen. 2. Symbole und Formeln darunter schreiben. 3. Mit Koeffizienten einrichten, Atomart für Atomart, beginnend bei der größten Formel. 4. Atome links und rechts zählen und kontrollieren.</p>`},
+    {type:'text',html:`<p class="small">Hinweis: Der elementare Stoff Schwefel besteht eigentlich aus ${F('S8')}-Molekülen. In Reaktionsgleichungen schreibt man zur Vereinfachung meist einzelne Schwefel-Atome (S). So machen wir es auch hier.</p>`}
+  ],
+  exercises:[
+    {type:'bal',q:'Probiere das Werkzeug am Beispiel aus: Stelle mit den Plus- und Minus-Tasten die Koeffizienten ein.',names:['Aluminium','Schwefel','Aluminiumsulfid'],left:['Al','S'],right:['Al2S3'],sol:[2,3,1]},
+    {type:'bal',q:`Kupfer reagiert mit Schwefel zu Kupfersulfid (${F('Cu2S')}).`,names:['Kupfer','Schwefel','Kupfersulfid'],left:['Cu','S'],right:['Cu2S'],sol:[2,1,1]},
+    {type:'bal',q:`Silber reagiert mit Schwefel zu Silbersulfid (${F('Ag2S')}).`,names:['Silber','Schwefel','Silbersulfid'],left:['Ag','S'],right:['Ag2S'],sol:[2,1,1]},
+    {type:'bal',q:'Zink reagiert mit Schwefel zu Zinksulfid (ZnS). Achtung: Manchmal ist gar nichts zu ändern.',names:['Zink','Schwefel','Zinksulfid'],left:['Zn','S'],right:['ZnS'],sol:[1,1,1]},
+    {type:'bal',q:`Natrium reagiert mit Schwefel zu Natriumsulfid (${F('Na2S')}).`,names:['Natrium','Schwefel','Natriumsulfid'],left:['Na','S'],right:['Na2S'],sol:[2,1,1]},
+    {type:'num',q:`Zur Bildung von Aluminiumsulfid (2 Al + 3 S → ${F('Al2S3')}) werden 100 Milliarden Aluminium-Atome eingesetzt. Wie viele Schwefel-Atome braucht man für eine vollständige Reaktion? (Antwort in Milliarden)`,ans:150,unit:'Milliarden',
+     explain:'Aluminium und Schwefel reagieren im Verhältnis 2 : 3. Auf 100 Milliarden Al-Atome kommen also 100 : 2 · 3 = 150 Milliarden S-Atome.'}
+  ]},
+
+{ id:'s4', title:'Reaktionsgleichungen mit Molekülen',
+  intro:'Viele Edukte und Produkte bestehen aus Molekülen. Du gehst nach den gleichen Schritten vor, musst aber eine Besonderheit beachten.',
+  blocks:[
+    {type:'text',html:`<p>Einige elementare Stoffe bestehen aus <b>Molekülen</b> mit zwei gleichen Atomen. Sie werden in der Reaktionsgleichung immer als Molekül geschrieben:</p>`},
+    {type:'table',html:`<div class="tablewrap"><table><thead><tr><th>Stoff</th><th>in der Gleichung</th><th>nicht</th></tr></thead><tbody>
+      <tr><td>Sauerstoff</td><td>${F('O2')}</td><td>O</td></tr><tr><td>Wasserstoff</td><td>${F('H2')}</td><td>H</td></tr>
+      <tr><td>Stickstoff</td><td>${F('N2')}</td><td>N</td></tr><tr><td>Chlor</td><td>${F('Cl2')}</td><td>Cl</td></tr></tbody></table></div>`},
+    {type:'steps',title:'Beispiel 1: Kohlenstoff verbrennt',items:[
+      {t:'Schema und Formeln',h:`<p>Kohlenstoff (Graphit oder Diamant) besteht aus Kohlenstoff-Atomen. Sauerstoff besteht aus ${F('O2')}-Molekülen. Kohlenstoffdioxid besteht aus ${F('CO2')}-Molekülen.</p>${eq(['C','O2'],['CO2'],null,{arrow:'|',names:['Kohlenstoff','Sauerstoff','Kohlenstoffdioxid']})}`},
+      {t:'Zählen',h:`${countTable(['C','O2'],['CO2'],[1,1,1])}<p>Die Anzahlen sind schon gleich. Es ist kein Koeffizient nötig:</p><p style="font-size:1.2rem">C + ${F('O2')} → ${F('CO2')}</p>`}
+    ]},
+    {type:'steps',title:'Beispiel 2: Kupfer reagiert mit Sauerstoff',items:[
+      {t:'Schema und Formeln',h:`<p>Kupfer besteht aus Atomen, Sauerstoff aus ${F('O2')}-Molekülen. Kupferoxid besteht aus CuO-Elementargruppen (vorgegeben).</p>${eq(['Cu','O2'],['CuO'],null,{arrow:'|',names:['Kupfer','Sauerstoff','Kupferoxid']})}${countTable(['Cu','O2'],['CuO'],[1,1,1])}`},
+      {t:'Sauerstoff ausgleichen',h:`<p>Links stehen 2 O-Atome, rechts nur 1. Du darfst <b>nicht</b> ${F('CuO2')} schreiben, denn dann wäre es ein anderer Stoff. Stattdessen nimmst du <b>zwei</b> CuO-Elementargruppen:</p>${eq(['Cu','O2'],['CuO'],[1,1,2],{arrow:'|',hl:[2]})}`},
+      {t:'Kupfer ausgleichen',h:`<p>Jetzt stehen rechts 2 Cu-Atome. Also braucht man links 2 Cu:</p>${eq(['Cu','O2'],['CuO'],[2,1,2],{hl:[0,2]})}${countTable(['Cu','O2'],['CuO'],[2,1,2])}<p style="font-size:1.2rem">2 Cu + ${F('O2')} → 2 CuO</p>`}
+    ]},
+    {type:'merke',html:`<p>Ein ${F('O2')}-Molekül liefert immer zwei Sauerstoff-Atome. Ist rechts nur ein O-Atom in der Formel, verdoppelst du das Produkt mit dem Koeffizienten 2 und gleichst danach die anderen Atomarten aus.</p>`}
+  ],
+  exercises:[
+    {type:'mc',q:'Magnesium reagiert mit Sauerstoff zu Magnesiumoxid (MgO). Welche Gleichung ist richtig?',
+     options:['Mg + O → MgO',`Mg + ${F('O2')} → ${F('MgO2')}`,`2 Mg + ${F('O2')} → 2 MgO`],correct:2,
+     explain:`Sauerstoff wird als ${F('O2')} geschrieben. Die Formel MgO ist vorgegeben und darf nicht zu ${F('MgO2')} verändert werden.`},
+    {type:'bal',q:'Magnesium reagiert mit Sauerstoff zu Magnesiumoxid (MgO).',names:['Magnesium','Sauerstoff','Magnesiumoxid'],left:['Mg','O2'],right:['MgO'],sol:[2,1,2]},
+    {type:'bal',q:`Wasserstoff reagiert mit Sauerstoff zu Wasser (${F('H2O')}).`,names:['Wasserstoff','Sauerstoff','Wasser'],left:['H2','O2'],right:['H2O'],sol:[2,1,2]},
+    {type:'bal',q:'Natrium reagiert mit Chlor zu Natriumchlorid (NaCl).',names:['Natrium','Chlor','Natriumchlorid'],left:['Na','Cl2'],right:['NaCl'],sol:[2,1,2]},
+    {type:'bal',q:`Stickstoff reagiert mit Wasserstoff zu Ammoniak (${F('NH3')}).`,names:['Stickstoff','Wasserstoff','Ammoniak'],left:['N2','H2'],right:['NH3'],sol:[1,3,2]},
+    {type:'bal',q:`Aluminium reagiert mit Sauerstoff zu Aluminiumoxid (${F('Al2O3')}). Diese Aufgabe ist schwieriger.`,names:['Aluminium','Sauerstoff','Aluminiumoxid'],left:['Al','O2'],right:['Al2O3'],sol:[4,3,2],
+     extra:'Tipp: Links kommen die O-Atome immer paarweise (2, 4, 6 …), rechts in Dreiergruppen (3, 6, 9 …). Suche die kleinste Zahl, die in beiden Reihen vorkommt.'}
+  ]},
+
+{ id:'s5', title:'Elementargruppen auf beiden Seiten',
+  intro:'Jetzt stehen Elementargruppen sowohl bei den Edukten als auch bei den Produkten. Beispiel: Magnesium reagiert mit rotem Eisenoxid zu Magnesiumoxid und Eisen.',
+  blocks:[
+    {type:'steps',title:'Beispiel: Magnesium und Eisenoxid',items:[
+      {t:'Schritt 1: Reaktionsschema',h:`<p style="font-size:1.15rem">Magnesium + rotes Eisenoxid → Magnesiumoxid + Eisen</p>`},
+      {t:'Schritt 2: Symbole und Formeln',h:`<p>Die Formeln sind vorgegeben: rotes Eisenoxid ${F('Fe2O3')}, Magnesiumoxid MgO.</p>${eq(['Mg','Fe2O3'],['MgO','Fe'],null,{arrow:'|',names:['Magnesium','rotes Eisenoxid','Magnesiumoxid','Eisen']})}${countTable(['Mg','Fe2O3'],['MgO','Fe'],[1,1,1,1])}<p>Die Anzahlen stimmen noch nicht überein.</p>`},
+      {t:'Schritt 3a: Von der größten Elementargruppe ausgehen',h:`<p>${F('Fe2O3')} hat die meisten Atome und bekommt den Koeffizienten 1. Sie enthält 2 Fe-Atome und 3 O-Atome.</p><p>Die 3 O-Atome landen rechts im MgO. Dafür braucht man <b>3</b> MgO. Die 2 Fe-Atome landen rechts als <b>2</b> Fe.</p>${eq(['Mg','Fe2O3'],['MgO','Fe'],[1,1,3,2],{arrow:'|',hl:[2,3]})}${countTable(['Mg','Fe2O3'],['MgO','Fe'],[1,1,3,2])}`},
+      {t:'Schritt 3b: Die fehlenden Atome ergänzen',h:`<p>Rechts stehen jetzt 3 Mg-Atome, links nur 1. Also kommen links 2 Mg-Atome hinzu: <b>3</b> Mg.</p>${eq(['Mg','Fe2O3'],['MgO','Fe'],[3,1,3,2],{hl:[0,2,3]})}`},
+      {t:'Schritt 4: Kontrollieren',h:`${countTable(['Mg','Fe2O3'],['MgO','Fe'],[3,1,3,2])}<p style="font-size:1.2rem">3 Mg + ${F('Fe2O3')} → 3 MgO + 2 Fe</p>`}
+    ]},
+    {type:'merke',html:`<p>Elementargruppen behandelst du wie Moleküle: Ein Koeffizient davor gilt für die ganze Gruppe. Wenn du eine Atomart ausgleichst, kann sich dadurch eine andere ändern. Prüfe deshalb am Ende immer alle Atomarten.</p>`}
+  ],
+  exercises:[
+    {type:'bal',q:'Magnesium reagiert mit Kupferoxid (CuO) zu Magnesiumoxid (MgO) und Kupfer.',names:['Magnesium','Kupferoxid','Magnesiumoxid','Kupfer'],left:['Mg','CuO'],right:['MgO','Cu'],sol:[1,1,1,1]},
+    {type:'bal',q:'Wasserstoff reagiert mit Kupferoxid (CuO) zu Kupfer und Wasser.',names:['Wasserstoff','Kupferoxid','Kupfer','Wasser'],left:['H2','CuO'],right:['Cu','H2O'],sol:[1,1,1,1]},
+    {type:'bal',q:`Magnesium reagiert mit Kohlenstoffdioxid (${F('CO2')}) zu Magnesiumoxid (MgO) und Kohlenstoff.`,names:['Magnesium','Kohlenstoffdioxid','Magnesiumoxid','Kohlenstoff'],left:['Mg','CO2'],right:['MgO','C'],sol:[2,1,2,1]},
+    {type:'bal',q:`Aluminium reagiert mit rotem Eisenoxid (${F('Fe2O3')}) zu Aluminiumoxid (${F('Al2O3')}) und Eisen.`,names:['Aluminium','rotes Eisenoxid','Aluminiumoxid','Eisen'],left:['Al','Fe2O3'],right:['Al2O3','Fe'],sol:[2,1,1,2]},
+    {type:'bal',q:`Aluminium reagiert mit Kupferoxid (CuO) zu Aluminiumoxid (${F('Al2O3')}) und Kupfer.`,names:['Aluminium','Kupferoxid','Aluminiumoxid','Kupfer'],left:['Al','CuO'],right:['Al2O3','Cu'],sol:[2,3,1,3],
+     extra:`Tipp: Beginne mit ${F('Al2O3')}. Wie viele CuO brauchst du für 3 O-Atome?`}
+  ]},
+
+{ id:'s6', title:'Abschluss',
+  intro:'Hier wiederholst du das Verfahren und wendest es auf gemischte Aufgaben an.',
+  blocks:[
+    {type:'table',html:`<div class="tablewrap"><table><thead><tr><th>Schritt</th><th>Was du tust</th></tr></thead><tbody>
+      <tr><td>1</td><td>Reaktionsschema mit den Namen der Stoffe aufstellen.</td></tr>
+      <tr><td>2</td><td>Elementsymbole und Formeln zuordnen. Elementare Gase als Moleküle schreiben (${F('O2')}, ${F('H2')}, ${F('N2')}, ${F('Cl2')}). Vorerst einen Strich statt eines Pfeils setzen.</td></tr>
+      <tr><td>3</td><td>Mit Koeffizienten einrichten. Bei der Formel mit den meisten Atomen beginnen und Atomart für Atomart ausgleichen. Indizes nie verändern.</td></tr>
+      <tr><td>4</td><td>Alle Atome links und rechts zählen. Stimmen alle überein, den Pfeil setzen. Koeffizienten möglichst klein halten.</td></tr></tbody></table></div>`},
+    {type:'merke',html:`<p>In einer Reaktionsgleichung sind die Anzahlen der Atome jeder Atomart links und rechts vom Reaktionspfeil gleich.</p>`}
+  ],
+  exercises:[
+    {type:'bal',q:'Calcium reagiert mit Sauerstoff zu Calciumoxid (CaO).',names:['Calcium','Sauerstoff','Calciumoxid'],left:['Ca','O2'],right:['CaO'],sol:[2,1,2]},
+    {type:'bal',q:`Aluminium reagiert mit Chlor zu Aluminiumchlorid (${F('AlCl3')}).`,names:['Aluminium','Chlor','Aluminiumchlorid'],left:['Al','Cl2'],right:['AlCl3'],sol:[2,3,2]},
+    {type:'bal',q:`Eisen reagiert mit Sauerstoff zu rotem Eisenoxid (${F('Fe2O3')}).`,names:['Eisen','Sauerstoff','rotes Eisenoxid'],left:['Fe','O2'],right:['Fe2O3'],sol:[4,3,2]},
+    {type:'bal',q:`Wasserstoff reagiert mit Chlor zu Chlorwasserstoff (HCl).`,names:['Wasserstoff','Chlor','Chlorwasserstoff'],left:['H2','Cl2'],right:['HCl'],sol:[1,1,2]},
+    {type:'mc',q:`Ein Mitschüler schreibt: Mg + ${F('O2')} → ${F('MgO2')}. Was ist falsch?`,
+     options:['Nichts, die Atome sind links und rechts gleich.','Er hat den Index der vorgegebenen Formel MgO verändert.','Sauerstoff müsste als O geschrieben werden.'],correct:1,
+     explain:`Die Formel MgO ist durch das Anzahlverhältnis festgelegt. Richtig ist 2 Mg + ${F('O2')} → 2 MgO.`}
+  ]},
+{ id:'s7', title:'Expertenaufgaben',
+  intro:'Für alle, die Station 1 bis 6 geschafft haben: schwierigere Gleichungen, bei denen du mehrmals ausgleichen musst, und Rechenaufgaben zu Teilchenanzahlen, auch rückwärts.',
+  blocks:[
+    {type:'steps',title:'Strategie für schwierige Gleichungen',items:[
+      {t:'Elemente zuletzt',h:`<p>Gleiche zuerst die Atomarten aus, die in <b>Verbindungen</b> stehen. Elementare Stoffe wie Fe, C oder ${F('O2')} kannst du am Ende frei anpassen, weil ihre Koeffizienten keine anderen Atomarten verändern.</p>`},
+      {t:'Gerade und ungerade Zahlen',h:`<p>${F('O2')} liefert die O-Atome immer paarweise. Ergibt sich auf der anderen Seite eine ungerade Zahl an O-Atomen, verdoppelst du dort alle bisherigen Koeffizienten und gleichst neu aus.</p>`},
+      {t:'Beispiel: Verbrennung von Methan',h:`<p>Methan (${F('CH4')}) verbrennt mit Sauerstoff zu Kohlenstoffdioxid und Wasser.</p>${eq(['CH4','O2'],['CO2','H2O'],null,{arrow:'|',names:['Methan','Sauerstoff','Kohlenstoffdioxid','Wasser']})}<p>C: 1 links, also 1 ${F('CO2')}. H: 4 links, also 2 ${F('H2O')}. Jetzt stehen rechts 2 + 2 = 4 O-Atome. Dafür braucht man links 2 ${F('O2')}.</p>${eq(['CH4','O2'],['CO2','H2O'],[1,2,1,2],{hl:[1,3]})}${countTable(['CH4','O2'],['CO2','H2O'],[1,2,1,2])}`}
+    ]},
+    {type:'steps',title:'Rechnen mit Reaktionsgleichungen',items:[
+      {t:'Koeffizienten als Anzahlverhältnis',h:`<p style="font-size:1.2rem">4 Al + 3 ${F('O2')} → 2 ${F('Al2O3')}</p><p>Die Koeffizienten geben das Anzahlverhältnis der Teilchen an: 4 Al-Atome reagieren mit 3 ${F('O2')}-Molekülen zu 2 ${F('Al2O3')}-Elementargruppen. Diesen Satz aus 4 + 3 → 2 nennen wir ein <b>Paket</b>.</p>`},
+      {t:'Vorwärts rechnen',h:`<p>Es werden 80 Milliarden Al-Atome eingesetzt. Wie viele ${F('O2')}-Moleküle braucht man?</p><div class="tablewrap"><table><tbody>
+        <tr><td>Anzahl der Pakete</td><td>80 Mrd. : 4 = 20 Mrd.</td></tr>
+        <tr><td>${F('O2')}-Moleküle</td><td>20 Mrd. · 3 = <b>60 Mrd.</b></td></tr>
+        <tr><td>${F('Al2O3')}-Elementargruppen</td><td>20 Mrd. · 2 = 40 Mrd.</td></tr></tbody></table></div>`},
+      {t:'Rückwärts rechnen',h:`<p>Es sind 30 Milliarden ${F('Al2O3')}-Elementargruppen entstanden. Wie viele Al-Atome und ${F('O2')}-Moleküle haben reagiert?</p><div class="tablewrap"><table><tbody>
+        <tr><td>Anzahl der Pakete</td><td>30 Mrd. : 2 = 15 Mrd.</td></tr>
+        <tr><td>Al-Atome</td><td>15 Mrd. · 4 = <b>60 Mrd.</b></td></tr>
+        <tr><td>${F('O2')}-Moleküle</td><td>15 Mrd. · 3 = <b>45 Mrd.</b></td></tr></tbody></table></div>`},
+      {t:'Atome statt Moleküle',h:`<p>Manchmal ist nach <b>Atomen</b> gefragt, obwohl der Stoff aus Molekülen besteht. 45 Mrd. ${F('O2')}-Moleküle enthalten 45 Mrd. · 2 = 90 Mrd. Sauerstoff-Atome.</p>`}
+    ]},
+    {type:'merke',html:`<p>Bekannte Anzahl durch ihren Koeffizienten teilen ergibt die Anzahl der Pakete. Anzahl der Pakete mal Koeffizient des gesuchten Stoffes ergibt die gesuchte Anzahl. Das funktioniert vorwärts und rückwärts.</p>`}
+  ],
+  exercises:[
+    {type:'bal',q:`Eisen verbrennt mit Sauerstoff zu Eisenoxid (${F('Fe3O4')}).`,names:['Eisen','Sauerstoff','Eisenoxid'],left:['Fe','O2'],right:['Fe3O4'],sol:[3,2,1]},
+    {type:'bal',q:`Methan (${F('CH4')}) verbrennt mit Sauerstoff zu Kohlenstoffdioxid und Wasser.`,names:['Methan','Sauerstoff','Kohlenstoffdioxid','Wasser'],left:['CH4','O2'],right:['CO2','H2O'],sol:[1,2,1,2]},
+    {type:'bal',q:`Natrium reagiert mit Wasser zu Natriumhydroxid (NaOH) und Wasserstoff.`,names:['Natrium','Wasser','Natriumhydroxid','Wasserstoff'],left:['Na','H2O'],right:['NaOH','H2'],sol:[2,2,2,1],
+     extra:'Tipp: Wasserstoff entsteht als H₂-Molekül. Die Zahl der NaOH muss deshalb gerade sein.'},
+    {type:'bal',q:`Phosphor reagiert mit Chlor zu Phosphortrichlorid (${F('PCl3')}).`,names:['Phosphor','Chlor','Phosphortrichlorid'],left:['P','Cl2'],right:['PCl3'],sol:[2,3,2]},
+    {type:'bal',q:`Rotes Eisenoxid (${F('Fe2O3')}) reagiert mit Kohlenstoff zu Eisen und Kohlenstoffdioxid.`,names:['rotes Eisenoxid','Kohlenstoff','Eisen','Kohlenstoffdioxid'],left:['Fe2O3','C'],right:['Fe','CO2'],sol:[2,3,4,3],
+     extra:`Tipp: Rechts kommen die O-Atome paarweise, links in Dreiergruppen. Wie viele ${F('Fe2O3')} brauchst du, damit die O-Anzahl gerade wird?`},
+    {type:'bal',q:`Schwefelwasserstoff (${F('H2S')}) verbrennt mit Sauerstoff zu Schwefeldioxid (${F('SO2')}) und Wasser.`,names:['Schwefelwasserstoff','Sauerstoff','Schwefeldioxid','Wasser'],left:['H2S','O2'],right:['SO2','H2O'],sol:[2,3,2,2],
+     extra:'Tipp: Gleiche S und H zuerst aus. Ist die Zahl der O-Atome rechts ungerade, verdopple alle Koeffizienten.'},
+    {type:'bal',q:`Aluminium reagiert mit Eisenoxid (${F('Fe3O4')}) zu Aluminiumoxid (${F('Al2O3')}) und Eisen.`,names:['Aluminium','Eisenoxid','Aluminiumoxid','Eisen'],left:['Al','Fe3O4'],right:['Al2O3','Fe'],sol:[8,3,4,9],
+     extra:'Tipp: Gleiche zuerst die O-Atome zwischen den beiden Oxiden aus. Die kleinste Zahl, die durch 4 und durch 3 teilbar ist, ist 12.'},
+    {type:'bal',q:`Ammoniak (${F('NH3')}) reagiert mit Sauerstoff zu Stickstoffmonooxid (NO) und Wasser. Die schwierigste Gleichung.`,names:['Ammoniak','Sauerstoff','Stickstoffmonooxid','Wasser'],left:['NH3','O2'],right:['NO','H2O'],sol:[4,5,4,6],
+     extra:`Tipp: H-Atome: 3 pro ${F('NH3')}, 2 pro ${F('H2O')}. Beginne mit 2 ${F('NH3')} und 3 ${F('H2O')}. Ist O dann ungerade, verdopple alles.`},
+    {type:'num',q:`2 Mg + ${F('O2')} → 2 MgO. Es werden 60 Milliarden Mg-Atome eingesetzt. Wie viele ${F('O2')}-Moleküle braucht man? (in Milliarden)`,ans:30,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'60 : 2 = 30 Pakete, 30 · 1 = 30 Mrd. O₂-Moleküle.'},
+    {type:'num',q:`4 Al + 3 ${F('O2')} → 2 ${F('Al2O3')}. Es werden 120 Milliarden Al-Atome eingesetzt. Wie viele ${F('Al2O3')}-Elementargruppen entstehen? (in Milliarden)`,ans:60,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'120 : 4 = 30 Pakete, 30 · 2 = 60 Mrd. Al₂O₃.'},
+    {type:'num',q:`2 ${F('H2')} + ${F('O2')} → 2 ${F('H2O')}. Es sind 50 Milliarden Wasser-Moleküle entstanden. Wie viele ${F('O2')}-Moleküle haben reagiert? (in Milliarden)`,ans:25,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'Rückwärts: 50 : 2 = 25 Pakete, 25 · 1 = 25 Mrd. O₂-Moleküle.'},
+    {type:'num',q:`3 Mg + ${F('Fe2O3')} → 3 MgO + 2 Fe. Es sind 40 Milliarden Fe-Atome entstanden. Wie viele Mg-Atome wurden eingesetzt? (in Milliarden)`,ans:60,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'Rückwärts: 40 : 2 = 20 Pakete, 20 · 3 = 60 Mrd. Mg-Atome.'},
+    {type:'num',q:`3 Mg + ${F('Fe2O3')} → 3 MgO + 2 Fe. Es sind 40 Milliarden Fe-Atome entstanden. Wie viele ${F('Fe2O3')}-Elementargruppen wurden eingesetzt? (in Milliarden)`,ans:20,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'40 : 2 = 20 Pakete, 20 · 1 = 20 Mrd. Fe₂O₃.'},
+    {type:'num',q:`${F('CH4')} + 2 ${F('O2')} → ${F('CO2')} + 2 ${F('H2O')}. Es sind 30 Milliarden Wasser-Moleküle entstanden. Wie viele Methan-Moleküle sind verbrannt? (in Milliarden)`,ans:15,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'Rückwärts: 30 : 2 = 15 Pakete, 15 · 1 = 15 Mrd. CH₄-Moleküle.'},
+    {type:'num',q:`${F('N2')} + 3 ${F('H2')} → 2 ${F('NH3')}. Es sind 80 Milliarden Ammoniak-Moleküle entstanden. Wie viele Wasserstoff-<b>Atome</b> wurden dafür eingesetzt? (in Milliarden)`,ans:240,unit:'Milliarden',wrong:'Rechne zuerst die H₂-Moleküle aus (Pakete mal Koeffizient). Jedes H₂-Molekül enthält 2 H-Atome.',explain:'80 : 2 = 40 Pakete, 40 · 3 = 120 Mrd. H₂-Moleküle. Jedes enthält 2 Atome: 120 · 2 = 240 Mrd. H-Atome. Kontrolle: 80 Mrd. NH₃ mit je 3 H-Atomen sind ebenfalls 240 Mrd.'},
+    {type:'num',q:`4 ${F('NH3')} + 5 ${F('O2')} → 4 NO + 6 ${F('H2O')}. Es sind 36 Milliarden Wasser-Moleküle entstanden. Wie viele ${F('O2')}-Moleküle haben reagiert? (in Milliarden)`,ans:30,unit:'Milliarden',wrong:'Bestimme zuerst, wie viele „Pakete“ vorliegen: Teile die bekannte Anzahl durch ihren Koeffizienten. Multipliziere dann mit dem Koeffizienten des gesuchten Stoffes.',explain:'Rückwärts: 36 : 6 = 6 Pakete, 6 · 5 = 30 Mrd. O₂-Moleküle.'}
+  ]},
+{ id:'s8', group:'ext', title:'Verhältnisformeln selbst aufstellen',
+  intro:'Bisher war die Formel jedes Produkts vorgegeben. Jetzt lernst du, wie du die Verhältnisformel eines salzartigen Stoffes mithilfe des Periodensystems selbst ermittelst.',
+  blocks:[
+    {type:'text',html:`<div class="extnote"><b>Erweiterung</b><p>Ab hier sind die Verhältnisformeln nicht mehr vorgegeben. Du ermittelst sie selbst. Das gilt für salzartige Stoffe aus einem Metall und einem Nichtmetall.</p></div>`},
+    {type:'steps',title:'Die Wertigkeit',items:[
+      {t:'Was die Wertigkeit angibt',h:`<p>Jedes Element hat in einer Verbindung eine <b>Wertigkeit</b>. Sie ist eine kleine Zahl, die angibt, in welchem Verhältnis sich die Atome verbinden. Man kann sie sich wie die Anzahl der „Hände“ vorstellen, mit denen sich ein Atom an andere bindet.</p>`},
+      {t:'Wertigkeit im Periodensystem ablesen',h:`<p>Für die Hauptgruppen-Elemente liest du die Wertigkeit an der Hauptgruppe ab:</p><div class="tablewrap"><table><thead><tr><th></th><th>Regel</th><th>Beispiele</th></tr></thead><tbody>
+        <tr><td>Metalle</td><td>Wertigkeit = Nummer der Hauptgruppe</td><td>Na (I): 1 · Mg (II): 2 · Al (III): 3</td></tr>
+        <tr><td>Nichtmetalle</td><td>Wertigkeit = 8 − Nummer der Hauptgruppe</td><td>Cl (VII): 1 · O (VI): 2 · N (V): 3</td></tr></tbody></table></div>${pse(true)}`},
+      {t:'Die Grundregel',h:`<p>In einer Verbindung müssen die Wertigkeiten beider Atomarten <b>zusammen gleich groß</b> sein. Man rechnet für jede Atomart: Anzahl der Atome · Wertigkeit.</p><p>Natriumchlorid NaCl: Na 1 · 1 = 1 und Cl 1 · 1 = 1. Beide Summen sind gleich.</p>${eq(['NaCl'],[],[1],{})}`}
+    ]},
+    {type:'steps',title:'Beispiel: Aluminiumoxid',items:[
+      {t:'Schritt 1: Elemente bestimmen',h:`<p>Der Name verrät die Elemente: <b>Aluminium</b>oxid besteht aus Aluminium (Al) und Sauerstoff (O). Die Endung <b>-oxid</b> steht für Sauerstoff.</p>`},
+      {t:'Schritt 2: Wertigkeiten ablesen',h:`<p>Al steht in Hauptgruppe III: Wertigkeit <b>3</b>.<br>O steht in Hauptgruppe VI: Wertigkeit 8 − 6 = <b>2</b>.</p>`},
+      {t:'Schritt 3: Kleinstes gemeinsames Vielfaches',h:`<p>Suche die kleinste Zahl, die durch beide Wertigkeiten teilbar ist. Für 3 und 2 ist das <b>6</b>.</p><p>Die Wertigkeiten müssen auf beiden Seiten zusammen 6 ergeben.</p>`},
+      {t:'Schritt 4: Anzahlen berechnen',h:`<div class="tablewrap"><table><tbody>
+        <tr><td>Aluminium</td><td>6 : 3 = <b>2</b> Al-Atome</td></tr>
+        <tr><td>Sauerstoff</td><td>6 : 2 = <b>3</b> O-Atome</td></tr></tbody></table></div><p>Die Anzahlen werden zu den Indizes der Formel:</p>${eq(['Al2O3'],[],[1],{})}<p class="bigf">${F('Al2O3')}</p>`},
+      {t:'Schritt 5: Kontrollieren',h:`<p>Al: 2 · 3 = 6. O: 3 · 2 = 6. Beide Summen sind gleich, die Formel stimmt.</p>`},
+      {t:'Abkürzung: Kreuzregel',h:`<p>Schneller geht es so: Die Wertigkeit des einen Elements wird der Index des anderen.</p><p>Al<sup>3</sup> O<sup>2</sup> → Al<sub>2</sub>O<sub>3</sub></p><p>Danach musst du prüfen, ob du <b>kürzen</b> kannst. Magnesiumoxid: Mg<sup>2</sup> O<sup>2</sup> → Mg<sub>2</sub>O<sub>2</sub>. Beide Indizes lassen sich durch 2 teilen. Die richtige Formel ist <b>MgO</b>.</p>`}
+    ]},
+    {type:'steps',title:'Beispiel: Von der Reaktion zur Reaktionsgleichung',items:[
+      {t:'Die Aufgabe',h:`<p style="font-size:1.15rem">Natrium reagiert mit Chlor zu Natriumchlorid.</p><p>Die Formel von Natriumchlorid ist nicht vorgegeben. Du gehst deshalb in zwei Teilen vor: erst die Formel, dann die Gleichung.</p>`},
+      {t:'Teil 1: Formel des Salzes aufstellen',h:`<p>Na steht in Hauptgruppe I: Wertigkeit 1. Cl steht in Hauptgruppe VII: Wertigkeit 8 − 7 = 1. KgV = 1, also je 1 Atom:</p><p class="bigf">NaCl</p>`},
+      {t:'Teil 2: Symbole und Formeln einsetzen',h:`<p>Chlor ist ein elementarer Stoff aus Molekülen und wird als ${F('Cl2')} geschrieben.</p>${eq(['Na','Cl2'],['NaCl'],null,{arrow:'|',names:['Natrium','Chlor','Natriumchlorid']})}${countTable(['Na','Cl2'],['NaCl'],[1,1,1])}`},
+      {t:'Teil 2: Mit Koeffizienten einrichten',h:`<p>Links stehen 2 Cl-Atome, rechts nur 1. Also 2 NaCl. Dann stehen rechts 2 Na-Atome, also 2 Na.</p>${eq(['Na','Cl2'],['NaCl'],[2,1,2],{hl:[0,2]})}${countTable(['Na','Cl2'],['NaCl'],[2,1,2])}<p style="font-size:1.2rem">2 Na + ${F('Cl2')} → 2 NaCl</p>`}
+    ]},
+    {type:'table',html:`<h3>Namen und Elemente</h3><p>Der zweite Teil des Namens zeigt das Nichtmetall:</p><div class="tablewrap"><table><thead><tr><th>Endung</th><th>Nichtmetall</th><th>Wertigkeit</th><th>Beispiel</th></tr></thead><tbody>
+      <tr><td>-fluorid</td><td>Fluor (F)</td><td class="num">1</td><td>Magnesiumfluorid</td></tr>
+      <tr><td>-chlorid</td><td>Chlor (Cl)</td><td class="num">1</td><td>Natriumchlorid</td></tr>
+      <tr><td>-bromid</td><td>Brom (Br)</td><td class="num">1</td><td>Kaliumbromid</td></tr>
+      <tr><td>-iodid</td><td>Iod (I)</td><td class="num">1</td><td>Natriumiodid</td></tr>
+      <tr><td>-oxid</td><td>Sauerstoff (O)</td><td class="num">2</td><td>Magnesiumoxid</td></tr>
+      <tr><td>-sulfid</td><td>Schwefel (S)</td><td class="num">2</td><td>Zinksulfid</td></tr>
+      <tr><td>-nitrid</td><td>Stickstoff (N)</td><td class="num">3</td><td>Magnesiumnitrid</td></tr>
+      <tr><td>-phosphid</td><td>Phosphor (P)</td><td class="num">3</td><td>Calciumphosphid</td></tr></tbody></table></div>`},
+    {type:'merke',html:`<p>1. Elemente aus dem Namen bestimmen. 2. Wertigkeiten im Periodensystem ablesen (Metall: Hauptgruppe, Nichtmetall: 8 − Hauptgruppe). 3. Kleinstes gemeinsames Vielfaches bilden. 4. KgV durch die Wertigkeit teilen ergibt die Anzahl jeder Atomart. 5. Kontrollieren: Anzahl · Wertigkeit muss auf beiden Seiten gleich sein. Für eine Reaktionsgleichung stellst du zuerst die Formel des Salzes auf und richtest danach mit Koeffizienten ein. Die Indizes der Formel bleiben dabei unverändert.</p>`}
+  ],
+  exercises:[
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Natriumoxid</b> auf. Stelle die Anzahlen mit den Plus- und Minus-Tasten ein.',m:'Na',x:'O',scaffold:true},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Calciumchlorid</b> auf.',m:'Ca',x:'Cl',scaffold:true},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Magnesiumoxid</b> auf. Achte darauf, ob du kürzen musst.',m:'Mg',x:'O',scaffold:true},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Magnesiumfluorid</b> auf.',m:'Mg',x:'F',scaffold:true},
+    {type:'formbal',scaffold:true,q:'Natrium reagiert mit Chlor zu Natriumchlorid.',product:'Natriumchlorid',m:'Na',x:'Cl',names:['Natrium','Chlor','Natriumchlorid'],left:['Na','Cl2'],sol:[2,1,2]},
+    {type:'formbal',scaffold:true,q:'Kalium reagiert mit Schwefel zu Kaliumsulfid.',product:'Kaliumsulfid',m:'K',x:'S',names:['Kalium','Schwefel','Kaliumsulfid'],left:['K','S'],sol:[2,1,1]},
+    {type:'formbal',scaffold:true,q:'Calcium reagiert mit Sauerstoff zu Calciumoxid.',product:'Calciumoxid',m:'Ca',x:'O',names:['Calcium','Sauerstoff','Calciumoxid'],left:['Ca','O2'],sol:[2,1,2]},
+    {type:'formbal',scaffold:true,q:'Aluminium reagiert mit Chlor zu Aluminiumchlorid.',product:'Aluminiumchlorid',m:'Al',x:'Cl',names:['Aluminium','Chlor','Aluminiumchlorid'],left:['Al','Cl2'],sol:[2,3,2],
+     extra:'Tipp: Links kommen die Cl-Atome paarweise, rechts in Dreiergruppen. Die kleinste gemeinsame Zahl ist 6.'}
+  ]},
+
+{ id:'s9', group:'ext', title:'Formeln und Gleichungen ohne Vorgabe',
+  intro:'Anspruchsvollere Formeln, Metalle mit mehreren Wertigkeiten und ganze Reaktionsgleichungen, bei denen du die Formel des Produkts selbst aufstellst.',
+  blocks:[
+    {type:'steps',title:'Metalle mit mehreren Wertigkeiten',items:[
+      {t:'Nebengruppen-Metalle',h:`<p>Viele Metalle aus den Nebengruppen, zum Beispiel Eisen und Kupfer, können <b>verschiedene Wertigkeiten</b> haben. Die Wertigkeit lässt sich nicht aus dem Periodensystem ablesen.</p>`},
+      {t:'Die römische Zahl im Namen',h:`<p>Deshalb steht die Wertigkeit als römische Zahl im Namen:</p><div class="tablewrap"><table><thead><tr><th>Name</th><th>Wertigkeit des Metalls</th><th>Formel</th></tr></thead><tbody>
+        <tr><td>Kupfer(I)-sulfid</td><td class="num">1</td><td>${F('Cu2S')}</td></tr>
+        <tr><td>Kupfer(II)-oxid</td><td class="num">2</td><td>CuO</td></tr>
+        <tr><td>Eisen(III)-oxid</td><td class="num">3</td><td>${F('Fe2O3')}</td></tr></tbody></table></div><p>Das „rote Eisenoxid“ aus Station 5 ist Eisen(III)-oxid.</p>`},
+      {t:'Beispiel: Eisen(III)-oxid',h:`<p>Fe: Wertigkeit 3 (römische Zahl). O: Wertigkeit 2. KgV = 6. Fe: 6 : 3 = 2. O: 6 : 2 = 3.</p><p class="bigf">${F('Fe2O3')}</p>`}
+    ]},
+    {type:'steps',title:'Von der Reaktion zur Gleichung',items:[
+      {t:'Zweiatomige Moleküle',h:`<p>Neben Sauerstoff, Wasserstoff, Stickstoff und Chlor bestehen auch die übrigen Halogene aus Molekülen mit zwei Atomen: Fluor ${F('F2')}, Brom ${F('Br2')} und Iod ${F('I2')}.</p>`},
+      {t:'Beispiel: Aluminium reagiert mit Sauerstoff',h:`<p><b>Teil 1: Formel des Produkts.</b> Aluminiumoxid: Al hat die Wertigkeit 3, O die Wertigkeit 2. KgV 6 ergibt ${F('Al2O3')}.</p>${eq(['Al','O2'],['Al2O3'],null,{arrow:'|',names:['Aluminium','Sauerstoff','Aluminiumoxid']})}`},
+      {t:'Teil 2: Gleichung einrichten',h:`<p>Jetzt richtest du wie gewohnt mit Koeffizienten ein. O: links paarweise, rechts in Dreiergruppen. Kleinste gemeinsame Zahl 6: 3 ${F('O2')} und 2 ${F('Al2O3')}. Dann Al: rechts 4, also 4 Al.</p>${eq(['Al','O2'],['Al2O3'],[4,3,2],{hl:[0,1,2]})}${countTable(['Al','O2'],['Al2O3'],[4,3,2])}`}
+    ]},
+    {type:'merke',html:`<p>Erst die Formel des Produkts mit den Wertigkeiten aufstellen, dann die Gleichung mit Koeffizienten einrichten. Die Indizes, die du in Teil 1 ermittelt hast, bleiben in Teil 2 unverändert.</p>`}
+  ],
+  exercises:[
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Magnesiumnitrid</b> auf.',m:'Mg',x:'N'},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Aluminiumsulfid</b> auf.',m:'Al',x:'S'},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Calciumphosphid</b> auf.',m:'Ca',x:'P'},
+    {type:'form',q:'Stelle die Verhältnisformel von <b>Kupfer(I)-oxid</b> auf.',m:'Cu',x:'O',wm:1,roman:'I'},
+    {type:'formbal',q:'Aluminium reagiert mit Brom zu Aluminiumbromid.',product:'Aluminiumbromid',m:'Al',x:'Br',names:['Aluminium','Brom','Aluminiumbromid'],left:['Al','Br2'],sol:[2,3,2],
+     extra:'Denk daran: Brom wird als Br₂ geschrieben.'},
+    {type:'formbal',q:'Lithium reagiert mit Stickstoff zu Lithiumnitrid.',product:'Lithiumnitrid',m:'Li',x:'N',names:['Lithium','Stickstoff','Lithiumnitrid'],left:['Li','N2'],sol:[6,1,2]},
+    {type:'formbal',q:'Eisen reagiert mit Chlor zu Eisen(III)-chlorid.',product:'Eisen(III)-chlorid',m:'Fe',x:'Cl',wm:3,roman:'III',names:['Eisen','Chlor','Eisen(III)-chlorid'],left:['Fe','Cl2'],sol:[2,3,2]},
+    {type:'formbal',q:'Eisen reagiert mit Sauerstoff zu Eisen(III)-oxid.',product:'Eisen(III)-oxid',m:'Fe',x:'O',wm:3,roman:'III',names:['Eisen','Sauerstoff','Eisen(III)-oxid'],left:['Fe','O2'],sol:[4,3,2],
+     extra:'Tipp: Die O-Atome kommen links paarweise, rechts in Dreiergruppen. Die kleinste gemeinsame Zahl ist 6.'}
+  ]}
+];
+
+/* ---------- Fortschritt ---------- */
+let done={};
+try{done=JSON.parse(localStorage.getItem('lp-reaktionsgleichungen')||'{}')||{}}catch(e){done={}}
+function save(){try{localStorage.setItem('lp-reaktionsgleichungen',JSON.stringify(done))}catch(e){}}
+function markDone(id,box){if(!done[id]){done[id]=true;save()}box.classList.add('done');const s=box.querySelector('.ex-state');if(s)s.textContent='gelöst';renderNav();melde()}
+/* Fehlversuche (nur auf diesem Gerät gespeichert) */
+let fehler=0;
+try{fehler=Math.max(0,parseInt(localStorage.getItem('lp-reaktionsgleichungen-fehler'),10)||0)}catch(e){fehler=0}
+function zaehleFehler(){fehler++;try{localStorage.setItem('lp-reaktionsgleichungen-fehler',String(fehler))}catch(e){}melde()}
+/* Klassencode: Station und Zähler anonym melden (nur bei gültigem Klassencode aktiv) */
+function melde(){
+  if(!window.Klassencode)return;
+  const richtig=STATIONS.reduce((a,s)=>a+s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length,0);
+  Klassencode.position(`Station ${current+1}`,{richtig,falsch:fehler});
+}
+
+/* ---------- Navigation ---------- */
+let current=0;
+function renderNav(){
+  document.getElementById('nav').innerHTML=STATIONS.map((s,i)=>{
+    const n=s.exercises.length, d=s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length;
+    const sep=(s.group==='ext'&&(i===0||STATIONS[i-1].group!=='ext'))?`<li class="navsep"><b>Erweiterung: Verhältnisformeln selbst aufstellen</b><span>Hier sind die Formeln nicht mehr vorgegeben.</span></li>`:'';
+    return `${sep}<li><button type="button" data-i="${i}" aria-current="${i===current}" class="${d===n?'complete':''} ${s.group==='ext'?'ext':''}"><span class="n">${i+1}</span><span>${s.title}</span><span class="p">${d} von ${n} Übungen gelöst</span></button></li>`}).join('');
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(+b.dataset.i,true));
+}
+function show(i,scroll){
+  current=i; renderNav(); renderStation(STATIONS[i],i); melde();
+  try{localStorage.setItem('lp-reaktionsgleichungen-station',String(i))}catch(e){}
+  if(scroll)document.getElementById('main').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- Station rendern ---------- */
+function renderStation(s,i){
+  const m=document.getElementById('main');
+  const isExt=s.group==='ext';
+  let h=`<section class="station${isExt?' ext':''}"><div class="st-head"><p class="kicker">${isExt?'Erweiterung · ':''}Station ${i+1} von ${STATIONS.length}</p><h2>${s.title}</h2><p class="lead">${s.intro}</p></div>`;
+  h+=`<p class="part-title">Erklärung</p>`;
+  s.blocks.forEach((b,bi)=>{
+    if(b.type==='text'||b.type==='table')h+=`<div class="text">${b.html}</div>`;
+    if(b.type==='merke')h+=`<div class="merke"><b class="lbl">Merke</b>${b.html}</div>`;
+    if(b.type==='steps'){
+      h+=`<div class="steps" data-steps><div class="steps-head"><h3>${b.title}</h3><span class="small" data-count></span></div>`;
+      b.items.forEach((it,k)=>{h+=`<div class="step" ${k>0?'hidden':''}><span class="sn">${k+1}</span><div class="sb"><p class="st">${it.t}</p>${it.h}</div></div>`});
+      h+=`<div class="steps-foot"><button type="button" class="btn" data-next>Nächster Schritt</button><button type="button" class="btn sec" data-all>Alle Schritte zeigen</button></div></div>`;
+    }
+  });
+  h+=`<p class="part-title">Übungen</p><div class="ex-list" id="exlist"></div>`;
+  h+=`<div class="pager">${i>0?`<button type="button" class="btn sec" id="prev">Zurück: ${STATIONS[i-1].title}</button>`:'<span></span>'}${i<STATIONS.length-1?`<button type="button" class="btn" id="next">Weiter: ${STATIONS[i+1].title}</button>`:''}</div></section>`;
+  m.innerHTML=h;
+  m.querySelectorAll('[data-steps]').forEach(box=>{
+    const steps=[...box.querySelectorAll('.step')]; const cnt=box.querySelector('[data-count]');
+    const upd=()=>{const v=steps.filter(x=>!x.hidden).length;cnt.textContent=`Schritt ${v} von ${steps.length}`;
+      const all=v===steps.length;box.querySelector('[data-next]').disabled=all;box.querySelector('[data-all]').disabled=all};
+    box.querySelector('[data-next]').onclick=()=>{const n=steps.find(x=>x.hidden);if(n){n.hidden=false;}upd()};
+    box.querySelector('[data-all]').onclick=()=>{steps.forEach(x=>x.hidden=false);upd()};
+    upd();
+  });
+  const list=m.querySelector('#exlist');
+  s.exercises.forEach((ex,j)=>list.appendChild(buildExercise(ex,`${s.id}-${j}`,j+1)));
+  const p=m.querySelector('#prev'),n=m.querySelector('#next');
+  if(p)p.onclick=()=>show(i-1,true); if(n)n.onclick=()=>show(i+1,true);
+}
+
+/* ---------- Übungstypen ---------- */
+function shell(id,no,q){
+  const box=document.createElement('div');box.className='ex'+(done[id]?' done':'');
+  box.innerHTML=`<div class="ex-top"><span class="ex-no">Übung ${no}</span><span class="ex-state">${done[id]?'gelöst':''}</span></div><div class="ex-q">${q}</div>`;
+  return box;
+}
+function fb(box){let f=box.querySelector('.fb');if(!f){f=document.createElement('p');box.appendChild(f)}return f}
+function say(box,cls,html){const f=fb(box);f.className='fb '+cls;f.innerHTML=html;f.setAttribute('role','status');if(cls==='bad')zaehleFehler()}
+
+function buildExercise(ex,id,no){
+  const box=shell(id,no,ex.q);
+  if(ex.type==='mc'){
+    const o=document.createElement('div');o.className='opts';
+    ex.options.forEach((t,k)=>{const b=document.createElement('button');b.type='button';b.className='opt';b.innerHTML=t;
+      b.onclick=()=>{o.querySelectorAll('.opt').forEach(x=>x.classList.remove('right','wrong'));
+        if(k===ex.correct){b.classList.add('right');say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+        else{b.classList.add('wrong');say(box,'bad','<b>Noch nicht.</b> Lies die Frage noch einmal und versuche eine andere Antwort.')}};
+      o.appendChild(b)});
+    box.appendChild(o);
+  }
+  if(ex.type==='num'){
+    const r=document.createElement('div');r.className='row';
+    r.innerHTML=`<input class="numin" id="${id}-in" inputmode="numeric" aria-label="Antwort"> ${ex.unit?`<span>${ex.unit}</span>`:''}<button type="button" class="btn">Prüfen</button>`;
+    const inp=r.querySelector('input');
+    const check=()=>{const m=inp.value.replace(',','.').match(/-?\d+(\.\d+)?/);
+      if(!m){say(box,'info','Gib eine Zahl ein.');return}
+      if(+m[0]===ex.ans){say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+      else say(box,'bad','<b>Noch nicht.</b> '+(ex.wrong||'Multipliziere den Koeffizienten mit dem Index und zähle noch einmal.'))};
+    r.querySelector('button').onclick=check;inp.onkeydown=e=>{if(e.key==='Enter')check()};
+    box.appendChild(r);
+  }
+  if(ex.type==='sort'){
+    const wrapR=document.createElement('div');
+    ex.items.forEach(([lab],k)=>{const row=document.createElement('div');row.className='sortrow';
+      row.innerHTML=`<span class="item">${lab}</span><span class="seg">${ex.options.map((o,oi)=>`<label><input type="radio" name="${id}-${k}" id="${id}-${k}-${oi}" value="${oi}"><span>${o}</span></label>`).join('')}</span>`;
+      wrapR.appendChild(row)});
+    box.appendChild(wrapR);
+    const r=document.createElement('div');r.className='row';r.innerHTML=`<button type="button" class="btn">Prüfen</button><button type="button" class="btn sec">Tipp</button>`;
+    r.children[0].onclick=()=>{let wrong=0,open=0;
+      ex.items.forEach(([,a],k)=>{const row=wrapR.children[k];const c=box.querySelector(`input[name="${id}-${k}"]:checked`);
+        row.classList.remove('right','wrong');if(!c){open++;return}
+        if(+c.value===a)row.classList.add('right');else{row.classList.add('wrong');wrong++}});
+      if(open)say(box,'info',`Es fehlen noch ${open} Zuordnungen.`.replace('noch 1 Zuordnungen','noch 1 Zuordnung'));
+      else if(wrong)say(box,'bad',`<b>${wrong} ${wrong===1?'Zuordnung ist':'Zuordnungen sind'} noch falsch</b> (rot markiert).`);
+      else{say(box,'ok','<b>Alles richtig.</b> '+(ex.okText||''));markDone(id,box)}};
+    r.children[1].onclick=()=>say(box,'info',ex.hint);
+    box.appendChild(r);
+  }
+  if(ex.type==='bal')buildBalancer(box,ex,id);
+  if(ex.type==='form')buildForm(box,ex,id,box,null);
+  if(ex.type==='formbal'){
+    const p1=document.createElement('div');p1.className='part';
+    p1.innerHTML=`<p class="st">Teil 1: Stelle die Formel von ${ex.product} auf.</p>`;box.appendChild(p1);
+    buildForm(p1,ex,id,box,f=>{
+      if(box.querySelector('.part2'))return;
+      const p2=document.createElement('div');p2.className='part part2';
+      p2.innerHTML=`<p class="st">Teil 2: Richte die Reaktionsgleichung ein.</p>`;box.appendChild(p2);
+      buildBalancer(p2,{names:ex.names,left:ex.left,right:[f],sol:ex.sol,extra:ex.extra},id,box);
+    });
+  }
+  return box;
+}
+
+function gcd(a,b){return b?gcd(b,a%b):a}
+const WK={Li:1,Na:1,K:1,Mg:2,Ca:2,Ba:2,Al:3,F:1,Cl:1,Br:1,I:1,O:2,S:2,N:3,P:3};
+const GRP={Li:'I',Na:'I',K:'I',Mg:'II',Ca:'II',Ba:'II',Al:'III',N:'V',P:'V',O:'VI',S:'VI',F:'VII',Cl:'VII',Br:'VII',I:'VII'};
+const ENAME={Li:'Lithium',Na:'Natrium',K:'Kalium',Mg:'Magnesium',Ca:'Calcium',Ba:'Barium',Al:'Aluminium',Fe:'Eisen',Cu:'Kupfer',F:'Fluor',Cl:'Chlor',Br:'Brom',I:'Iod',O:'Sauerstoff',S:'Schwefel',N:'Stickstoff',P:'Phosphor'};
+const fstr=(m,a,x,b)=>m+(a>1?a:'')+x+(b>1?b:'');
+function formSol(ex){const wm=ex.wm||WK[ex.m],wx=ex.wx||WK[ex.x],l=wm*wx/gcd(wm,wx);return {wm,wx,l,a:l/wm,b:l/wx}}
+function buildForm(part,ex,id,outer,onOk){
+  const S=formSol(ex), ix=[1,1];
+  const area=document.createElement('div');area.style.display='grid';area.style.gap='12px';part.appendChild(area);
+  const btns=document.createElement('div');btns.className='row';
+  btns.innerHTML=`<button type="button" class="btn">Prüfen</button><button type="button" class="btn sec">Tipp</button>`;part.appendChild(btns);
+  const stp=(k,el)=>`<span class="fc">Anzahl ${el}-Atome<span class="stepper"><button type="button" data-k="${k}" data-d="-1" aria-label="Anzahl ${el} verkleinern" ${ix[k]<=1?'disabled':''}>−</button><output>${ix[k]}</output><button type="button" data-k="${k}" data-d="1" aria-label="Anzahl ${el} vergrößern" ${ix[k]>=6?'disabled':''}>+</button></span></span>`;
+  function draw(){
+    const f=fstr(ex.m,ix[0],ex.x,ix[1]);
+    let h=`<div class="formctl">${stp(0,ex.m)}${stp(1,ex.x)}</div><div class="formres"><span class="bigf">${F(f)}</span>${unitHTML(f)}</div>`;
+    if(ex.scaffold){const sm=ix[0]*S.wm,sx=ix[1]*S.wx,ok=sm===sx;
+      h+=`<div class="tablewrap"><table><thead><tr><th>Atomart</th><th class="num">Anzahl</th><th class="num">Wertigkeit</th><th class="num">Anzahl · Wertigkeit</th></tr></thead><tbody>
+        <tr><td>${ENAME[ex.m]} (${ex.m})</td><td class="num">${ix[0]}</td><td class="num">${S.wm}</td><td class="num">${sm}</td></tr>
+        <tr><td>${ENAME[ex.x]} (${ex.x})</td><td class="num">${ix[1]}</td><td class="num">${S.wx}</td><td class="num">${sx}</td></tr>
+        <tr><td colspan="3">Vergleich</td><td class="num ${ok?'same':'diff'}">${ok?'gleich':'ungleich'}</td></tr></tbody></table></div>`}
+    area.innerHTML=h;
+    area.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;ix[k]=Math.max(1,Math.min(6,ix[k]+ +b.dataset.d));draw();
+      const fb0=part.querySelector(':scope > .fb');if(fb0)fb0.remove()});
+  }
+  draw();
+  btns.children[0].onclick=()=>{
+    const f=fstr(ex.m,ix[0],ex.x,ix[1]),sm=ix[0]*S.wm,sx=ix[1]*S.wx;
+    if(sm!==sx){say(part,'bad',ex.scaffold?`<b>Noch nicht.</b> Die Summen der Wertigkeiten sind verschieden (${ex.m}: ${ix[0]} · ${S.wm} = ${sm}, ${ex.x}: ${ix[1]} · ${S.wx} = ${sx}).`:'<b>Noch nicht.</b> Die Wertigkeiten gleichen sich nicht aus. Nutze bei Bedarf den Tipp.');return}
+    if(ix[0]!==S.a){const g=gcd(ix[0],ix[1]);say(part,'info',`<b>Ausgeglichen, aber zu groß.</b> Beide Indizes lassen sich durch ${g} teilen. Die Verhältnisformel gibt das kleinste Anzahlverhältnis an.`);return}
+    say(part,'ok',`<b>Richtig.</b> ${F(f)}: ${ex.m} ${ix[0]} · ${S.wm} = ${sm}, ${ex.x} ${ix[1]} · ${S.wx} = ${sx}.`);
+    if(onOk)onOk(f);else markDone(id,outer);
+  };
+  btns.children[1].onclick=()=>{
+    const wmT=ex.roman?`${ENAME[ex.m]} hat laut römischer Zahl (${ex.roman}) im Namen die Wertigkeit ${S.wm}.`:`${ENAME[ex.m]} steht in Hauptgruppe ${GRP[ex.m]} und hat die Wertigkeit ${S.wm}.`;
+    say(part,'info',`${wmT} ${ENAME[ex.x]} steht in Hauptgruppe ${GRP[ex.x]} und hat die Wertigkeit ${S.wx}. Das kleinste gemeinsame Vielfache ist ${S.l}.`);
+  };
+}
+function buildBalancer(box,ex,id,outer){
+  outer=outer||box;
+  const sp=[...ex.left,...ex.right];const co=sp.map(()=>1);
+  const area=document.createElement('div');area.style.display='grid';area.style.gap='12px';
+  box.appendChild(area);
+  const btns=document.createElement('div');btns.className='row';
+  btns.innerHTML=`<button type="button" class="btn">Prüfen</button><button type="button" class="btn sec">Tipp</button>`;
+  box.appendChild(btns);
+  function draw(){
+    let col=1,cells='';
+    const put=(row,html,cls)=>{cells+=`<div class="${cls}" style="grid-row:${row};grid-column:${col}">${html}</div>`};
+    sp.forEach((s,i)=>{
+      if(i>0){const op=i===ex.left.length?'→':'+';put(1,'','op');put(2,op,'op');put(3,op,'op');col++}
+      put(1,ex.names[i],'nm');
+      put(2,`<span class="stepper"><button type="button" data-d="-1" data-i="${i}" aria-label="Koeffizient vor ${s} verkleinern" ${co[i]<=1?'disabled':''}>−</button><output>${co[i]}</output><button type="button" data-d="1" data-i="${i}" aria-label="Koeffizient vor ${s} vergrößern" ${co[i]>=12?'disabled':''}>+</button></span>`,'ctl');
+      put(3,(co[i]>1?`<span class="coef">${co[i]}</span>`:'')+F(s),'fm');
+      put(4,particles(s,co[i]),'pt');col++});
+    const selfCount=/^s[67]-/.test(id); /* Station 6 und 7: Atome selbst zählen */
+    area.innerHTML=`<div class="eqbox"><div class="eq">${cells}</div></div>${selfCount?'<p class="small">Zähle die Atome links und rechts selbst, bevor du auf Prüfen drückst.</p>':countTable(ex.left,ex.right,co)}`;
+    area.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;co[i]=Math.max(1,Math.min(12,co[i]+ +b.dataset.d));draw();
+      const f=box.querySelector('.fb');if(f)f.remove()});
+  }
+  draw();
+  const state=()=>{const L=counts(ex.left,co.slice(0,ex.left.length)),R=counts(ex.right,co.slice(ex.left.length));
+    return {L,R,bad:order(sp).filter(e=>L[e]!==R[e])}};
+  btns.children[0].onclick=()=>{const {bad}=state();
+    if(bad.length){say(box,'bad',`<b>Noch nicht ausgeglichen.</b> Die Anzahl der ${bad.join('- und ')}-Atome stimmt links und rechts nicht überein.`);return}
+    const g=co.reduce((a,b)=>gcd(a,b));
+    if(g>1){say(box,'info',`<b>Ausgeglichen, aber zu groß.</b> Alle Koeffizienten lassen sich durch ${g} teilen. Wähle die kleinstmöglichen Zahlen.`);return}
+    const eqTxt=ex.left.map((s,i)=>(co[i]>1?co[i]+' ':'')+F(s)).join(' + ')+' → '+ex.right.map((s,i)=>(co[ex.left.length+i]>1?co[ex.left.length+i]+' ':'')+F(s)).join(' + ');
+    say(box,'ok',`<b>Richtig.</b> ${eqTxt}`);markDone(id,outer)};
+  btns.children[1].onclick=()=>{const {L,R,bad}=state();
+    if(!bad.length){say(box,'info','Alle Atomarten stimmen schon überein. Drücke auf Prüfen.');return}
+    const e=bad[0];
+    let t=`Schau auf die ${e}-Atome: links ${L[e]}, rechts ${R[e]}. Ändere einen Koeffizienten so, dass beide Seiten gleich viele ${e}-Atome haben.`;
+    if(ex.extra)t+=' '+ex.extra;
+    say(box,'info',t)};
+}
+
+/* ---------- Start ---------- */
+let start=0;try{const v=+localStorage.getItem('lp-reaktionsgleichungen-station');if(v>=0&&v<STATIONS.length)start=v}catch(e){}
+if(window.Klassencode)Klassencode.start("reaktionsgleichungen");
+show(start,false);
+</script>
+</body>
+</html>
