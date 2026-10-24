@@ -33,7 +33,6 @@ p{margin:0}
 .coderow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .coderow input{font:inherit;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:1.3rem;letter-spacing:.15em;text-transform:uppercase;
   width:12ch;min-height:50px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
-.coderow .hint{font-size:.9rem;color:var(--muted)}
 .btn{font:inherit;font-weight:600;min-height:46px;padding:10px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
 ul.tools{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 ul.tools a{display:grid;gap:4px;padding:18px 20px;min-height:64px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
@@ -48,17 +47,15 @@ footer a{color:var(--muted)}
 </head>
 <body>
 <div class="wrap">
-  <header style="display:grid;gap:10px">
+  <header>
     <h1>Lern-Tools</h1>
-    <p class="lead">Interaktive Übungen für den Unterricht. Alle Tools funktionieren ohne Anmeldung. Dein Fortschritt bleibt nur auf diesem Gerät.</p>
   </header>
 
   <div class="codebox">
-    <label for="code">Klassencode (nur wenn deine Lehrkraft einen nennt)</label>
+    <label for="code">Klassencode</label>
     <div class="coderow">
       <input id="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="------">
       <button type="button" class="btn" id="clear" hidden>Entfernen</button>
-      <span class="hint" id="hint"></span>
     </div>
   </div>
 
@@ -68,7 +65,6 @@ footer a{color:var(--muted)}
   </section>
 
   <footer>
-    <span>Keine Namen, keine Konten. Mit Klassencode sieht die Lehrkraft nur anonym, an welcher Station gearbeitet wird.</span>
     <a href="lehrer.html">Für Lehrkräfte</a>
   </footer>
 </div>
@@ -76,13 +72,12 @@ footer a{color:var(--muted)}
 (function(){
 "use strict";
 const OK=/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
-const inp=document.getElementById('code'), hint=document.getElementById('hint'), clr=document.getElementById('clear');
+const inp=document.getElementById('code'), clr=document.getElementById('clear');
 let tools=[];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function code(){const c=inp.value.trim().toUpperCase();return OK.test(c)?c:''}
 function render(){
   const c=code();
-  hint.textContent=inp.value&&!c?(inp.value.length<6?'':'Dieser Code ist nicht gültig.'):(c?'Wähle jetzt das Tool, das deine Lehrkraft genannt hat.':'');
   clr.hidden=!inp.value;
   document.getElementById('list').innerHTML=tools.map(t=>
     `<li><a href="${esc(t.pfad)}${c?'#'+c:''}"><span class="fach">${esc(t.fach||'')}</span><span class="name">${esc(t.name)}</span>${t.beschreibung?`<span class="desc">${esc(t.beschreibung)}</span>`:''}</a></li>`).join('')
