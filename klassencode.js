@@ -167,7 +167,9 @@
   function beitreten(c) {
     var meinVersuch = ++versuch;
     var schluessel = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
-    kanal = client.channel("klasse:" + c, { config: { private: true, presence: { key: schluessel } } });
+    /* enabled: true ist nötig, weil das Tool nur meldet und nicht auf Presence-Ereignisse hört.
+       Ohne diese Angabe prüft Supabase nur das Lesen von Broadcast, und das verbieten die Regeln. */
+    kanal = client.channel("klasse:" + c, { config: { private: true, presence: { key: schluessel, enabled: true } } });
     kanal.subscribe(function (status, fehler) {
       if (meinVersuch !== versuch) return;
       if (status === "SUBSCRIBED") {
