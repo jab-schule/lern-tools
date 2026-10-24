@@ -59,7 +59,9 @@ Damit sind nur noch private Kanäle erlaubt, und die Zugriffsregeln aus `setup.s
 1. **Project Settings** → **API Keys** (bzw. **Data API** / **API**).
 2. Notieren:
    - **Project URL**, z. B. `https://abcdefghijkl.supabase.co`
-   - den **öffentlichen** Schlüssel: **publishable key** (`sb_publishable_…`) oder unter „Legacy API keys“ den **anon public** key.
+   - den **anon public** key aus dem Reiter „Legacy anon, service_role API keys“. Er beginnt mit `eyJ…`.
+
+   Der neue **publishable key** (`sb_publishable_…`) genügt **nicht**: Er ist kein JWT, und private Realtime-Kanäle brauchen einen JWT mit der Rolle `anon`. Mit ihm funktioniert zwar die Codeprüfung, die Live-Zählung aber nicht.
 3. **Niemals** den `service_role` key bzw. `secret` key verwenden oder weitergeben.
 
 Beide Werte an Claude geben oder selbst in `config.js` eintragen:
@@ -67,11 +69,11 @@ Beide Werte an Claude geben oder selbst in `config.js` eintragen:
 ```js
 window.LERN_TOOLS_CONFIG = {
   supabaseUrl: "https://abcdefghijkl.supabase.co",
-  supabaseKey: "sb_publishable_..."
+  supabaseKey: "eyJhbGciOiJIUzI1NiIs..."
 };
 ```
 
-Der öffentliche Schlüssel darf im Repository stehen. Er erlaubt nur, was die Zugriffsregeln zulassen.
+Der anon key ist öffentlich und darf im Repository stehen. Er erlaubt nur, was die Zugriffsregeln zulassen.
 
 ---
 
@@ -148,4 +150,6 @@ An Supabase ändert sich dabei nichts.
 | „Stunde starten“ meldet einen Fehler | `setup.sql` vollständig ausgeführt? |
 | Tool: „Klassencode ungültig oder abgelaufen“ | Stunde beendet, 90 Minuten vorbei oder Code gehört zu einem anderen Tool |
 | Live-Übersicht bleibt bei „Verbindung gestört“ | Realtime-Regeln aus `setup.sql` vorhanden? Seite neu laden |
+| Tool: „Live-Verbindung gestört (Unauthorized …)“ | In `config.js` steht der publishable key statt des anon key (Abschnitt 1.6), oder das Gerät nutzt noch eine alte `klassencode.js` (siehe nächste Zeile) |
+| Eine Änderung wirkt auf einem Gerät noch nicht | GitHub Pages lässt Browser Dateien bis zu 10 Minuten zwischenspeichern. Warten oder zum Test ein privates Browserfenster nutzen |
 | Live-Übersicht zeigt 0, obwohl Schüler verbunden sind | Schüler haben den Link ohne `#CODE` geöffnet; Hinweis unten rechts im Tool prüfen |
