@@ -4,6 +4,6 @@
   Der service_role key (bzw. secret key) gehört niemals in dieses Repository.
 */
 window.LERN_TOOLS_CONFIG = {
-  supabaseUrl: "https://DEIN-PROJEKT.supabase.co",
-  supabaseKey: "DEIN-ANON-KEY"
+  supabaseUrl: "https://ajooqurzqutghjvxdvzn.supabase.co",
+  supabaseKey: "sb_publishable_5R42CxhfazAQYfXQ4T3T-g_WqGEvHgO"
 };
