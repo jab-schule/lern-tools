@@ -87,7 +87,7 @@ Der anon key ist öffentlich und darf im Repository stehen. Er erlaubt nur, was 
 6. **Stunde beenden** macht den Code sofort ungültig. Spätestens nach 90 Minuten läuft er von selbst ab.
    Schülergeräte prüfen den Code alle 5 Minuten erneut und trennen sich dann automatisch.
 
-Ein Schülergerät meldet nur: Tool-Kurzname, Station, Anzahl gelöster Übungen und Anzahl der Fehlversuche (beides nur aus dem Speicher dieses Geräts). Unten rechts im Tool erscheint ein kleiner Hinweis, ob eine Verbindung zur Klasse besteht.
+Ein Schülergerät meldet nur: Tool-Kurzname, Station, Anzahl gelöster Übungen und Anzahl der Fehlversuche (beides nur aus dem Speicher dieses Geräts). Unten rechts im Tool zeigt eine kleine Pille den Status: **grün** = verbunden, **grau** = Code ungültig, abgelaufen, Stunde beendet oder Verbindung gestört. Ohne Code erscheint keine Pille. Die Pille ist nicht anklickbar; den genauen Grund liest VoiceOver vor, außerdem steht er in der Browser-Konsole.
 
 Ohne Code (oder mit ungültigem Code) funktioniert jedes Tool vollständig und nimmt keinen Kontakt zu Supabase auf; die Supabase-Bibliothek wird dann nicht einmal geladen.
 
@@ -150,6 +150,6 @@ An Supabase ändert sich dabei nichts.
 | „Stunde starten“ meldet einen Fehler | `setup.sql` vollständig ausgeführt? |
 | Tool: „Klassencode ungültig oder abgelaufen“ | Stunde beendet, 90 Minuten vorbei oder Code gehört zu einem anderen Tool |
 | Live-Übersicht bleibt bei „Verbindung gestört“ | Realtime-Regeln aus `setup.sql` vorhanden? Seite neu laden |
-| Tool: „Live-Verbindung gestört (Unauthorized …)“ | In `config.js` steht der publishable key statt des anon key (Abschnitt 1.6), oder das Gerät nutzt noch eine alte `klassencode.js` (siehe nächste Zeile) |
+| Pille bleibt grau, Konsole meldet „gestört (Unauthorized …)“ | In `config.js` steht der publishable key statt des anon key (Abschnitt 1.6), oder das Gerät nutzt noch eine alte `klassencode.js` (siehe nächste Zeile) |
 | Eine Änderung wirkt auf einem Gerät noch nicht | GitHub Pages lässt Browser Dateien bis zu 10 Minuten zwischenspeichern. Warten oder zum Test ein privates Browserfenster nutzen |
-| Live-Übersicht zeigt 0, obwohl Schüler verbunden sind | Schüler haben den Link ohne `#CODE` geöffnet; Hinweis unten rechts im Tool prüfen |
+| Live-Übersicht zeigt 0, obwohl Schüler verbunden sind | Schüler haben den Link ohne `#CODE` geöffnet (dann ist unten rechts keine Pille zu sehen) |

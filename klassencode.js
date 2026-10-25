@@ -57,27 +57,25 @@
     return ZEICHEN.test(h) ? h : null;
   }
 
-  /* ---------- kleiner Statushinweis unten rechts ---------- */
+  /* ---------- Statuspille unten rechts ----------
+     ohne Code: keine Pille · grün: verbunden · grau: Prüfung läuft oder Verbindung fehlgeschlagen.
+     Die Pille ist nicht anklickbar. Der Grund steht im aria-label (VoiceOver) und in der Konsole. */
   function stil() {
     if (document.getElementById("kc-stil")) return;
     var st = document.createElement("style");
     st.id = "kc-stil";
     st.textContent =
-      ".kc-hinweis{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:2147483000;" +
-      "font:14px/1.35 system-ui,-apple-system,'Segoe UI',sans-serif;color:#1d2427;background:#ffffff;border:1px solid #cfd6d9;border-radius:999px;" +
-      "padding:8px 14px;display:flex;gap:8px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.08);max-width:calc(100vw - 24px)}" +
-      ".kc-hinweis i{width:8px;height:8px;border-radius:50%;background:#8a979c;flex:none}" +
-      ".kc-hinweis.ok i{background:#2c7646}.kc-hinweis.fehler i{background:#ad3a2d}" +
-      ".kc-hinweis button{font:inherit;color:inherit;background:none;border:0;padding:4px 2px 4px 8px;margin:-4px 0;cursor:pointer;opacity:.6;min-height:32px}" +
-      "@media (prefers-color-scheme:dark){.kc-hinweis{color:#e3e9eb;background:#182125;border-color:#2c383d;box-shadow:none}" +
-      ".kc-hinweis.ok i{background:#73c48f}.kc-hinweis.fehler i{background:#e8907f}}" +
-      "@media print{.kc-hinweis{display:none}}";
+      ".kc-pille{position:fixed;z-index:2147483000;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));" +
+      "width:24px;height:12px;border-radius:999px;background:#8a979c;box-shadow:0 0 0 2px #ffffff,0 1px 4px rgba(0,0,0,.18);pointer-events:none}" +
+      ".kc-pille.ok{background:#2f8a52}" +
+      "@media (prefers-color-scheme:dark){.kc-pille{background:#6f7d83;box-shadow:0 0 0 2px #11171a}.kc-pille.ok{background:#3c9a60}}" +
+      "@media print{.kc-pille{display:none}}";
     document.head.appendChild(st);
   }
 
-  function zeige(text, art, schliessbar) {
+  function zeige(text, art) {
     if (!document.body) {
-      document.addEventListener("DOMContentLoaded", function () { zeige(text, art, schliessbar); }, { once: true });
+      document.addEventListener("DOMContentLoaded", function () { zeige(text, art); }, { once: true });
       return;
     }
     stil();
@@ -86,21 +84,9 @@
       hinweis.setAttribute("role", "status");
       document.body.appendChild(hinweis);
     }
-    hinweis.className = "kc-hinweis" + (art ? " " + art : "");
-    hinweis.innerHTML = "";
-    var punkt = document.createElement("i");
-    var t = document.createElement("span");
-    t.textContent = text;
-    hinweis.appendChild(punkt);
-    hinweis.appendChild(t);
-    if (schliessbar) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.setAttribute("aria-label", "Hinweis schließen");
-      b.textContent = "×";
-      b.onclick = verstecke;
-      hinweis.appendChild(b);
-    }
+    hinweis.className = "kc-pille" + (art === "ok" ? " ok" : "");
+    hinweis.setAttribute("aria-label", "Live-Verbindung: " + text);
+    if (art !== "ok" && window.console) console.info("Klassencode:", text);
   }
 
   function verstecke() {
@@ -161,7 +147,7 @@
       try { k.untrack(); } catch (e) { /* ignorieren */ }
       client.removeChannel(k);
     }
-    if (text) zeige(text, "", true);
+    if (text) zeige(text, "fehler");
   }
 
   function beitreten(c) {
@@ -175,21 +161,21 @@
       if (status === "SUBSCRIBED") {
         verbunden = true;
         kanal.track(nutzlast());
-        zeige("Mit der Klasse verbunden (anonym)", "ok", true);
+        zeige("verbunden", "ok");
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
         verbunden = false;
         var grund = status === "TIMED_OUT" ? "Zeitüberschreitung" : (fehler && fehler.message ? String(fehler.message).slice(0, 140) : "");
         if (window.console) console.warn("Klassencode: Live-Verbindung gestört", status, fehler);
-        zeige("Live-Verbindung gestört. Das Tool funktioniert trotzdem." + (grund ? " (" + grund + ")" : ""), "fehler", true);
+        zeige("gestört" + (grund ? " (" + grund + ")" : ""), "fehler");
       }
     });
     pruefTimer = setInterval(function () {
       pruefe(c).then(function (gueltig) {
-        if (!gueltig) trennen("Die Stunde ist beendet. Das Tool funktioniert weiter.");
+        if (!gueltig) trennen("Stunde beendet");
       }).catch(function () { /* bei Netzproblemen später erneut prüfen */ });
     }, PRUEF_INTERVALL_MS);
     endeTimer = setTimeout(function () {
-      trennen("Die Stunde ist beendet. Das Tool funktioniert weiter.");
+      trennen("Stunde beendet");
     }, HOECHSTDAUER_MS);
   }
 
@@ -200,21 +186,21 @@
     code = c;
     if (!code) { verstecke(); return; }
     if (!konfiguriert()) {
-      zeige("Klassencode erkannt, aber die Live-Zählung ist noch nicht eingerichtet.", "fehler", true);
+      zeige("nicht eingerichtet (config.js)", "fehler");
       return;
     }
     var meinVersuch = ++versuch;
-    zeige("Klassencode wird geprüft …", "");
+    zeige("Klassencode wird geprüft", "");
     ladeBibliothek()
       .then(function () { erzeugeClient(); return pruefe(code); })
       .then(function (gueltig) {
         if (meinVersuch !== versuch) return;
         if (gueltig) beitreten(code);
-        else zeige("Klassencode ungültig oder abgelaufen. Das Tool funktioniert trotzdem.", "fehler", true);
+        else zeige("Klassencode ungültig oder abgelaufen", "fehler");
       })
       .catch(function () {
         if (meinVersuch !== versuch) return;
-        zeige("Keine Verbindung zur Klasse. Das Tool funktioniert trotzdem.", "fehler", true);
+        zeige("keine Verbindung", "fehler");
       });
   }
 
