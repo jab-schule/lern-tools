@@ -10,6 +10,7 @@
   --bg:#f6f7f7; --surface:#ffffff; --ink:#172126; --muted:#56646a; --line:#d6dde0;
   --accent:#155e6b; --accent-ink:#ffffff; --accent-soft:#e2edef;
   --ok:#2c7646; --ok-soft:#e3f1e7; --bad:#ad3a2d; --bad-soft:#f6e5e2;
+  --kc:#534AB7; --kc-soft:#EEEDFE; --kc-ink:#3C3489; --warn:#7a4d08; --warn-soft:#faeeda;
   --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
   --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   color-scheme:light;
@@ -17,11 +18,11 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
   --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
-  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; color-scheme:dark}}
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; --kc:#AFA9EC; --kc-soft:#2b2660; --kc-ink:#CECBF6; --warn:#f0b860; --warn-soft:#3a2a10; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#11171a; --surface:#182125; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
   --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
-  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; color-scheme:dark}
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d; --kc:#AFA9EC; --kc-soft:#2b2660; --kc-ink:#CECBF6; --warn:#f0b860; --warn-soft:#3a2a10; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
@@ -63,14 +64,36 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 /* Live-Übersicht */
 .live-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .total{font-family:var(--font-display);font-size:2.4rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
-.tablewrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:.95rem}
-th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.live-tools{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap}
+.live-tools label{display:flex;gap:8px;align-items:center;font-size:.92rem;color:var(--muted)}
+.live-tools select{width:auto;min-height:40px;padding:6px 10px}
+.btn.sm{min-height:40px;padding:6px 14px;font-size:.92rem}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;-webkit-overflow-scrolling:touch}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.95rem}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:center;white-space:nowrap;background:var(--surface)}
+tbody tr:last-child td{border-bottom:0}
 th{font-weight:600;color:var(--muted);font-size:.85rem}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-td.bar{width:40%}
-.bar span{display:block;height:10px;border-radius:5px;background:var(--accent);min-width:2px}
-.bar span.zero{background:var(--line)}
+thead tr.grp th{padding-bottom:0;border-bottom:0;font-weight:400}
+th.dev,td.dev{position:sticky;left:0;z-index:1;text-align:left;padding-left:12px;border-right:1px solid var(--line)}
+tfoot td{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);border-bottom:0}
+tfoot tr+tr td{border-top:0}
+td.c{font-variant-numeric:tabular-nums;min-width:52px}
+td.c.cur{box-shadow:inset 0 0 0 2px var(--kc)}
+.r{color:var(--ok)} .f{color:var(--bad)} .n{color:var(--line)}
+.nr{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 6px;border-radius:999px;background:var(--kc-soft);color:var(--kc-ink);font-weight:600;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:.85rem;padding:3px 9px;border-radius:6px;font-variant-numeric:tabular-nums}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.quiet{color:var(--muted);font-size:.88rem}
+td.hw{text-align:left;min-width:100px}
+.hwbtn{font:inherit;font-size:.9rem;font-weight:600;min-width:84px;min-height:40px;padding:6px 12px;border-radius:8px;border:1px solid var(--kc);background:transparent;color:var(--kc);cursor:pointer;font-variant-numeric:tabular-nums;touch-action:manipulation}
+.hwbtn:disabled{border-color:var(--line);color:var(--muted);cursor:default}
+.hwst{display:block;margin-top:2px;font-size:.8rem;color:var(--muted)}
+.hwst.seen{color:var(--ok)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:20px;width:min(520px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(10,14,16,.45)}
+dialog form{display:grid;gap:14px}
+.vorschlag{font:inherit;text-align:left;width:100%;min-height:52px;padding:12px 14px;border-radius:10px;border:1px solid var(--kc);background:var(--kc-soft);color:var(--kc-ink);cursor:pointer;line-height:1.4}
+textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-height:84px;resize:vertical}
 .state{display:inline-flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
 .state i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
 .state.ok i{background:var(--ok)} .state.bad i{background:var(--bad)}
@@ -145,24 +168,44 @@ body.beamer .link{font-size:1.2rem}
         <h2>Live-Übersicht</h2>
         <span class="state" id="live-state"><i></i><span>verbinde …</span></span>
       </div>
-      <div class="row" style="align-items:baseline">
-        <span class="total" id="total">0</span><span class="muted">Geräte verbunden</span>
+      <div class="live-head">
+        <div class="row" style="align-items:baseline">
+          <span class="total" id="total">0</span><span class="muted">Geräte verbunden</span>
+        </div>
+        <div class="live-tools">
+          <label>Inaktiv ab
+            <select id="schwelle"><option value="3">3 min</option><option value="5" selected>5 min</option><option value="10">10 min</option><option value="15">15 min</option></select>
+          </label>
+          <span class="quiet" id="alle-st"></span>
+          <button type="button" class="hwbtn" id="alle-btn">An alle</button>
+        </div>
       </div>
       <div class="tablewrap"><table>
-        <thead><tr><th>Position</th><th class="num">Geräte</th><th></th><th class="num">richtig (Summe)</th><th class="num">Fehlversuche (Summe)</th></tr></thead>
-        <tbody id="by-pos"></tbody>
+        <thead id="kopf"></thead>
+        <tbody id="geraete"></tbody>
+        <tfoot id="fuss"></tfoot>
       </table></div>
-      <details>
-        <summary class="small muted" style="cursor:pointer;min-height:32px">Einzelne Geräte (anonym)</summary>
-        <div class="tablewrap" style="margin-top:8px"><table>
-          <thead><tr><th>Gerät</th><th>Position</th><th class="num">richtig</th><th class="num">Fehlversuche</th></tr></thead>
-          <tbody id="by-dev"></tbody>
-        </table></div>
-      </details>
-      <p class="muted small">Es werden keine Namen übertragen und nichts gespeichert. Ein Gerät verschwindet aus der Liste, sobald das Tool geschlossen wird.</p>
+      <p class="muted small">Zellen: <span class="r">richtig</span> · <span class="f">falsch</span>. Umrandet: Station, an der das Gerät gerade ist. Inaktive Geräte stehen oben. Nach einem Hinweis kann an dasselbe Gerät erst nach einer Minute ein weiterer gesendet werden.</p>
+      <p class="muted small">Es werden keine Namen übertragen und nichts gespeichert. Ein Gerät verschwindet aus der Liste, sobald das Tool geschlossen wird. Die Gerätenummern gelten nur, solange diese Seite offen ist.</p>
     </section>
   </div>
 </div>
+
+<!-- Hinweis senden -->
+<dialog id="hw-dialog" aria-labelledby="hw-titel">
+  <form method="dialog" id="hw-form">
+    <h3 id="hw-titel">Hinweis senden</h3>
+    <button type="button" class="vorschlag" id="hw-vorschlag"></button>
+    <label class="f">Eigener Text
+      <textarea id="hw-text" maxlength="200" placeholder="Schau dir die Erklärung oben noch einmal an."></textarea>
+    </label>
+    <p id="hw-msg" class="msg bad" hidden></p>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="btn sec" id="hw-abbruch">Abbrechen</button>
+      <button type="button" class="btn" id="hw-senden">Eigenen Text senden</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="config.js"></script>
 <script src="vendor/supabase.js"></script>
@@ -179,7 +222,7 @@ const sb=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseKey,{auth:{det
 let TOOLS=[];
 let lesson=null;        // {code, tool, gueltig_bis}
 let channel=null, expiryTimer=null, clockTimer=null;
-const devNames=new Map(); let devCounter=0;
+const geraete=new Map(); let devCounter=0;   /* Presence-Schlüssel -> {nr, sig, seit} */
 
 function show(el,on){el.hidden=!on}
 function msg(el,text){el.textContent=text||'';el.hidden=!text}
@@ -228,7 +271,7 @@ $('start-btn').onclick=async()=>{
   const {data,error}=await sb.rpc('stunde_starten',{p_tool:$('tool').value});
   $('start-btn').disabled=false;
   if(error||!data||!data[0]){msg($('start-msg'),'Die Stunde konnte nicht gestartet werden'+(error?': '+error.message:'.'));return}
-  await stopLive(); lesson=data[0]; devNames.clear(); devCounter=0; render(); startLive();
+  await stopLive(); lesson=data[0]; resetLive(); render(); startLive();
 };
 
 $('end').onclick=async()=>{
@@ -272,53 +315,158 @@ $('beamer-off').onclick=()=>setBeamer(false);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')setBeamer(false)});
 
 /* ---------- Live-Übersicht ---------- */
+const SPERRE_S=60;   /* Sekunden, bis an dasselbe Gerät ein weiterer Hinweis gehen kann */
+const VORSCHLAG='Du bist noch nicht sehr weit gekommen. Melde dich, wenn du Hilfe brauchst.';
+let presence={};
+const hinweise=new Map();   /* Presence-Schlüssel -> {id, um} */
+let alleHinweis=null;       /* {id, um} */
+let tickTimer=null;
+const zeilen=new Map();     /* Presence-Schlüssel -> <tr> */
+let kopfHtml='', fussHtml='';
+
 function liveState(cls,text){const s=$('live-state');s.className='state '+cls;s.lastElementChild.textContent=text}
+function resetLive(){geraete.clear();devCounter=0;hinweise.clear();alleHinweis=null;presence={};zeilen.clear();$('geraete').innerHTML='';kopfHtml=fussHtml=''}
+
+try{const v=localStorage.getItem('lt-schwelle');if(v&&[...$('schwelle').options].some(o=>o.value===v))$('schwelle').value=v}catch(e){}
+$('schwelle').onchange=()=>{try{localStorage.setItem('lt-schwelle',$('schwelle').value)}catch(e){}renderLive()};
 
 async function startLive(){
   await stopLive();
   const {data:{session}}=await sb.auth.getSession();
   if(session)await sb.realtime.setAuth(session.access_token);
   liveState('','verbinde …');
-  channel=sb.channel('klasse:'+lesson.code,{config:{private:true}});
-  channel.on('presence',{event:'sync'},()=>renderLive(channel.presenceState()));
+  channel=sb.channel('klasse:'+lesson.code,{config:{private:true,broadcast:{self:false,ack:true}}});
+  channel.on('presence',{event:'sync'},()=>{if(channel){presence=channel.presenceState();renderLive()}});
   channel.subscribe(status=>{
     if(status==='SUBSCRIBED')liveState('ok','live');
     else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')liveState('bad','Verbindung gestört');
     else if(status==='CLOSED')liveState('','getrennt');
   });
-  renderLive({});
+  presence={}; renderLive();
+  tickTimer=setInterval(renderLive,1000);
   clearTimeout(expiryTimer);
   expiryTimer=setTimeout(async()=>{await stopLive();lesson=null;setBeamer(false);render()},Math.max(0,new Date(lesson.gueltig_bis)-Date.now())+1000);
 }
 async function stopLive(){
-  clearTimeout(expiryTimer);
+  clearTimeout(expiryTimer); clearInterval(tickTimer); tickTimer=null;
+  if($('hw-dialog').open)$('hw-dialog').close();
   /* nicht auf die Abmeldung vom Kanal warten: bei Netzproblemen würde die Seite sonst hängen */
   if(channel){const c=channel;channel=null;sb.removeChannel(c).catch(()=>{})}
 }
 
-function renderLive(state){
-  const t=lesson?toolInfo(lesson.tool):{};
-  const devs=[];
-  Object.entries(state).forEach(([key,metas])=>{
+const zahl=x=>Math.max(0,Math.floor(+x||0));
+const kurz=p=>p.replace(/^Station\s+/,'');
+
+function geraeteListe(){
+  const jetzt=Date.now(), devs=[];
+  Object.entries(presence).forEach(([key,metas])=>{
     const m=metas[metas.length-1]||{};
     if(lesson&&m.tool&&m.tool!==lesson.tool)return;
-    if(!devNames.has(key))devNames.set(key,++devCounter);
-    devs.push({nr:devNames.get(key),pos:String(m.position||'ohne Angabe'),r:+m.richtig||0,f:+m.falsch||0,hasR:typeof m.richtig==='number',hasF:typeof m.falsch==='number'});
+    const st=(m.st&&typeof m.st==='object'&&!Array.isArray(m.st))?m.st:{};
+    const sig=JSON.stringify([m.position,st]);
+    let g=geraete.get(key);
+    if(!g){
+      /* Zeitpunkt der letzten Aktivität laut Gerät übernehmen, falls plausibel (z. B. nach Neuladen dieser Seite) */
+      const tt=zahl(m.t)*1000; let seit=jetzt;
+      if(tt>0&&tt<=jetzt+60000&&jetzt-tt<3*3600000)seit=Math.min(jetzt,tt);
+      g={nr:++devCounter,sig,seit}; geraete.set(key,g);
+    }else if(g.sig!==sig){g.sig=sig;g.seit=jetzt}
+    devs.push({key,nr:g.nr,pos:String(m.position||''),st,min:(jetzt-g.seit)/60000,ok:String(m.ok||'')});
   });
-  $('total').textContent=devs.length;
-  const order=[...(t.positionen||[])];
-  devs.forEach(d=>{if(!order.includes(d.pos))order.push(d.pos)});
-  const max=Math.max(1,...order.map(p=>devs.filter(d=>d.pos===p).length));
-  $('by-pos').innerHTML=order.map(p=>{
-    const g=devs.filter(d=>d.pos===p), n=g.length;
-    const r=g.reduce((a,d)=>a+d.r,0), f=g.reduce((a,d)=>a+d.f,0);
-    return `<tr><td>${esc(p)}</td><td class="num">${n}</td><td class="bar"><span class="${n?'':'zero'}" style="width:${n/max*100}%"></span></td><td class="num">${n?r:'–'}</td><td class="num">${n?f:'–'}</td></tr>`;
-  }).join('')||`<tr><td colspan="5" class="muted">Noch keine Geräte verbunden.</td></tr>`;
-  devs.sort((a,b)=>a.nr-b.nr);
-  $('by-dev').innerHTML=devs.map(d=>`<tr><td>Gerät ${d.nr}</td><td>${esc(d.pos)}</td><td class="num">${d.hasR?d.r:'–'}</td><td class="num">${d.hasF?d.f:'–'}</td></tr>`).join('')
-    ||`<tr><td colspan="4" class="muted">Noch keine Geräte verbunden.</td></tr>`;
+  return devs;
 }
-const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function renderLive(){
+  if(!lesson)return;
+  const t=toolInfo(lesson.tool), jetzt=Date.now(), schwelle=+$('schwelle').value||5;
+  const devs=geraeteListe();
+  $('total').textContent=devs.length;
+
+  /* Spalten: Positionen aus tools.json, dazu unbekannte Positionen der Geräte */
+  const spalten=[...(t.positionen||[])];
+  devs.forEach(d=>{[d.pos,...Object.keys(d.st)].forEach(p=>{if(p&&!spalten.includes(p))spalten.push(p)})});
+  const alleStation=spalten.length&&spalten.every(p=>/^Station\s+\S/.test(p));
+  const kopf=(alleStation?`<tr class="grp"><th class="dev"></th><th colspan="${spalten.length}">Station</th><th></th><th></th></tr>`:'')+
+    `<tr><th class="dev">Gerät</th>${spalten.map(p=>`<th title="${esc(p)}">${esc(alleStation?kurz(p):p)}</th>`).join('')}<th>Aktiv</th><th style="text-align:left">Hinweis</th></tr>`;
+  if(kopf!==kopfHtml){$('kopf').innerHTML=kopf;kopfHtml=kopf}
+
+  /* Reihenfolge: inaktive Geräte zuerst (am längsten inaktiv oben), dann nach Nummer */
+  devs.forEach(d=>d.inaktiv=d.min>=schwelle);
+  devs.sort((a,b)=>(a.inaktiv!==b.inaktiv)?(a.inaktiv?-1:1):(a.inaktiv?b.min-a.min:a.nr-b.nr));
+
+  const tb=$('geraete');
+  const sichtbar=new Set();
+  devs.forEach((d,i)=>{
+    sichtbar.add(d.key);
+    const zellen=spalten.map(p=>{
+      const v=Array.isArray(d.st[p])&&(zahl(d.st[p][0])||zahl(d.st[p][1]))?d.st[p]:null;
+      return `<td class="c${p===d.pos?' cur':''}">${v?`<span class="r">${zahl(v[0])}</span> · <span class="f">${zahl(v[1])}</span>`:'<span class="n">–</span>'}</td>`;
+    }).join('');
+    const m=Math.floor(d.min);
+    const aktiv=d.inaktiv?`<span class="badge warn">${m} min</span>`:`<span class="quiet">${m<1?'gerade':m+' min'}</span>`;
+    const h=hinweise.get(d.key);
+    const rest=h?Math.ceil(SPERRE_S-(jetzt-h.um)/1000):0;
+    const knopf=rest>0
+      ?`<button type="button" class="hwbtn" disabled aria-label="Hinweis wieder möglich in ${rest} Sekunden">${Math.floor(rest/60)}:${String(rest%60).padStart(2,'0')}</button>`
+      :`<button type="button" class="hwbtn" data-key="${esc(d.key)}" aria-label="Hinweis an Gerät ${d.nr}">Hinweis</button>`;
+    const status=h?(d.ok===h.id?'<span class="hwst seen">gesehen</span>':'<span class="hwst">gesendet</span>'):'';
+    const html=`<td class="dev"><span class="nr">${d.nr}</span></td>${zellen}<td>${aktiv}</td><td class="hw">${knopf}${status}</td>`;
+    let tr=zeilen.get(d.key);
+    if(!tr){tr=document.createElement('tr');zeilen.set(d.key,tr)}
+    if(tr._html!==html){tr.innerHTML=html;tr._html=html}
+    if(tb.children[i]!==tr)tb.insertBefore(tr,tb.children[i]||null);
+  });
+  zeilen.forEach((tr,key)=>{if(!sichtbar.has(key)){tr.remove();zeilen.delete(key);hinweise.delete(key)}});
+  [...tb.children].forEach(el=>{if(!el._html)el.remove()});
+  if(!devs.length){tb.innerHTML=`<tr><td colspan="${spalten.length+3}" class="muted" style="text-align:left;padding:14px 12px">Noch keine Geräte verbunden.</td></tr>`}
+
+  /* Fußzeilen: Geräte je Station und Summen */
+  const fuss=devs.length?
+    `<tr><td class="dev">hier</td>${spalten.map(p=>{const n=devs.filter(d=>d.pos===p).length;return `<td>${n||'–'}</td>`}).join('')}<td></td><td></td></tr>`+
+    `<tr><td class="dev">Summe</td>${spalten.map(p=>{let r=0,f=0,da=false;devs.forEach(d=>{const v=d.st[p];if(Array.isArray(v)){r+=zahl(v[0]);f+=zahl(v[1])}});da=r+f>0;
+      return `<td>${da?`<span class="r">${r}</span> · <span class="f">${f}</span>`:'–'}</td>`}).join('')}<td></td><td></td></tr>`:'';
+  if(fuss!==fussHtml){$('fuss').innerHTML=fuss;fussHtml=fuss}
+
+  /* An alle */
+  const restAlle=alleHinweis?Math.ceil(SPERRE_S-(jetzt-alleHinweis.um)/1000):0;
+  const ab=$('alle-btn');
+  ab.disabled=restAlle>0;
+  ab.textContent=restAlle>0?`${Math.floor(restAlle/60)}:${String(restAlle%60).padStart(2,'0')}`:'An alle';
+  $('alle-st').textContent=alleHinweis?`An alle: ${devs.filter(d=>d.ok===alleHinweis.id).length} von ${devs.length} gesehen`:'';
+}
+
+/* ---------- Hinweis senden ---------- */
+let ziel=null;
+$('geraete').addEventListener('click',e=>{const b=e.target.closest('button[data-key]');if(b&&!b.disabled)oeffneHinweis(b.dataset.key)});
+$('alle-btn').onclick=()=>oeffneHinweis('*');
+function oeffneHinweis(key){
+  if(!channel)return;
+  ziel=key;
+  const g=geraete.get(key);
+  $('hw-titel').textContent=key==='*'?'Hinweis an alle Geräte':`Hinweis an Gerät ${g?g.nr:''}`;
+  $('hw-vorschlag').textContent=VORSCHLAG;
+  $('hw-text').value=''; msg($('hw-msg'),'');
+  $('hw-dialog').showModal();
+}
+$('hw-vorschlag').onclick=()=>hinweisSenden(VORSCHLAG);
+$('hw-senden').onclick=()=>{const t=$('hw-text').value.trim();if(!t){msg($('hw-msg'),'Bitte zuerst einen Text eingeben.');$('hw-text').focus();return}hinweisSenden(t)};
+$('hw-text').addEventListener('input',()=>msg($('hw-msg'),''));
+$('hw-abbruch').onclick=()=>$('hw-dialog').close();
+function neueId(){const a=new Uint8Array(6);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,'0')).join('')}
+let sendetGerade=false;
+async function hinweisSenden(text){
+  if(!channel||ziel==null||sendetGerade)return;
+  if(ziel!=='*'&&!presence[ziel]){msg($('hw-msg'),'Dieses Gerät ist nicht mehr verbunden.');return}
+  const id=neueId(), g=geraete.get(ziel);
+  sendetGerade=true; $('hw-vorschlag').disabled=$('hw-senden').disabled=true;
+  let r='error';
+  try{r=await channel.send({type:'broadcast',event:'hinweis',payload:{an:ziel,id,text:text.slice(0,200),nr:ziel==='*'?null:(g?g.nr:null)}})}catch(e){r='error'}
+  sendetGerade=false; $('hw-vorschlag').disabled=$('hw-senden').disabled=false;
+  if(r!=='ok'){msg($('hw-msg'),'Der Hinweis konnte nicht gesendet werden. Bitte noch einmal versuchen.');return}
+  if(ziel==='*')alleHinweis={id,um:Date.now()};else hinweise.set(ziel,{id,um:Date.now()});
+  $('hw-dialog').close(); renderLive();
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 sb.auth.onAuthStateChange((ev,session)=>{
   if(ev==='SIGNED_OUT'){stopLive();lesson=null;render();showLogin()}

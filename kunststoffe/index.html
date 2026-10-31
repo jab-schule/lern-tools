@@ -702,14 +702,17 @@ let done={};
 try{done=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){done={}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}}
 function markDone(id,box){if(!done[id]){done[id]=true;save()}box.classList.add('done');const s=box.querySelector('.ex-state');if(s)s.textContent='gelöst';renderNav();melde()}
-let fehler=0;
-try{fehler=Math.max(0,parseInt(localStorage.getItem(KEY+'-fehler'),10)||0)}catch(e){fehler=0}
-function zaehleFehler(){fehler++;try{localStorage.setItem(KEY+'-fehler',String(fehler))}catch(e){}melde()}
-/* Klassencode: Station und Zähler anonym melden (nur bei gültigem Klassencode aktiv) */
+/* Fehlversuche je Station (nur auf diesem Gerät gespeichert) */
+let fehlerSt={};
+try{const v=JSON.parse(localStorage.getItem(KEY+'-fehler-st')||'{}');if(v&&typeof v==='object')fehlerSt=v}catch(e){fehlerSt={}}
+function zaehleFehler(){const id=STATIONS[current].id;fehlerSt[id]=(+fehlerSt[id]||0)+1;try{localStorage.setItem(KEY+'-fehler-st',JSON.stringify(fehlerSt))}catch(e){}melde()}
+/* Klassencode: Station sowie richtig/falsch je Station anonym melden (nur bei gültigem Klassencode aktiv) */
 function melde(){
   if(!window.Klassencode)return;
-  const richtig=STATIONS.reduce((a,s)=>a+s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length,0);
-  Klassencode.position(`Station ${current+1}`,{richtig,falsch:fehler});
+  const stand={};
+  STATIONS.forEach((s,i)=>{stand[`Station ${i+1}`]={richtig:s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length,falsch:+fehlerSt[s.id]||0}});
+  Klassencode.stand(stand);
+  Klassencode.position(`Station ${current+1}`);
 }
 
 /* ---------- Navigation ---------- */

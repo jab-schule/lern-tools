@@ -5,7 +5,7 @@
 --   1. Tabelle "sitzungen" (eine Zeile pro Unterrichtsstunde mit Klassencode)
 --   2. Zugriffsregeln (Row Level Security) für die Tabelle
 --   3. Funktionen: stunde_starten, stunde_beenden, code_gueltig
---   4. Zugriffsregeln für die Live-Zählung (Realtime Presence)
+--   4. Zugriffsregeln für die Live-Zählung und die Hinweise (Realtime)
 --
 -- Das Skript kann gefahrlos mehrfach ausgeführt werden.
 -- Es speichert keine Daten über Schüler. Fortschritt wird nie gespeichert.
@@ -187,26 +187,30 @@ grant execute on function public.kanal_eigen(text)         to authenticated;
 
 
 -- ---------------------------------------------------------------------
--- 4. Zugriffsregeln für die Live-Zählung (Realtime Presence)
+-- 4. Zugriffsregeln für die Live-Zählung und die Hinweise (Realtime)
 --    Gilt nur für private Kanäle. In den Realtime-Einstellungen muss
 --    "Allow public access" ausgeschaltet sein (siehe ANLEITUNG.md),
 --    damit ausschließlich private Kanäle zugelassen sind.
 --
 --    Schülergeräte (anon): dürfen nur dem Kanal einer laufenden Stunde
---    beitreten und dort ihre Anwesenheit melden.
---    Lehrkraft (authenticated): darf die Kanäle ihrer eigenen Stunden lesen.
---    Broadcast-Nachrichten sind für niemanden freigegeben.
+--    beitreten, dort ihre Anwesenheit melden (Presence) und Hinweise
+--    empfangen (Broadcast lesen). Senden von Broadcast ist ihnen verboten.
+--    Lehrkraft (authenticated): darf die Kanäle ihrer eigenen Stunden lesen
+--    und in laufenden eigenen Stunden Hinweise senden (Broadcast).
 -- ---------------------------------------------------------------------
 drop policy if exists "Schueler lesen Presence laufender Stunden"   on realtime.messages;
 drop policy if exists "Schueler melden Presence laufender Stunden"  on realtime.messages;
 drop policy if exists "Lehrkraft liest Presence eigener Stunden"   on realtime.messages;
+drop policy if exists "Schueler lesen Kanal laufender Stunden"      on realtime.messages;
+drop policy if exists "Lehrkraft liest Kanal eigener Stunden"      on realtime.messages;
+drop policy if exists "Lehrkraft sendet Hinweise in eigenen Stunden" on realtime.messages;
 
-create policy "Schueler lesen Presence laufender Stunden"
+create policy "Schueler lesen Kanal laufender Stunden"
   on realtime.messages
   for select
   to anon
   using (
-    realtime.messages.extension = 'presence'
+    realtime.messages.extension in ('presence', 'broadcast')
     and public.kanal_aktiv((select realtime.topic()))
   );
 
@@ -219,13 +223,23 @@ create policy "Schueler melden Presence laufender Stunden"
     and public.kanal_aktiv((select realtime.topic()))
   );
 
-create policy "Lehrkraft liest Presence eigener Stunden"
+create policy "Lehrkraft liest Kanal eigener Stunden"
   on realtime.messages
   for select
   to authenticated
   using (
-    realtime.messages.extension = 'presence'
+    realtime.messages.extension in ('presence', 'broadcast')
     and public.kanal_eigen((select realtime.topic()))
+  );
+
+create policy "Lehrkraft sendet Hinweise in eigenen Stunden"
+  on realtime.messages
+  for insert
+  to authenticated
+  with check (
+    realtime.messages.extension = 'broadcast'
+    and public.kanal_eigen((select realtime.topic()))
+    and public.kanal_aktiv((select realtime.topic()))
   );
 
 -- Ende
