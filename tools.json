@@ -6,5 +6,13 @@
     "fach": "Chemie",
     "beschreibung": "In neun Stationen vom Reaktionsschema zur Reaktionsgleichung, mit Übungen und Rückmeldung.",
     "positionen": ["Station 1", "Station 2", "Station 3", "Station 4", "Station 5", "Station 6", "Station 7", "Station 8", "Station 9"]
+  },
+  {
+    "kurzname": "kunststoffe",
+    "name": "Lernpfad Kunststoffe: Verarbeitung, Abfall und Verwertung",
+    "pfad": "kunststoffe/",
+    "fach": "Chemie",
+    "beschreibung": "Klasse 12 (Basisfach): Verarbeitung von Kunststoffen und die vier Wege für Kunststoffabfall, mit Exkursen zu Kunststoffmüll im Meer und Biokunststoffen.",
+    "positionen": ["Station 1", "Station 2", "Station 3", "Station 4", "Station 5", "Station 6", "Station 7", "Station 8", "Station 9"]
   }
 ]

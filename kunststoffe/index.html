@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lernpfad Kunststoffe</title>
+<style>
+/* Layout wie im Lernpfad Reaktionsgleichungen: eine Lesespalte, oben die Stationsfolge, je Station Erklärung und danach Übungen. */
+:root{
+  --bg:#f6f7f7; --surface:#ffffff; --surface2:#e7ecee; --ink:#172126; --muted:#56646a; --line:#d6dde0;
+  --accent:#155e6b; --accent-ink:#ffffff; --accent-soft:#e2edef;
+  --ok:#2c7646; --ok-soft:#e3f1e7; --bad:#ad3a2d; --bad-soft:#f6e5e2;
+  --melt:#6aa77a; --gran:#3f6f86; --heat:#c9693f; --air:#2f6fb3;
+  --c1:#3f7f8c; --c2:#c9a13f; --c3:#b45f45;
+  --ext:#8a5a12; --ext-soft:#f6ecdb; --ext-line:#e2cfa8;
+  --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171a; --surface:#182125; --surface2:#26333a; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d;
+  --melt:#5f9f70; --gran:#7fb0c8; --heat:#e08a62; --air:#7fb2ea;
+  --c1:#6fb0bd; --c2:#dcbb62; --c3:#d88a72; --ext:#e2b46c; --ext-soft:#2c2416; --ext-line:#5a4826; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171a; --surface:#182125; --surface2:#26333a; --ink:#e3e9eb; --muted:#9aa8ad; --line:#2c383d;
+  --accent:#73b6c3; --accent-ink:#0e1a1d; --accent-soft:#1c3036;
+  --ok:#73c48f; --ok-soft:#172a1f; --bad:#e8907f; --bad-soft:#35211d;
+  --melt:#5f9f70; --gran:#7fb0c8; --heat:#e08a62; --air:#7fb2ea;
+  --c1:#6fb0bd; --c2:#dcbb62; --c3:#d88a72; --ext:#e2b46c; --ext-soft:#2c2416; --ext-line:#5a4826; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.6}
+.wrap{max-width:780px;margin:0 auto;padding-block:32px 72px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{font-family:var(--font-display);font-weight:600;line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:2rem}
+h2{font-size:1.6rem}
+h3{font-size:1.15rem}
+p{margin:0}
+sub,sup{font-size:.72em;line-height:0}
+.lead{color:var(--muted);max-width:62ch}
+header.top{display:grid;gap:10px;margin-bottom:28px}
+.kicker{font-size:.85rem;color:var(--muted);letter-spacing:.02em}
+
+/* Stationsliste */
+nav.stations ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+nav.stations button{width:100%;height:100%;text-align:left;font:inherit;font-size:.95rem;line-height:1.3;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;
+  display:grid;grid-template-columns:auto 1fr;align-content:start;gap:2px 10px}
+nav.stations button .n{grid-row:span 2;font-family:var(--font-display);font-size:1.25rem;color:var(--muted);font-variant-numeric:tabular-nums}
+nav.stations button .p{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+nav.stations button[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+nav.stations button[aria-current="true"] .n{color:var(--accent)}
+nav.stations button.complete .p{color:var(--ok)}
+button:focus-visible,input:focus-visible,select:focus-visible,label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+
+main{margin-top:36px;display:grid;gap:40px}
+section.station{display:grid;gap:22px}
+.st-head{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.part-title{font-family:var(--font-display);font-size:1.25rem;font-weight:600;margin-top:8px}
+.text{display:grid;gap:12px;max-width:66ch}
+.text ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+
+/* Tabellen */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.85rem}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Merke */
+.merke{background:var(--accent-soft);border-radius:8px;padding:16px 18px;display:grid;gap:8px;max-width:66ch}
+.merke b.lbl{font-weight:700;color:var(--accent)}
+.merke td,.merke th{border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
+
+/* Schrittfolge */
+.steps{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.steps-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.step{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.step:last-of-type{border-bottom:0}
+.step[hidden]{display:none}
+.step .sn{font-family:var(--font-display);font-weight:600;color:var(--accent);font-size:1.05rem;min-width:1.6em}
+.step .sb{display:grid;gap:10px;min-width:0}
+.step .st{font-weight:600}
+.steps-foot{padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line)}
+
+/* Abbildungen */
+figure{margin:0;display:grid;gap:6px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:.85rem;color:var(--muted)}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.step .fig{background:var(--bg)}
+svg .ln{stroke:var(--ink);fill:none;stroke-width:1.5}
+svg .metal{fill:var(--surface2);stroke:var(--ink);stroke-width:1.5}
+svg .hole{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+svg .melt{fill:var(--melt)}
+svg .meltl{stroke:var(--melt);fill:none}
+svg .gran{fill:var(--gran)}
+svg .heat{fill:var(--heat)}
+svg .screw{stroke:var(--muted);stroke-width:3;fill:none}
+svg .shaft{fill:var(--muted)}
+svg .air{stroke:var(--air);stroke-width:2.5;fill:none}
+svg .airf{fill:var(--air)}
+svg .arr{stroke:var(--ink);stroke-width:1.5;fill:none}
+svg .arrf{fill:var(--ink)}
+svg .chain{stroke:var(--ink);stroke-width:1.6;fill:none;stroke-linejoin:round}
+svg .xl{stroke:var(--accent);stroke-width:2.6}
+svg text{font-family:var(--font-body);font-size:13px;fill:var(--ink)}
+svg text.m{fill:var(--muted)}
+svg text.b{font-weight:600}
+svg text.atomt{font-size:16px}
+.figrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.figrow figure{background:var(--bg);border-radius:8px;padding:8px}
+@media (max-width:560px){.figrow{grid-template-columns:1fr}}
+
+/* Chemische Formeln */
+.eqn{font-size:1.05rem;overflow-x:auto;white-space:nowrap;padding:6px 0}
+.formula{white-space:nowrap}
+
+/* Balken */
+.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.88rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px}
+
+/* Vierfeldertafel */
+.grid4{display:grid;grid-template-columns:minmax(0,8.5em) 1fr 1fr;gap:6px;font-size:.92rem}
+.grid4 .h{font-weight:600;color:var(--muted);font-size:.82rem;display:grid;align-items:end;padding:4px 6px}
+.grid4 .rh{font-weight:600;color:var(--muted);font-size:.82rem;padding:10px 6px;writing-mode:horizontal-tb}
+.grid4 .c{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:4px;align-content:start}
+.grid4 .c b{font-weight:600}
+.grid4 .c.bio{background:var(--accent-soft);border-color:transparent}
+.grid4 .c.no{background:transparent;border-style:dashed}
+.grid4 .ml{display:none;font-size:.8rem;color:var(--muted)}
+@media (max-width:520px){.grid4{grid-template-columns:1fr}.grid4 .h,.grid4 .rh{display:none}.grid4 .ml{display:block}}
+
+/* Übungen */
+.ex-list{display:grid;gap:16px}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px}
+.ex.done{border-color:var(--ok)}
+.ex-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.ex-no{font-weight:700;font-size:.9rem;color:var(--muted)}
+.ex-kind{font-weight:400}
+.ex-state{font-size:.85rem;color:var(--ok);font-weight:600}
+.ex-q{max-width:66ch}
+.opts{display:grid;gap:8px}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-height:48px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.chk{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-height:48px;cursor:pointer}
+.chk input{width:22px;height:22px;margin:0;accent-color:var(--accent)}
+.chk.right{border-color:var(--ok);background:var(--ok-soft)}
+.chk.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.sortrow{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:8px 14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sortrow:last-child{border-bottom:0}
+.sortrow.wrong .item{color:var(--bad)}
+.sortrow.right .item{color:var(--ok)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg label{position:relative;cursor:pointer;flex:1 1 auto}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:grid;place-items:center;min-height:44px;padding:8px 12px;font-size:.9rem;line-height:1.25;text-align:center;border-left:1px solid var(--line)}
+.seg label:first-child span{border-left:0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:640px){.sortrow{grid-template-columns:1fr}}
+.orderlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.orderlist li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 6px 6px 12px}
+.orderlist li .pos{font-family:var(--font-display);font-weight:600;color:var(--muted);min-width:1.2em;font-variant-numeric:tabular-nums}
+.orderlist li.right{border-color:var(--ok);background:var(--ok-soft)}
+.orderlist li.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.mv{display:flex;gap:4px}
+.mv button{font:inherit;font-size:1.1rem;width:44px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--accent);cursor:pointer}
+.mv button:disabled{color:var(--line);cursor:default}
+.cloze{max-width:66ch;line-height:2.6}
+.cloze select{font:inherit;font-size:.95rem;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);max-width:100%}
+.cloze select.right{border-color:var(--ok);background:var(--ok-soft)}
+.cloze select.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input.numin{font:inherit;width:9em;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.btn{font:inherit;font-size:.95rem;font-weight:600;min-height:44px;padding:8px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.fb{padding:10px 12px;border-radius:8px;max-width:66ch}
+.fb.ok{background:var(--ok-soft);color:var(--ok)}
+.fb.bad{background:var(--bad-soft);color:var(--bad)}
+.fb.info{background:var(--accent-soft);color:var(--ink)}
+.fb b{font-weight:700}
+
+/* Exkurse */
+.navnote{margin-top:8px}
+nav.stations button.ext{background:var(--ext-soft);border-color:var(--ext-line)}
+nav.stations button.ext .ek{color:var(--ext);font-weight:600}
+nav.stations button.ext[aria-current="true"]{border-color:var(--ext);background:var(--ext-soft);box-shadow:0 0 0 1px var(--ext)}
+nav.stations button.ext[aria-current="true"] .n{color:var(--ext)}
+section.station.ext .st-head{background:var(--ext-soft);border:1px solid var(--ext-line);border-radius:10px;padding:16px 18px}
+section.station.ext .kicker{color:var(--ext);font-weight:600}
+.pager .right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* Übersicht der vier Wege */
+.ov{display:grid;gap:10px}
+.ov-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ov-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;align-content:start;font-size:.9rem;line-height:1.4}
+.ov-card .on{font-family:var(--font-display);font-size:1.2rem;color:var(--accent);font-weight:600}
+.ov-card h4{margin:0;font-size:1rem;line-height:1.25}
+.ov-card dl{margin:0;display:grid;gap:6px}
+.ov-card dt{font-size:.78rem;color:var(--muted)}
+.ov-card dd{margin:0}
+.ov-card.dim{opacity:.5}
+.ov-card.hl{border-color:var(--accent);background:var(--accent-soft)}
+.ov-axis{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:.82rem;color:var(--muted)}
+.ov-axis i{height:0;border-top:1.5px solid var(--muted);position:relative}
+.ov-axis i::after{content:"";position:absolute;right:-1px;top:-5.5px;border:5px solid transparent;border-left:8px solid var(--muted);border-right:0}
+@media (max-width:700px){.ov-cards{grid-template-columns:1fr 1fr}}
+
+.pager{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--line)}
+.small{font-size:.88rem;color:var(--muted)}
+.src{font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.step{animation:fade .25s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="kicker">Chemie Klasse 12 · Basisfach · Lernpfad</p>
+    <h1>Kunststoffe: Verarbeitung, Abfall und Verwertung</h1>
+    <p class="lead">Du lernst, wie aus Kunststoffgranulat Alltagsgegenstände werden und auf welchen Wegen Kunststoffabfall vermieden und verwertet werden kann. Bearbeite die Pflichtstationen 1, 2, 5, 6 und 9 der Reihe nach. Die Exkurse vertiefen einzelne Themen und können übersprungen werden. Jede Station beginnt mit einer Erklärung, danach folgen Übungen mit Rückmeldung. Dein Fortschritt wird nur auf diesem Gerät gespeichert.</p>
+  </header>
+  <nav class="stations" aria-label="Stationen"><ol id="nav"></ol><p class="small navnote">Farbig hinterlegte Stationen sind Exkurse.</p></nav>
+  <main id="main"></main>
+</div>
+
+<script src="../config.js"></script>
+<script src="../klassencode.js"></script>
+<script>
+/* ---------- Hilfen ---------- */
+const F=f=>f.replace(/([A-Za-z\)\]])(\d+)/g,'$1<sub>$2</sub>');
+let svgN=0;
+function arrowDef(id,cls){return `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="${cls}"/></marker>`}
+
+/* Seeded Zufall für reproduzierbare Grafiken und Reihenfolgen */
+function rng(seed){let s=0;for(const c of String(seed))s=(s*31+c.charCodeAt(0))>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+
+/* ---------- Abbildungen (eigene Schemazeichnungen) ---------- */
+/* Teilchenmodell: Makromoleküle unvernetzt, weitmaschig oder engmaschig vernetzt */
+function chainsSVG(kind){
+  const r=rng('k'+kind), N=5, W=200, H=136, ys=[], step=10;
+  let s='';
+  for(let i=0;i<N;i++){
+    const base=18+i*25, x0=kind==='t'?6+r()*30:6, x1=kind==='t'?W-6-r()*30:W-6, ph=r()*6, pts=[];
+    const y=x=>base+Math.sin(x/17+ph)*5+Math.sin(x/7+ph*2)*2;
+    for(let x=x0;x<=x1;x+=step)pts.push([x,y(x)]);
+    ys.push(y);
+    s+=`<polyline class="chain" points="${pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`;
+  }
+  const per=kind==='e'?[1,2,1,1]:kind==='d'?[5,5,5,5]:[0,0,0,0];
+  let links='';
+  per.forEach((m,i)=>{for(let k=0;k<m;k++){
+    const x=24+(k+0.2+0.6*r())*(W-48)/m;
+    links+=`<line class="xl" x1="${x.toFixed(1)}" y1="${(ys[i](x)+2).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(ys[i+1](x)-2).toFixed(1)}"/>`;
+  }});
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind==='t'?'Unvernetzte Kettenmoleküle':kind==='e'?'Weitmaschig vernetzte Kettenmoleküle':'Engmaschig vernetzte Kettenmoleküle'}">${links}${s}</svg>`;
+}
+function structureFig(){
+  return `<figure class="fig"><div class="figrow">
+    <figure>${chainsSVG('t')}<figcaption><b>Thermoplast:</b> Ketten nicht verbunden</figcaption></figure>
+    <figure>${chainsSVG('e')}<figcaption><b>Elastomer:</b> weitmaschig vernetzt</figcaption></figure>
+    <figure>${chainsSVG('d')}<figcaption><b>Duromer:</b> engmaschig vernetzt</figcaption></figure>
+  </div><figcaption>Schematische Darstellung der Makromoleküle. Die farbigen Striche stehen für Querverbindungen (Atombindungen) zwischen den Ketten.</figcaption></figure>`;
+}
+
+/* Extruder als Baustein: Trichter, beheizter Zylinder, Schnecke */
+function extruder(x0,L,id){
+  const r=rng(id); let g='';
+  g+=`<polygon class="metal" points="${x0+20},18 ${x0+84},18 ${x0+62},70 ${x0+42},70"/>`;
+  for(let k=0;k<14;k++)g+=`<circle class="gran" cx="${(x0+40+r()*24+(k%3)*2).toFixed(1)}" cy="${(30+r()*36).toFixed(1)}" r="3"/>`;
+  g+=`<rect class="metal" x="${x0}" y="70" width="${L}" height="60"/>`;
+  g+=`<rect x="${x0+5}" y="78" width="${L-5}" height="44" style="fill:var(--bg)"/>`;
+  g+=`<rect class="melt" x="${x0+L*0.45}" y="78" width="${L*0.3}" height="44" opacity=".45"/>`;
+  g+=`<rect class="melt" x="${x0+L*0.75}" y="78" width="${L*0.25}" height="44"/>`;
+  for(let k=0;k<18;k++){const x=x0+12+r()*L*0.42;g+=`<circle class="gran" cx="${x.toFixed(1)}" cy="${(82+r()*36).toFixed(1)}" r="3"/>`}
+  g+=`<rect class="shaft" x="${x0+5}" y="96" width="${L-28}" height="8"/>`;
+  for(let x=x0+18;x<x0+L-34;x+=24)g+=`<line class="screw" x1="${x}" y1="80" x2="${x+12}" y2="120"/>`;
+  for(let k=0;k<3;k++){const x=x0+L*0.38+k*(L*0.2);g+=`<rect class="heat" x="${x}" y="62" width="${L*0.14}" height="8"/><rect class="heat" x="${x}" y="130" width="${L*0.14}" height="8"/>`}
+  g+=`<text x="${x0+92}" y="34">Granulat</text>`;
+  g+=`<text x="${x0+L*0.38}" y="54" class="m">Heizung</text>`;
+  g+=`<text x="${x0+10}" y="156" class="m">Schnecke im beheizten Zylinder</text>`;
+  return g;
+}
+function extrusionSVG(){
+  const id='ex'+(svgN++);
+  return `<figure class="fig"><svg viewBox="0 0 640 175" role="img" aria-label="Schema der Extrusion"><defs>${arrowDef(id+'a','arrf')}</defs>
+  ${extruder(14,380,id)}
+  <polygon class="metal" points="394,70 432,84 432,116 394,130"/>
+  <rect class="melt" x="432" y="86" width="190" height="28"/><rect x="432" y="92" width="190" height="16" style="fill:var(--bg)"/>
+  <rect x="470" y="68" width="120" height="64" rx="6" fill="none" stroke="var(--muted)" stroke-dasharray="4 4"/>
+  <text x="478" y="60" class="m">Kühlung</text>
+  <text x="402" y="156" class="m">Düse</text>
+  <text x="470" y="156">Rohr (Längsschnitt)</text>
+  </svg><figcaption>Extrudieren: Die Schnecke drückt die Schmelze durch eine Ringdüse. Es entsteht ein endloses Rohr, das anschließend gekühlt wird.</figcaption></figure>`;
+}
+function injectionSVG(){
+  const id='sg'+(svgN++);
+  return `<figure class="fig"><svg viewBox="0 0 640 190" role="img" aria-label="Schema des Spritzgießens"><defs>${arrowDef(id+'a','arrf')}</defs>
+  ${extruder(14,300,id)}
+  <polygon class="metal" points="314,84 342,94 342,106 314,116"/>
+  <rect class="metal" x="342" y="30" width="96" height="140"/>
+  <rect class="metal" x="438" y="30" width="96" height="140"/>
+  <path class="melt" d="M342,96 H398 V56 H488 V68 H410 V132 H488 V144 H398 V104 H342 Z"/>
+  ${[[362,48],[362,152],[460,44],[460,156],[512,100]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" class="hole"/>`).join('')}
+  <line class="arr" x1="548" y1="100" x2="600" y2="100" marker-end="url(#${id}a)"/>
+  <text x="546" y="88" class="m">öffnet</text>
+  <text x="350" y="186">Werkzeug mit Kühlkanälen</text>
+  </svg><figcaption>Spritzgießen: Die Schmelze wird unter hohem Druck in den Hohlraum eines geschlossenen, gekühlten Werkzeugs gespritzt (hier ein Becher im Schnitt). Nach dem Erstarren öffnet sich das Werkzeug und das Formteil wird ausgeworfen.</figcaption></figure>`;
+}
+function blowSVG(){
+  const id='hb'+(svgN++);
+  const cav=cx=>`M${cx-8},40 V75 L${cx-38},100 V175 H${cx+38} V100 L${cx+8},75 V40 Z`;
+  const mold=cx=>`<rect class="metal" x="${cx-70}" y="40" width="140" height="150"/><path class="hole" d="${cav(cx)}"/>`;
+  const head=cx=>`<rect class="metal" x="${cx-26}" y="2" width="52" height="22"/>`;
+  const p1=110,p2=320,p3=530;
+  return `<figure class="fig"><svg viewBox="0 0 640 240" role="img" aria-label="Schema des Hohlkörperblasens in drei Schritten"><defs>
+    <clipPath id="${id}L"><rect x="${p1-70}" y="30" width="70" height="170"/></clipPath>
+    <clipPath id="${id}R"><rect x="${p1}" y="30" width="70" height="170"/></clipPath>
+    ${arrowDef(id+'a','airf')}</defs>
+  ${head(p1)}<g transform="translate(-30,0)"><g clip-path="url(#${id}L)">${mold(p1)}</g></g><g transform="translate(30,0)"><g clip-path="url(#${id}R)">${mold(p1)}</g></g>
+  <rect class="melt" x="${p1-6}" y="24" width="12" height="164"/>
+  ${head(p2)}${mold(p2)}<rect class="melt" x="${p2-6}" y="24" width="12" height="151"/>
+  ${head(p3)}${mold(p3)}<path d="${cav(p3)}" class="meltl" stroke-width="7" stroke-linejoin="round" style="stroke:var(--melt)"/>
+  <line class="air" x1="${p3}" y1="6" x2="${p3}" y2="92" marker-end="url(#${id}a)"/>
+  <line class="air" x1="${p3}" y1="120" x2="${p3-24}" y2="120" marker-end="url(#${id}a)"/><line class="air" x1="${p3}" y1="120" x2="${p3+24}" y2="120" marker-end="url(#${id}a)"/>
+  <line class="air" x1="${p3}" y1="140" x2="${p3-24}" y2="140" marker-end="url(#${id}a)"/><line class="air" x1="${p3}" y1="140" x2="${p3+24}" y2="140" marker-end="url(#${id}a)"/>
+  <text x="${p1}" y="212" text-anchor="middle" class="b">1 Schlauch</text><text x="${p1}" y="230" text-anchor="middle" class="m">zwischen offenen Formhälften</text>
+  <text x="${p2}" y="212" text-anchor="middle" class="b">2 Werkzeug schließt</text><text x="${p2}" y="230" text-anchor="middle" class="m">Schlauch unten abgequetscht</text>
+  <text x="${p3}" y="212" text-anchor="middle" class="b">3 Druckluft</text><text x="${p3}" y="230" text-anchor="middle" class="m">presst Schlauch an die Wand</text>
+  </svg><figcaption>Hohlkörperblasen: Ein extrudierter Schlauch wird im zweiteiligen Werkzeug eingeschlossen und mit Druckluft an die gekühlte Wand der Form geblasen.</figcaption></figure>`;
+}
+function filmSVG(){
+  const id='fb'+(svgN++);
+  return `<figure class="fig"><svg viewBox="0 0 640 320" role="img" aria-label="Schema des Folienblasens"><defs>${arrowDef(id+'a','airf')}${arrowDef(id+'b','arrf')}</defs>
+  <rect class="metal" x="40" y="250" width="350" height="36"/>
+  <rect class="metal" x="390" y="240" width="80" height="46"/>
+  <rect class="melt" x="230" y="262" width="230" height="12"/>
+  <rect class="melt" x="404" y="226" width="8" height="40"/><rect class="melt" x="448" y="226" width="8" height="40"/>
+  <path d="M408,226 C406,200 360,188 360,158 L360,92 L420,48 L440,48 L500,92 L500,158 C500,188 454,200 452,226" class="meltl" stroke-width="4" style="fill:color-mix(in srgb,var(--melt) 18%,transparent)"/>
+  <circle class="metal" cx="418" cy="36" r="11"/><circle class="metal" cx="442" cy="36" r="11"/>
+  <line class="air" x1="430" y1="306" x2="430" y2="160" marker-end="url(#${id}a)"/>
+  <line class="air" x1="430" y1="160" x2="386" y2="132" marker-end="url(#${id}a)"/><line class="air" x1="430" y1="160" x2="474" y2="132" marker-end="url(#${id}a)"/>
+  <line class="arr" x1="406" y1="22" x2="300" y2="22" marker-end="url(#${id}b)"/>
+  <text x="48" y="276" class="m">Extruder</text>
+  <text x="480" y="236" class="m">Ringdüse</text>
+  <text x="440" y="314">Druckluft</text>
+  <text x="514" y="130">Folienschlauch</text>
+  <text x="460" y="40">Abquetschwalzen</text>
+  <text x="180" y="26" class="m">zum Aufwickeln</text>
+  </svg><figcaption>Folienblasen: Die Schmelze tritt aus einer Ringdüse aus und wird mit Druckluft zu einem dünnwandigen Schlauch aufgeblasen. Oben wird er flachgelegt und aufgewickelt.</figcaption></figure>`;
+}
+function calenderSVG(){
+  let g='';const yc=100;
+  [[150,30],[260,18],[370,10]].forEach(([x,t])=>{const r=34;g+=`<circle class="metal" cx="${x}" cy="${yc-t/2-r}" r="${r}"/><circle class="metal" cx="${x}" cy="${yc+t/2+r}" r="${r}"/>`;});
+  return `<figure class="fig"><svg viewBox="0 0 640 200" role="img" aria-label="Schema des Kalandrierens">
+  <path class="melt" d="M40,70 C80,66 110,80 150,85 L260,91 L370,95 L620,95 V105 L370,105 L260,109 L150,115 C110,120 80,134 40,130 Z"/>
+  ${g}
+  <text x="20" y="158" class="m">Kunststoffmasse</text>
+  <text x="440" y="86">Folie oder Bahn</text>
+  <text x="196" y="196" class="m">beheizte Walzen, der Spalt wird immer enger</text>
+  </svg><figcaption>Kalandrieren: Die plastische Masse wird zwischen mehreren beheizten Walzen zu einer dünnen Bahn ausgewalzt, ähnlich wie Wäsche in einer Mangel.</figcaption></figure>`;
+}
+/* Lactid: sechsgliedriger Ring mit zwei Estergruppen */
+function lactidSVG(){
+  const cx=150,cy=105,R=50, ang=[-90,-30,30,90,150,210].map(a=>a*Math.PI/180);
+  const P=ang.map(a=>[cx+R*Math.cos(a),cy+R*Math.sin(a)]);
+  const lab=['O','C','CH','O','C','HC'];
+  let s='';
+  for(let i=0;i<6;i++){const a=P[i],b=P[(i+1)%6],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,sh=13;
+    s+=`<line class="ln" x1="${(a[0]+ux*sh).toFixed(1)}" y1="${(a[1]+uy*sh).toFixed(1)}" x2="${(b[0]-ux*sh).toFixed(1)}" y2="${(b[1]-uy*sh).toFixed(1)}"/>`}
+  P.forEach((p,i)=>s+=`<text class="atomt" x="${p[0].toFixed(1)}" y="${(p[1]+5).toFixed(1)}" text-anchor="middle">${lab[i]}</text>`);
+  const sub=(i,txt,dbl)=>{const a=ang[i],ux=Math.cos(a),uy=Math.sin(a),p=P[i],q=[p[0]+ux*46,p[1]+uy*46],anc=ux<-0.3?'end':ux>0.3?'start':'middle',tx=q[0]+(anc==='end'?10:anc==='start'?-10:0);
+    const x1=p[0]+ux*13,y1=p[1]+uy*13,x2=q[0]-ux*12,y2=q[1]-uy*12,nx=-uy*2.6,ny=ux*2.6;
+    let l=dbl?`<line class="ln" x1="${(x1+nx).toFixed(1)}" y1="${(y1+ny).toFixed(1)}" x2="${(x2+nx).toFixed(1)}" y2="${(y2+ny).toFixed(1)}"/><line class="ln" x1="${(x1-nx).toFixed(1)}" y1="${(y1-ny).toFixed(1)}" x2="${(x2-nx).toFixed(1)}" y2="${(y2-ny).toFixed(1)}"/>`
+      :`<line class="ln" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+    return l+`<text class="atomt" x="${tx.toFixed(1)}" y="${(q[1]+5).toFixed(1)}" text-anchor="${anc}">${txt}</text>`};
+  s+=sub(1,'O',true)+sub(4,'O',true)+sub(2,'CH<tspan dy="4" font-size="11">3</tspan>')+sub(5,'H<tspan dy="4" font-size="11">3</tspan><tspan dy="-4">C</tspan>');
+  return `<svg viewBox="40 15 220 180" role="img" aria-label="Strukturformel des Lactid-Moleküls" style="max-width:280px;margin:0 auto">${s}</svg>`;
+}
+function lactidFig(){
+  return `<figure class="fig"><div class="figrow" style="grid-template-columns:1fr 1fr">
+    <figure><div class="eqn" style="padding:40px 8px;text-align:center"><span class="formula">CH<sub>3</sub>–CH(OH)–COOH</span></div><figcaption>Milchsäure (2-Hydroxypropansäure): eine Hydroxygruppe und eine Carboxygruppe im selben Molekül</figcaption></figure>
+    <figure>${lactidSVG()}<figcaption>Lactid: ringförmiges Dimer aus zwei Milchsäure-Molekülen mit zwei Estergruppen</figcaption></figure>
+  </div></figure>`;
+}
+
+/* Übersicht: die vier Wege für Kunststoffabfall, hl = hervorgehobene Wege (Index 0 bis 3) */
+const WEGE=[
+  {t:'Vermeiden',m:'Abfall entsteht gar nicht erst',g:'alle Kunststoffe',e:'Rohstoff und Energie werden ganz eingespart'},
+  {t:'Werkstofflich verwerten',m:'bleiben erhalten',g:'sortenreine, saubere Thermoplaste',e:'neuer Kunststoff (Regranulat)'},
+  {t:'Rohstofflich verwerten',m:'werden in kleine Moleküle zerlegt',g:'auch gemischte und verschmutzte Kunststoffe',e:'Gase, Öle, Monomere als Rohstoff'},
+  {t:'Energetisch verwerten',m:'werden oxidiert (verbrannt)',g:'alle Kunststoffe',e:'Wärme und Strom'}
+];
+function overviewFig(hl){
+  return `<figure class="fig ov"><div class="ov-axis"><span>Vorrang hoch</span><i></i><span>Vorrang niedrig</span></div><div class="ov-cards">${WEGE.map((w,i)=>`<div class="ov-card${hl?(hl.includes(i)?' hl':' dim'):''}"><span class="on">${i+1}</span><h4>${w.t}</h4><dl><dt>Makromoleküle</dt><dd>${w.m}</dd><dt>geeignet für</dt><dd>${w.g}</dd><dt>Ergebnis</dt><dd>${w.e}</dd></dl></div>`).join('')}</div>${hl?'<figcaption>Diese Station behandelt die hervorgehobenen Wege.</figcaption>':'<figcaption>Die vier Wege für Kunststoffabfall in der Reihenfolge ihres Vorrangs</figcaption>'}</figure>`;
+}
+
+/* Verwertung 2017 als Balken */
+function shareBar(){
+  return `<figure class="fig" style="background:var(--bg)"><div class="bar" role="img" aria-label="Anteile 2017: werkstofflich 45,9 Prozent, rohstofflich 0,8 Prozent, energetisch 52,7 Prozent, nicht verwertet 0,6 Prozent">
+    <span style="width:45.9%;background:var(--c1)"></span><span style="width:0.8%;background:var(--c2)"></span><span style="width:52.7%;background:var(--c3)"></span><span style="width:0.6%;background:var(--line)"></span></div>
+    <div class="legend"><span><i style="background:var(--c1)"></i>werkstofflich 45,9 %</span><span><i style="background:var(--c2)"></i>rohstofflich 0,8 %</span><span><i style="background:var(--c3)"></i>energetisch 52,7 %</span><span><i style="background:var(--line)"></i>nicht verwertet 0,6 %</span></div>
+    <figcaption>Verbleib der 2017 in Deutschland gesammelten Kunststoffabfälle (6,15 Mio. t). Daten: Umweltbundesamt 2018, nach Schulbuch.</figcaption></figure>`;
+}
+
+/* ---------- Inhalte ---------- */
+const STATIONS=[
+{ id:'s1', title:'Thermoplaste, Duromere, Elastomere',
+  intro:'Wie ein Kunststoff verarbeitet werden kann, hängt davon ab, wie seine Makromoleküle miteinander verbunden sind. Diese Station wiederholt das Wichtigste dazu und gibt einen Überblick über die Verarbeitungsverfahren.',
+  blocks:[
+    {type:'text',html:`<p>Kunststoffe bestehen aus <b>Makromolekülen</b>, also sehr langen Kettenmolekülen. Nach dem Verhalten beim Erwärmen unterscheidet man drei Gruppen. Der Grund für das unterschiedliche Verhalten liegt darin, ob und wie stark die Ketten untereinander vernetzt sind.</p>`},
+    {type:'fig',html:structureFig()},
+    {type:'text',html:`<div class="tablewrap"><table><thead><tr><th>Gruppe</th><th>Bau</th><th>beim Erwärmen</th><th>Beispiele</th></tr></thead><tbody>
+      <tr><td><b>Thermoplaste</b></td><td>lineare oder wenig verzweigte Ketten, nur durch zwischenmolekulare Kräfte zusammengehalten</td><td>werden weich und plastisch, dann flüssig; beim Abkühlen wieder fest; beliebig oft wiederholbar</td><td>PE, PP, PS, PVC, PET</td></tr>
+      <tr><td><b>Elastomere</b></td><td>Ketten weitmaschig vernetzt</td><td>bleiben gummielastisch, schmelzen nicht, zersetzen sich bei hoher Temperatur</td><td>Gummi, Silikonkautschuk</td></tr>
+      <tr><td><b>Duromere</b></td><td>Ketten engmaschig räumlich vernetzt</td><td>bleiben hart, schmelzen nicht, zersetzen sich bei hoher Temperatur</td><td>Phenolharz, Melaminharz, Epoxidharz</td></tr></tbody></table></div>`},
+    {type:'steps',title:'Drei Gruppen von Verarbeitungsverfahren',items:[
+      {t:'Urformen',h:`<p>Aus einem <b>formlosen</b> Ausgangsstoff entsteht ein Körper mit fester Form. Formlos heißt: Granulat, Pulver, eine Schmelze oder ein flüssiges Harz. Beispiele sind Extrudieren, Spritzgießen und 3D-Druck.</p>`},
+      {t:'Umformen',h:`<p>Ein bereits geformtes Halbzeug, etwa eine Platte oder Folie, wird erwärmt und in eine neue Form gebracht. Das geht nur bei <b>Thermoplasten</b>, denn nur sie werden beim Erwärmen weich.</p>`},
+      {t:'Fügen',h:`<p>Fertige Bauteile werden dauerhaft miteinander verbunden. Beim <b>Schweißen</b> wird der Kunststoff an der Verbindungsstelle geschmolzen. Das geht nur bei Thermoplasten. <b>Kleben</b> ist bei allen drei Gruppen möglich.</p>`}
+    ]},
+    {type:'merke',html:`<p>Thermoplaste bestehen aus unvernetzten Ketten. Sie lassen sich schmelzen, umformen und schweißen. Elastomere und Duromere sind vernetzt. Sie schmelzen nicht und können deshalb nur beim Urformen ihre Form erhalten und nur durch Kleben gefügt werden.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Ordne jedem Gegenstand die Kunststoffgruppe zu.',options:['Thermoplast','Elastomer','Duromer'],
+     items:[['Joghurtbecher aus Polystyrol',0],['Fahrradschlauch',1],['Griff einer Bratpfanne aus Phenolharz',2],['Getränkeflasche aus PET',0],['Dichtungsring aus Gummi',1],['Ausgehärteter Epoxidharz-Kleber',2],['Abwasserrohr aus PVC',0]],
+     hint:'Lässt sich der Gegenstand dehnen und federt zurück? Dann Elastomer. Muss er hart und auch bei Hitze formstabil bleiben? Dann eher Duromer. Die Kurzzeichen PE, PP, PS, PVC und PET stehen für Thermoplaste.',
+     okText:'Gummiartige Stoffe sind Elastomere, hitzefeste harte Harze sind Duromere, die bekannten Verpackungskunststoffe sind Thermoplaste.'},
+    {type:'mc',q:'Warum kann man ein Duromer nach dem Aushärten nicht mehr umformen?',
+     options:['Weil die Ketten engmaschig durch Atombindungen vernetzt sind und nicht aneinander vorbeigleiten können. Beim starken Erwärmen zersetzt sich das Duromer, bevor es weich wird.','Weil Duromere bei Raumtemperatur flüssig sind.','Weil zwischen den Ketten von Duromeren keine Kräfte wirken.'],correct:0,
+     explain:'Zum Umformen müssen die Ketten gegeneinander verschiebbar werden. Bei Duromeren verhindern die vielen Querverbindungen das.'},
+    {type:'sort',q:'Urformen, Umformen oder Fügen? Ordne jeden Vorgang zu.',options:['Urformen','Umformen','Fügen'],
+     items:[['Aus Granulat wird ein Rohr extrudiert.',0],['Eine Folie wird erwärmt und zu einem Becher tiefgezogen.',1],['Zwei Rohrstücke aus PE werden verschweißt.',2],['Eine Zahnschiene entsteht im 3D-Drucker.',0],['Zwei Gehäuseteile werden verklebt.',2],['Eine Acrylglasplatte wird erwärmt und gebogen.',1]],
+     hint:'Urformen: Ausgangsstoff ohne Form. Umformen: Ein geformtes Teil bekommt eine neue Form. Fügen: Teile werden verbunden.',
+     okText:'Nur beim Urformen entsteht die Form erstmals aus einem formlosen Stoff.'}
+  ]},
+
+{ id:'s2', title:'Urformen aus der Schmelze',
+  intro:'Die meisten Gegenstände aus Thermoplasten entstehen aus Granulat, das zuerst geschmolzen und dann in Form gebracht wird. Hier lernst du die vier wichtigsten Verfahren kennen.',
+  blocks:[
+    {type:'text',html:`<p>Kunststoff wird meist als <b>Granulat</b> geliefert, also als kleine Körner von wenigen Millimetern. Fast alle Verfahren für Thermoplaste beginnen im <b>Extruder</b>.</p>`},
+    {type:'steps',title:'So arbeitet ein Extruder',items:[
+      {t:'Einfüllen',h:`<p>Das Granulat wird über einen Trichter in einen Zylinder gefüllt.</p>`},
+      {t:'Fördern, verdichten, schmelzen',h:`<p>Im beheizten Zylinder dreht sich eine <b>Schnecke</b>. Sie befördert das Granulat nach vorne und verdichtet es. Durch die Heizung und die Reibung schmilzt der Kunststoff, bis er plastisch fließt.</p>`},
+      {t:'Formen und abkühlen',h:`<p>Die plastische Masse wird in ein formgebendes <b>Werkzeug</b> gedrückt. Dort kühlt sie ab und wird fest. Je nach Werkzeug entstehen ganz verschiedene Produkte.</p>`}
+    ]},
+    {type:'steps',title:'Vier Urformverfahren',items:[
+      {t:'Extrudieren',h:`<p>Die Schmelze wird <b>kontinuierlich</b> durch eine formgebende Öffnung, die Düse, gepresst. Aus einer <b>Ringdüse</b> kommen Rohre und Schläuche, aus einer <b>Schlitzdüse</b> Platten und Folien. Führt man während des Extrudierens einen Kupferdraht durch die Mitte der Ringdüse, erhält man ein ummanteltes Kabel.</p>${extrusionSVG()}`},
+      {t:'Spritzgießen',h:`<p>Die Schmelze wird stoßweise unter hohem Druck in eine <b>geschlossene, gekühlte Form</b> gespritzt. Dort erstarrt sie, die Form öffnet sich und das Teil wird ausgeworfen. So entstehen sehr maßgenaue Massenartikel und kompliziert geformte Teile, zum Beispiel Schüsseln, Schraubverschlüsse oder Gehäuse.</p>${injectionSVG()}`},
+      {t:'Hohlkörperblasen',h:`<p>Ein Extruder drückt einen noch plastischen Schlauch zwischen die beiden Hälften einer Hohlform. Die Form schließt sich und quetscht den Schlauch unten luftdicht ab. Dann wird Luft eingeblasen, die den Schlauch an die Wand der Form drückt. So entstehen <b>Hohlkörper</b> mit enger Öffnung, etwa Flaschen, Kanister und Gießkannen.</p>${blowSVG()}`},
+      {t:'Folienblasen',h:`<p>Die Schmelze tritt aus einer Ringdüse aus. Druckluft bläst den Schlauch zu einem großen, <b>dünnwandigen</b> Schlauch auf. Diese Blasfolie wird zu Beuteln verarbeitet oder aufgeschnitten und als Folie verwendet.</p>${filmSVG()}`}
+    ]},
+    {type:'merke',html:`<div class="tablewrap"><table><thead><tr><th>Verfahren</th><th>Prinzip</th><th>typische Produkte</th></tr></thead><tbody>
+      <tr><td>Extrudieren</td><td>Schmelze wird ununterbrochen durch eine Düse gepresst</td><td>Rohre, Schläuche, Profile, Platten, Kabelmäntel</td></tr>
+      <tr><td>Spritzgießen</td><td>Schmelze wird in eine geschlossene, gekühlte Form gespritzt</td><td>Schüsseln, Verschlüsse, Gehäuse</td></tr>
+      <tr><td>Hohlkörperblasen</td><td>extrudierter Schlauch wird in einer Hohlform aufgeblasen</td><td>Flaschen, Kanister, Gießkannen</td></tr>
+      <tr><td>Folienblasen</td><td>Schlauch aus einer Ringdüse wird zu dünner Folie aufgeblasen</td><td>Tüten, Beutel, Folien</td></tr></tbody></table></div>`}
+  ],
+  exercises:[
+    {type:'order',q:'Bringe die Schritte beim Spritzgießen in die richtige Reihenfolge.',
+     items:['Granulat wird über den Trichter in den Zylinder gefüllt.','Die Schnecke fördert und verdichtet das Granulat, es schmilzt.','Die Schmelze wird unter hohem Druck in die geschlossene Form gespritzt.','Der Kunststoff kühlt in der Form ab und erstarrt.','Die Form öffnet sich und das Formteil wird ausgeworfen.'],
+     explain:'Erst schmelzen, dann formen, dann abkühlen. Ausgeworfen wird erst, wenn das Teil formstabil ist.'},
+    {type:'sort',q:'Mit welchem Verfahren wird der Gegenstand hergestellt?',options:['Extrudieren','Spritzgießen','Hohlkörper&shy;blasen','Folienblasen'],
+     items:[['Gartenschlauch',0],['Schraubverschluss',1],['Shampooflasche',2],['Müllbeutel',3],['Staubsaugergehäuse',1],['Fensterprofil',0],['Benzinkanister',2],['Einkaufstüte',3]],
+     hint:'Endlose Stränge mit gleichem Querschnitt: Extrudieren. Kompliziert geformte, massive Teile: Spritzgießen. Hohlkörper mit enger Öffnung: Hohlkörperblasen. Dünne Tüten: Folienblasen.',
+     okText:'Der Querschnitt eines extrudierten Produkts ist überall gleich. Hohlkörper mit enger Öffnung entstehen durch Blasen.'},
+    {type:'multi',q:'Warum wird die Form beim Spritzgießen gekühlt? Wähle alle richtigen Gründe aus.',
+     options:[['Der Kunststoff erstarrt schnell und das Teil kann ohne Verformung entnommen werden.',true],['Kurze Abkühlzeiten ermöglichen viele Teile pro Stunde.',true],['Durch die Kühlung vernetzen die Ketten des Thermoplasts.',false],['Die Kühlung hält den Kunststoff flüssig, damit er die Form ausfüllt.',false]],
+     explain:'Thermoplaste vernetzen beim Abkühlen nicht, sie werden nur fest. Die Kühlung verkürzt die Zeit, bis das Teil formstabil ist.'}
+  ]},
+
+{ id:'s3', group:'ext', title:'Weitere Ur-, Um- und Fügeverfahren',
+  intro:'Neben den Verfahren aus dem Extruder gibt es weitere Urformverfahren. Außerdem lernst du, wie Thermoplaste umgeformt und wie Kunststoffteile verbunden werden.',
+  blocks:[
+    {type:'steps',title:'Weitere Urformverfahren',items:[
+      {t:'3D-Druck',h:`<p>Ein 3D-Drucker trägt Material <b>Schicht für Schicht</b> auf, gesteuert durch ein am Computer konstruiertes Modell (CAD, computer-aided design). Verwendet werden Thermoplaste, Kunstharze, aber auch Keramik und Metalle. Der 3D-Druck eignet sich für Modelle, Prototypen und Einzelstücke, zum Beispiel für individuell angepasste Zahnschienen in der Kieferorthopädie.</p>`},
+      {t:'Pressen',h:`<p>Die Kunststoffmasse kommt in ein <b>offenes Werkzeug</b>, das sich danach schließt. Unter hohem Druck wird das Werkstück geformt. Durch eingelegte Matten oder Vliese, etwa aus Glasfasern, lassen sich die Teile verstärken. Gepresst werden auch Duromer-Formmassen, die in der beheizten Form aushärten.</p>`},
+      {t:'Kalandrieren',h:`<p>Die Masse wird zwischen mehreren beheizten Walzen zu Folien oder Bahnen ausgewalzt. Der Name kommt vom französischen calandre, die Wäschemangel. So werden zum Beispiel PVC-Folien hergestellt.</p>${calenderSVG()}`},
+      {t:'Rotationsformen',h:`<p>Kunststoffpulver wird in eine Hohlform gegeben. Die Form wird erwärmt und dreht sich gleichzeitig um <b>zwei Achsen</b>. Der Kunststoff lagert sich Schicht für Schicht an der Innenwand ab. Über Menge und Dauer lässt sich die Wanddicke steuern. So entstehen große Hohlkörper wie Tanks, Kajaks, Möbel und Spielzeug.</p>`},
+      {t:'Schäumen',h:`<p>Beim Schäumen werden Gasblasen in den Kunststoff eingebracht. Man unterscheidet drei Arten, wie das Gas entsteht:</p><ul><li><b>chemisch:</b> Das Gas entsteht durch eine Reaktion. Bei Polyurethan (PUR) bildet sich Kohlenstoffdioxid.</li><li><b>physikalisch:</b> Ein leicht siedendes Treibmittel, zum Beispiel Pentan, verdampft.</li><li><b>mechanisch:</b> Luft wird eingerührt, ähnlich wie beim Eischnee.</li></ul><p>Bei Polyurethan entscheidet der eingesetzte <b>Polyalkohol</b> über die Art des Schaums. Viele Hydroxygruppen und kurze Ketten führen zu einer engmaschigen Vernetzung und damit zu <b>Hartschaum</b>. Wenige Hydroxygruppen und lange Ketten ergeben <b>Weichschaum</b>.</p>`},
+      {t:'Urformen von Duromeren und Elastomeren',h:`<p>Duromere und Elastomere sind nach der Vernetzung nicht mehr formbar. Deshalb gibt man ihre <b>unvernetzten Vorprodukte</b> in die Form und lässt sie dort durch Wärme oder einen Katalysator reagieren. Erst in der Form entsteht das Netzwerk. Die Masse darf vorher nicht überhitzt werden, sonst vernetzt sie zu früh, bevor die Form gefüllt ist.</p>`}
+    ]},
+    {type:'steps',title:'Umformen und Fügen',items:[
+      {t:'Umformen: Thermoformen',h:`<p>Eine extrudierte Platte oder Folie aus einem Thermoplast wird erneut erwärmt, bis sie weich ist. Dann wird sie in ein Werkzeug gezogen, meist mit Unterdruck (<b>Tiefziehen</b>). So entstehen zum Beispiel Joghurtbecher und Verpackungsschalen. Für Duromere und Elastomere ist das nicht möglich.</p>`},
+      {t:'Fügen: Schweißen',h:`<p>Die Teile werden an der Verbindungsstelle angeschmolzen und zusammengepresst. Beim Abkühlen verbinden sie sich fest. Weil das Material schmelzen muss, eignet sich Schweißen <b>nur für Thermoplaste</b>.</p>`},
+      {t:'Fügen: Kleben',h:`<p>Kleben funktioniert auch bei Duromeren und Elastomeren.</p><ul><li><b>Physikalisches Kleben:</b> Der Klebstoff ist in einem Lösungsmittel gelöst. Das Lösungsmittel verdampft und der Klebstoff verfestigt sich.</li><li><b>Chemisches Kleben:</b> Die Bestandteile des Klebers reagieren miteinander zu einem festen Werkstoff, zum Beispiel beim Zweikomponentenkleber.</li></ul>`}
+    ]},
+    {type:'merke',html:`<p>Zum Urformen gehören auch 3D-Druck, Pressen, Kalandrieren, Rotationsformen und Schäumen. Duromere und Elastomere entstehen erst in der Form durch Vernetzen ihrer Vorprodukte. Umformen und Schweißen gelingen nur bei Thermoplasten, Kleben bei allen Kunststoffen.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Ordne jedem Produkt das passende Verfahren zu.',options:['3D-Druck','Kalandrieren','Rotationsformen','Thermoformen'],
+     items:[['Individuell angepasste Zahnschiene',0],['Kajak',2],['Joghurtbecher aus einer erwärmten Folie',3],['PVC-Folie für Bodenbeläge',1],['Großer Wassertank',2],['Prototyp eines neuen Gehäuses',0]],
+     hint:'Rotationsformen eignet sich für große Hohlkörper. 3D-Druck lohnt sich für Einzelstücke. Beim Thermoformen wird ein Halbzeug umgeformt.',
+     okText:'Jedes Verfahren hat seine Stärken: Einzelstücke, große Hohlkörper, Bahnen oder Becher aus Folie.'},
+    {type:'mc',q:'Ein Hersteller möchte Polyurethan-<b>Hartschaum</b> für Dämmplatten herstellen. Welchen Polyalkohol sollte er wählen?',
+     options:['Einen Polyalkohol mit wenigen Hydroxygruppen und langen Ketten','Einen Polyalkohol mit vielen Hydroxygruppen und kurzen Ketten','Die Art des Polyalkohols spielt keine Rolle.'],correct:1,
+     explain:'Jede Hydroxygruppe kann eine Verknüpfung eingehen. Viele Hydroxygruppen und kurze Ketten ergeben ein engmaschiges Netz, also einen harten Schaum.'},
+    {type:'sort',q:'Welche Fügeverfahren sind möglich?',options:['Schweißen und Kleben','nur Kleben'],
+     items:[['Zwei Rohre aus Polyethylen',0],['Zwei Platten aus Epoxidharz',1],['Eine Gummidichtung an einem Bauteil',1],['Zwei Platten aus PVC',0],['Zwei Teile aus Melaminharz',1]],
+     hint:'Schweißen setzt voraus, dass der Kunststoff schmilzt. Das ist nur bei Thermoplasten der Fall.',
+     okText:'Duromere und Elastomere schmelzen nicht. Für sie bleibt nur das Kleben.'}
+  ]},
+
+{ id:'s4', group:'ext', title:'Kunststoffmüll im Meer',
+  intro:'Kunststoffe sind langlebig. Das ist im Alltag ein Vorteil, in der Umwelt aber ein Problem. Diese Station zeigt, wie Kunststoffmüll ins Meer gelangt, was er dort anrichtet und welche Lösungsansätze es gibt.',
+  blocks:[
+    {type:'text',html:`<p>An vielen Küsten wird regelmäßig Kunststoffmüll angeschwemmt, etwa PET-Flaschen, Tüten, Kanister und Styropor. In Urlaubsorten werden die Strände täglich gereinigt. Auf unbewohnten Inseln sammelt sich der Müll dagegen an. Der größte Teil des Kunststoffmülls gelangt vom Land ins Meer, vor allem über Flüsse.</p>`},
+    {type:'steps',title:'Das Problem im Einzelnen',items:[
+      {t:'Müllstrudel',h:`<p>Meeresströmungen sammeln den treibenden Müll in bestimmten Bereichen, den <b>Müllstrudeln</b>, vor allem in der Nähe des Äquators. Im Pazifischen Müllstrudel treiben nach Schätzung eines internationalen Forschungsteams rund 80&nbsp;000 Tonnen Kunststoffmüll auf einer Fläche, die mehr als viermal so groß ist wie Deutschland. Manche Teile schwimmen an der Oberfläche, andere schweben darunter im Wasser.</p>`},
+      {t:'Gefahren für Tiere',h:`<p>Meerestiere verwechseln Kunststoff mit Nahrung: Seevögel fressen Kunststoffteile, Schildkröten halten Tüten für Quallen, Fische verwechseln kleine Teilchen mit Plankton. Kunststoff kann nicht verdaut und nicht in Energie umgewandelt werden. Die Tiere haben einen vollen Magen und verhungern trotzdem. Außerdem können sie sich in Kunststoffteilen verfangen.</p>`},
+      {t:'Mikroplastik',h:`<p>Als <b>Mikroplastik</b> bezeichnet man Kunststoffteilchen, die kleiner als 5&nbsp;mm sind.</p><ul><li><b>Primäres Mikroplastik</b> wird absichtlich in dieser Größe hergestellt, zum Beispiel Granulat oder Schleifkörper in Kosmetik.</li><li><b>Sekundäres Mikroplastik</b> entsteht, wenn größere Kunststoffteile zerfallen oder abgerieben werden, etwa durch UV-Licht und Wellen, durch Reifenabrieb oder beim Waschen synthetischer Kleidung.</li></ul><p>Über die Nahrungskette gelangt Mikroplastik auch in unseren Körper. An den Teilchen können krebserregende und giftige Stoffe haften, zum Beispiel PCB (polychlorierte Biphenyle).</p>`},
+      {t:'Geisternetze',h:`<p>Fischernetze, die verloren gegangen sind oder absichtlich zurückgelassen wurden, treiben als <b>Geisternetze</b> im Meer. In ihnen verfangen sich weiter Fische, Schildkröten und Meeressäuger. Mit der Zeit zerfallen sie zu Mikroplastik.</p>`},
+      {t:'Ursachen',h:`<p>In Deutschland nimmt die Menge der Verpackungen weiter zu. Gründe sind unter anderem Verpackungen für Lebensmittel zum sofortigen Verzehr wie Coffee-to-go-Becher, der Trend zu kleineren Packungen, etwa bei Süßigkeiten, und der wachsende Onlinehandel.</p>`},
+      {t:'Lösungsansätze',h:`<p>Kunststoffmüll im Meer ist ein <b>globales</b> Problem, das auf mehreren Ebenen angegangen werden muss:</p><ul><li><b>Politik:</b> gesetzlicher Rahmen, zum Beispiel Pfandsysteme, Verbote einzelner Einwegprodukte und internationale Abkommen</li><li><b>Industrie und Wirtschaft:</b> Rücknahme von Verpackungen, weniger und besser verwertbare Verpackungen</li><li><b>Einzelne:</b> Kunststoff vermeiden, Mehrweg nutzen, Müll richtig trennen</li></ul><p>Ziel ist die Reihenfolge: zuerst vermeiden, dann wiederverwenden und verwerten, zuletzt richtig entsorgen.</p>`}
+    ]},
+    {type:'merke',html:`<p>Kunststoffe werden in der Umwelt kaum abgebaut. Im Meer sammeln sie sich in Müllstrudeln, gefährden Tiere und zerfallen zu Mikroplastik, das über die Nahrungskette auch den Menschen erreicht. Lösungen erfordern Vermeidung, Verwertung und internationale Regeln.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Primäres oder sekundäres Mikroplastik? Nutze die Definition aus der Erklärung.',options:['primär','sekundär'],
+     items:[['Schleifkörper aus Kunststoff in einem Peeling',0],['Eine Plastiktüte zerfällt durch UV-Licht und Wellen.',1],['Kunststoffgranulat geht beim Transport verloren.',0],['Fasern lösen sich beim Waschen aus einer Fleecejacke.',1],['Ein Geisternetz zerfällt mit der Zeit.',1]],
+     hint:'Primär: Die Teilchen wurden schon in dieser kleinen Größe hergestellt. Sekundär: Sie entstehen erst durch Zerfall oder Abrieb größerer Teile.',
+     okText:'Entscheidend ist, ob die Teilchen absichtlich so klein hergestellt wurden oder erst durch Zerfall entstanden sind.'},
+    {type:'mc',q:'Wie kann Mikroplastik dem Menschen schaden, obwohl wir selten Kunststoff direkt essen?',
+     options:['Es gelangt über die Nahrungskette in den Körper, und daran haftende Schadstoffe wie PCB können mit aufgenommen werden.','Es verdunstet aus dem Meer und wird eingeatmet.','Mikroplastik ist für Menschen grundsätzlich unbedenklich.'],correct:0,
+     explain:'Fische und Meeresfrüchte nehmen Mikroplastik auf. Am Kunststoff können sich giftige Stoffe anreichern.'}
+  ]},
+
+{ id:'s5', title:'Vier Wege für Kunststoffabfall',
+  intro:'Kunststoffabfall bleibt Hunderte bis Tausende Jahre erhalten. Diese Station gibt dir zuerst einen Überblick über die vier Wege, mit ihm umzugehen. Danach lernst du die ersten beiden genauer kennen: Vermeiden und werkstofflich verwerten.',
+  blocks:[
+    {type:'text',html:`<h3>Wie viel Kunststoff steckt im Abfall?</h3><p>Den Anteil eines Bestandteils an einem Gemisch kann man auf das Volumen oder auf die Masse beziehen:</p>
+      <div class="tablewrap"><table><tbody>
+      <tr><td><b>Volumenanteil</b></td><td class="formula">φ(Kunststoffabfall) = V(Kunststoffabfall) : V(Abfall gesamt)</td></tr>
+      <tr><td><b>Massenanteil</b></td><td class="formula">w(Kunststoffabfall) = m(Kunststoffabfall) : m(Abfall gesamt)</td></tr></tbody></table></div>
+      <p>Im Abfall in Deutschland beträgt der Volumenanteil der Kunststoffe etwa φ = 20&nbsp;%, der Massenanteil nur etwa w = 8&nbsp;%. Kunststoffe haben eine geringe Dichte. Sie machen also wenig von der Masse, aber viel vom Volumen aus. Gerade das Volumen ist bei Deponien knapp.</p>`},,
+    {type:'text',html:`<h3>Die vier Wege im Überblick</h3><p>Kunststoffabfall kann man vermeiden oder auf drei Arten verwerten. Die Wege unterscheiden sich vor allem darin, <b>was mit den Makromolekülen geschieht</b>. Je weiter vorne ein Weg steht, desto mehr Rohstoff und Energie bleiben erhalten. Deshalb hat er Vorrang vor den folgenden.</p>`},
+    {type:'fig',html:overviewFig()},
+    {type:'text',html:`<h3>Weg 1: Vermeiden</h3><p>Abfall, der gar nicht entsteht, muss weder gesammelt noch verwertet werden. Dafür sollten Verpackungen, Taschen und Behälter möglichst oft <b>wiederverwendet</b> werden. Pfandflaschen im Mehrwegsystem sind zum Beispiel besser als Einwegflaschen. Unnötige Verpackungen lassen sich ganz weglassen.</p>`},
+    {type:'steps',title:'Weg 2: Werkstoffliche Verwertung',items:[
+      {t:'Prinzip',h:`<p>Sortenreine, wenig verschmutzte Abfälle aus <b>Thermoplasten</b> werden zerkleinert, gereinigt und wieder eingeschmolzen. Daraus entsteht <b>Regranulat</b>, dem auch Neuware beigemischt werden kann. Die <b>Makromoleküle bleiben dabei erhalten</b>. Aus dem Regranulat werden neue Kunststoffprodukte hergestellt.</p>`},
+      {t:'Grenzen',h:`<ul><li>Bei gebrauchten Kunststoffen sind die Makromoleküle oft geschädigt. Das neue Produkt hat dann nicht mehr die Eigenschaften eines Produkts aus Neuware.</li><li>Sammeln, Sortieren, Reinigen und Aufbereiten sind aufwendig. Recycelte Produkte sind deshalb oft teurer und von geringerer Qualität.</li><li>Gemischte Kunststoffe lassen sich schlecht werkstofflich verwerten.</li><li><b>Duromere</b> schmelzen nicht. Sie können nur zerkleinert oder gemahlen und als <b>Füllstoff</b> in neuen Produkten eingesetzt werden (Partikelrecycling).</li></ul>`},
+      {t:'Sortieren nach der Dichte',h:`<p>Werkstoffliche Verwertung braucht sortenreine Kunststoffe. Ein einfaches Trennverfahren ist das <b>Schwimm-Sink-Verfahren</b>: Die zerkleinerten Kunststoffe werden in Flüssigkeiten bekannter Dichte gegeben. Was eine geringere Dichte hat als die Flüssigkeit, schwimmt oben.</p>
+        <div class="tablewrap"><table><thead><tr><th>Kunststoff</th><th class="num">Dichte in g/cm³</th></tr></thead><tbody>
+        <tr><td>Polyethylen (PE)</td><td class="num">0,91 bis 0,96</td></tr>
+        <tr><td>Polystyrol (PS)</td><td class="num">1,05</td></tr>
+        <tr><td>Polyvinylchlorid (PVC)</td><td class="num">1,38 bis 1,40</td></tr>
+        <tr><td>zum Vergleich: Wasser</td><td class="num">1,00</td></tr></tbody></table></div>`},
+      {t:'Der Kunststoffcode',h:`<p>Auf vielen Verpackungen steht ein Recyclingcode: ein Dreieck aus Pfeilen mit einer Nummer. Er hilft beim Sortieren.</p><div class="tablewrap"><table><tbody>
+        <tr><td class="num">01</td><td>PET</td><td class="num">02</td><td>PE-HD</td></tr>
+        <tr><td class="num">03</td><td>PVC</td><td class="num">04</td><td>PE-LD</td></tr>
+        <tr><td class="num">05</td><td>PP</td><td class="num">06</td><td>PS</td></tr>
+        <tr><td class="num">07</td><td colspan="3">andere Kunststoffe</td></tr></tbody></table></div>`}
+    ]},
+    {type:'merke',html:`<p>Die vier Wege in der Reihenfolge ihres Vorrangs: vermeiden, werkstofflich, rohstofflich und energetisch verwerten. Bei der werkstofflichen Verwertung werden sortenreine Thermoplaste eingeschmolzen, die Makromoleküle bleiben erhalten. Das Verfahren braucht sauberes, sortiertes Material und liefert oft Produkte geringerer Qualität. Duromere können nur als Füllstoff wiederverwendet werden.</p>`}
+  ],
+  exercises:[
+    {type:'order',q:'Ordne die vier Wege nach ihrem Vorrang. Der beste Weg steht oben.',
+     items:['Vermeiden','Werkstofflich verwerten','Rohstofflich verwerten','Energetisch verwerten'],
+     explain:'Vermeiden spart Rohstoff und Energie vollständig. Werkstofflich bleiben die Makromoleküle erhalten, rohstofflich immerhin die Kohlenstoffverbindungen als Rohstoff. Energetisch wird nur noch die Energie genutzt.'},
+    {type:'mc',q:'Im Abfall beträgt der Volumenanteil der Kunststoffe 20 %, der Massenanteil nur 8 %. Wie erklärt sich der Unterschied?',
+     options:['Kunststoffe haben im Vergleich zum übrigen Abfall eine geringe Dichte.','Kunststoffe haben eine besonders hohe Dichte.','Beim Messen des Volumens werden Kunststoffe doppelt gezählt.'],correct:0,
+     explain:'Wenig Masse bei viel Volumen bedeutet eine geringe Dichte (ρ = m : V).'},
+    {type:'sort',q:'Ist der Abfall für die werkstoffliche Verwertung geeignet?',options:['gut geeignet','kaum geeignet'],
+     items:[['Sortenrein gesammelte PET-Flaschen',0],['Saubere Produktionsabfälle aus PP',0],['Stark verschmutzte Mischfolie',1],['Gehäuse aus Melaminharz (Duromer)',1],['Verpackung aus mehreren verklebten Kunststoffschichten',1],['Saubere Kanister aus PE-HD',0]],
+     hint:'Geeignet sind saubere, sortenreine Thermoplaste. Verbunde, Gemische, Verschmutzungen und Duromere machen Probleme.',
+     okText:'Je reiner und sauberer der Abfall, desto besser das Regranulat.'},
+    {type:'cloze',q:'Ein Gemisch aus zerkleinertem PE, PS und PVC wird mit dem Schwimm-Sink-Verfahren getrennt. Ergänze.',
+     text:'Gibt man das Gemisch in Wasser (ρ = 1,00 g/cm³), schwimmt {0} oben, während {1} absinken. Die abgesunkenen Teile gibt man in eine Salzlösung mit ρ = 1,20 g/cm³. Dort schwimmt {2}, und {3} sinkt zu Boden.',
+     gaps:[{o:['PE','PS','PVC'],a:0},{o:['PE und PS','PS und PVC','PE und PVC'],a:1},{o:['PE','PS','PVC'],a:1},{o:['PE','PS','PVC'],a:2}],
+     explain:'PE (0,91–0,96) ist leichter als Wasser. PS (1,05) ist leichter als die Salzlösung, PVC (1,38–1,40) schwerer.'}
+  ]},
+
+{ id:'s6', title:'Rohstofflich und energetisch verwerten',
+  intro:'Gemischte oder verschmutzte Kunststoffe lassen sich nicht sinnvoll einschmelzen. Für sie bleiben die Wege 3 und 4: Die Makromoleküle werden in kleinere Moleküle zerlegt oder zur Energiegewinnung verbrannt.',
+  blocks:[
+    {type:'fig',html:overviewFig([2,3])},
+    {type:'steps',title:'Weg 3: Rohstoffliche Verwertung',items:[
+      {t:'Prinzip',h:`<p>Die Makromoleküle werden in <b>niedermolekulare Stoffe</b> umgewandelt: in ihre Monomere oder in Gemische aus Alkanen, Alkenen und Aromaten. Diese Produkte dienen als Rohstoff für neue Monomere oder für andere Synthesen. Das funktioniert auch mit <b>vermischten und verschmutzten</b> Kunststoffen.</p>`},
+      {t:'Petrochemische Verfahren: Pyrolyse und Hydrierung',h:`<p>Bei der <b>Pyrolyse</b> (griechisch pyr, Feuer, und lysis, Auflösung) werden Kunststoffe unter <b>Ausschluss von Sauerstoff</b> auf etwa 500 bis 900&nbsp;°C erhitzt. Die hohe Temperatur bricht Bindungen in den Makromolekülen. Es entstehen Pyrolysegase wie Methan, Ethan und Propen sowie Pyrolyseöle, außerdem Ruß. Ein Teil der Gase wird verbrannt, um die Anlage zu beheizen.</p><p>Bei der <b>Hydrierung</b> werden die Kunststoffe mit Wasserstoff umgesetzt. Beide Verfahren liefern erdölartige Produkte, benötigen aber viel Energie.</p>`},
+      {t:'Solvolyse',h:`<p>Bei der <b>Solvolyse</b> werden Bindungen mit Hilfe eines Lösungsmittels gespalten. Das gelingt bei Kunststoffen, die durch Polykondensation oder Polyaddition entstanden sind. Sie werden in ihre Monomere zerlegt. Ein Beispiel ist die Spaltung von PET.</p>`},
+      {t:'Reduktionsmittel im Hochofen',h:`<p>Altkunststoffe können im Hochofen als <b>Reduktionsmittel</b> für Eisenoxide eingesetzt werden. Sie ersetzen dort einen Teil von Koks und Schweröl.</p>`}
+    ]},
+    {type:'steps',title:'Weg 4: Energetische Verwertung',items:[
+      {t:'Verbrennen zur Energiegewinnung',h:`<p>Die meisten Kunststoffe haben einen ähnlich hohen <b>Heizwert</b> wie Heizöl oder Kohle. Die bei der Verbrennung frei werdende Energie wird in Heizkraftwerken oder zur Stromerzeugung genutzt. In Müllverbrennungsanlagen erhöht Kunststoff den Heizwert des Mülls. Die Makromoleküle werden dabei <b>oxidiert</b>, vor allem zu Kohlenstoffdioxid und Wasser.</p>`},
+      {t:'Schadstoffe',h:`<p>Bei der Verbrennung entstehen auch Schadstoffe. Aus PVC bildet sich <b>Chlorwasserstoff</b> (HCl), außerdem können hochgiftige und krebserregende <b>Dioxine</b> wie 2,3,7,8-Tetrachlordibenzodioxin (TCDD) entstehen. Moderne Filteranlagen müssen diese Stoffe aus den Abgasen entfernen. Chlorwasserstoff wird zum Beispiel in Waschlösungen absorbiert. Für Dioxine gelten sehr niedrige Grenzwerte.</p>`}
+    ]},
+    {type:'text',html:`<h3>Wie wird in Deutschland verwertet?</h3>${shareBar()}<p>Verwertete Kunststoffabfälle in Tausend Tonnen. Daten: Umweltbundesamt 2018, nach Schulbuch.</p><div class="tablewrap"><table><thead><tr><th>Jahr</th><th class="num">werkstofflich</th><th class="num">rohstofflich</th><th class="num">energetisch</th><th class="num">gesamt</th></tr></thead><tbody>
+      <tr><td>1994</td><td class="num">1250</td><td class="num">50</td><td class="num">100</td><td class="num">1400</td></tr>
+      <tr><td>2017</td><td class="num">2824</td><td class="num">49</td><td class="num">3242</td><td class="num">6115</td></tr></tbody></table></div>`},
+    {type:'merke',html:`<p>Bei der rohstofflichen Verwertung werden die Makromoleküle in kleine Moleküle zerlegt, die als Rohstoff dienen. Bei der energetischen Verwertung werden sie oxidiert, genutzt wird nur die frei werdende Energie. Beide Wege eignen sich auch für gemischte Abfälle. In Deutschland wird mehr als die Hälfte der Kunststoffabfälle energetisch verwertet.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Welche Verwertungsart ist gemeint?',options:['werkstofflich','rohstofflich','energetisch'],
+     items:[['Die Polymer-Moleküle bleiben erhalten.',0],['Die Polymer-Moleküle werden in kleinere Moleküle zerlegt.',1],['Die Polymer-Moleküle werden oxidiert.',2],['Pyrolyse von Mischkunststoffen',1],['Einschmelzen sortenreiner Flaschen zu Regranulat',0],['Kunststoff erhöht den Heizwert in der Müllverbrennungsanlage.',2],['Altkunststoff als Reduktionsmittel im Hochofen',1]],
+     hint:'Frage dich jeweils: Was passiert mit den Makromolekülen? Bleiben sie ganz, werden sie zerlegt oder verbrannt?',
+     okText:'Das Schicksal der Makromoleküle unterscheidet die drei Verwertungsarten.'},
+    {type:'mc',q:'Warum muss bei der Pyrolyse Sauerstoff ausgeschlossen werden?',
+     options:['Sonst würden die Kunststoffe verbrennen, statt in verwertbare kleinere Moleküle gespalten zu werden.','Sauerstoff würde die Reaktion zu stark verlangsamen.','Sauerstoff ist bei 500 °C flüssig.'],correct:0,
+     explain:'Mit Sauerstoff entstünden vor allem Kohlenstoffdioxid und Wasser, die nicht als Rohstoff taugen.'},
+    {type:'num',q:'Berechne den Anteil der werkstofflichen Verwertung an den 1994 verwerteten Kunststoffabfällen. Runde auf ganze Prozent.',ans:89,tol:0.6,unit:'%',
+     explain:'1250 : 1400 = 0,893, also etwa 89 %.',wrong:'Teile die werkstofflich verwertete Menge durch die Gesamtmenge von 1994.'},
+    {type:'num',q:'Berechne den Anteil der werkstofflichen Verwertung an den 2017 verwerteten Kunststoffabfällen. Runde auf ganze Prozent.',ans:46,tol:0.6,unit:'%',
+     explain:'2824 : 6115 = 0,462, also etwa 46 %. Der Anteil ist seit 1994 stark gesunken, obwohl die Menge gestiegen ist.',wrong:'Teile 2824 durch die Gesamtmenge 6115.'},
+    {type:'mc',q:'Bei der Verbrennung von PVC entsteht ein saures Gas. Welches, und wie wird es aus dem Abgas entfernt?',
+     options:['Chlorwasserstoff; er wird in einer Waschlösung absorbiert.','Kohlenstoffmonooxid; es wird mit Wasser ausgewaschen.','Chlor; es entweicht ungehindert.'],correct:0,
+     explain:'PVC enthält Chlor. Bei der Verbrennung entsteht HCl, das sich in Wasser oder basischen Lösungen löst und so zurückgehalten wird.'}
+  ]},
+
+{ id:'s7', group:'ext', title:'Polymilchsäure (PLA)',
+  intro:'Als Antwort auf die Müllproblematik wurden biologisch abbaubare Kunststoffe entwickelt. Das bekannteste Beispiel ist Polymilchsäure, kurz PLA (polylactic acid).',
+  blocks:[
+    {type:'text',html:`<p>PLA wird vielfältig eingesetzt: in der Lebensmittelindustrie als Verpackung, in der Landwirtschaft für Mulchfolien, die nach dem Unterpflügen verrotten, und in der Medizin als Nahtmaterial, das sich im Körper auflöst (bioresorbierbar). Ein Siegel mit einem Keimling kennzeichnet Produkte, die als kompostierbar zertifiziert sind.</p>`},
+    {type:'fig',html:lactidFig()},
+    {type:'steps',title:'Synthese und Abbau von PLA',items:[
+      {t:'Das Monomer: Milchsäure',h:`<p>Milchsäure wird aus Stärke, Glucose oder Lactose gewonnen, indem Mikroorganismen diese Stoffe vergären. Ein Milchsäure-Molekül besitzt eine <b>Hydroxygruppe</b> (–OH) und eine <b>Carboxygruppe</b> (–COOH). Damit kann es an beiden Enden mit weiteren Molekülen reagieren.</p>`},
+      {t:'Weg 1: Polykondensation',h:`<p>Die Carboxygruppe eines Moleküls reagiert mit der Hydroxygruppe des nächsten zu einer <b>Estergruppe</b>. Dabei wird jeweils ein Wasser-Molekül abgespalten. Es entsteht ein Polyester.</p><p class="eqn">n HO–CH(CH<sub>3</sub>)–COOH → H–[O–CH(CH<sub>3</sub>)–CO]<sub>n</sub>–OH + (n–1) H<sub>2</sub>O</p>`},
+      {t:'Weg 2: Ringöffnungspolymerisation',h:`<p>Zwei Milchsäure-Moleküle können zuerst zu einem ringförmigen Molekül reagieren, dem <b>Lactid</b>. Es enthält bereits zwei Estergruppen. Bei der Ringöffnungspolymerisation werden die Ringe geöffnet und zu langen Ketten verknüpft. Dabei entsteht <b>kein Nebenprodukt</b>, und man erhält besonders lange Ketten.</p>`},
+      {t:'Abbau',h:`<p>Die Esterbindungen im PLA können durch <b>Hydrolyse</b> gespalten werden: Mit Wasser entstehen wieder Milchsäure-Moleküle. Mikroorganismen bauen die Milchsäure anschließend vollständig zu Kohlenstoffdioxid und Wasser ab. Das ähnelt dem Abbau von Stärke, bei dem die Bindungen zwischen den Glucose-Bausteinen hydrolytisch gespalten werden.</p><p class="eqn">H–[O–CH(CH<sub>3</sub>)–CO]<sub>n</sub>–OH + (n–1) H<sub>2</sub>O → n HO–CH(CH<sub>3</sub>)–COOH</p><p class="small">Im Kompost läuft der Abbau nur unter günstigen Bedingungen schnell ab, vor allem bei höheren Temperaturen wie in industriellen Kompostieranlagen.</p>`}
+    ]},
+    {type:'merke',html:`<p>PLA ist ein Polyester aus Milchsäure. Es entsteht durch Polykondensation von Milchsäure oder durch Ringöffnungspolymerisation von Lactid. Durch Hydrolyse der Esterbindungen wird PLA wieder in Milchsäure gespalten, die Mikroorganismen zu Kohlenstoffdioxid und Wasser abbauen.</p>`}
+  ],
+  exercises:[
+    {type:'cloze',q:'Ergänze die Beschreibung der Polykondensation von Milchsäure.',
+     text:'Die {0} eines Milchsäure-Moleküls reagiert mit der {1} eines anderen. Dabei wird {2} abgespalten, und es entsteht eine {3}. Das Produkt gehört deshalb zu den {4}.',
+     gaps:[{o:['Carboxygruppe','Aminogruppe','Doppelbindung'],a:0},{o:['Carboxygruppe','Hydroxygruppe','Methylgruppe'],a:1},{o:['Wasserstoff','Wasser','Kohlenstoffdioxid'],a:1},{o:['Estergruppe','Ethergruppe','Amidgruppe'],a:0},{o:['Polyestern','Polyamiden','Polyalkenen'],a:0}],
+     explain:'Säure plus Alkohol ergibt einen Ester und Wasser. Bei vielen Verknüpfungen entsteht ein Polyester.'},
+    {type:'mc',q:'Auch aus 3-Hydroxybuttersäure, CH<sub>3</sub>–CH(OH)–CH<sub>2</sub>–COOH, lässt sich ein Polymer herstellen. Welcher Reaktionstyp liegt zugrunde?',
+     options:['Polymerisation, weil das Molekül eine C=C-Doppelbindung besitzt','Polykondensation, weil Hydroxy- und Carboxygruppen unter Abspaltung von Wasser Estergruppen bilden','Polyaddition, weil keine Atome umgelagert werden'],correct:1,
+     explain:'Das Monomer hat keine C=C-Doppelbindung, aber eine Hydroxy- und eine Carboxygruppe. Es entsteht der Polyester Poly-3-hydroxybuttersäure (PHB) mit der Wiederholungseinheit –[O–CH(CH<sub>3</sub>)–CH<sub>2</sub>–CO]–.'},
+    {type:'mc',q:'Welche Bindung wird beim biologischen Abbau von PLA zuerst gespalten?',options:['Die C–H-Bindungen der Methylgruppe','Die Esterbindungen in der Hauptkette','Die C=O-Doppelbindungen'],correct:1,
+     explain:'Wasser spaltet die Esterbindungen hydrolytisch. Dabei entstehen wieder Hydroxy- und Carboxygruppen.'}
+  ]},
+
+{ id:'s8', group:'ext', title:'Biokunststoffe einordnen',
+  intro:'Nicht jeder Biokunststoff ist biologisch abbaubar, und nicht jeder biologisch abbaubare Kunststoff stammt aus nachwachsenden Rohstoffen. Hier lernst du, die Begriffe auseinanderzuhalten.',
+  blocks:[
+    {type:'text',html:`<p>Der Begriff <b>Biokunststoff</b> wird nicht einheitlich verwendet. Er bezieht sich auf zwei voneinander unabhängige Merkmale:</p><ul><li><b>Rohstoff:</b> Wird der Kunststoff aus nachwachsenden Rohstoffen hergestellt (biobasiert) oder aus Erdöl (fossil)?</li><li><b>Abbaubarkeit:</b> Können Mikroorganismen den Kunststoff zu Kohlenstoffdioxid, Wasser und Biomasse abbauen?</li></ul><p>Als Biokunststoff gilt ein Kunststoff, wenn mindestens eines der beiden Merkmale zutrifft.</p>`},
+    {type:'text',html:`<div class="grid4" role="table" aria-label="Einteilung der Biokunststoffe nach Rohstoff und Abbaubarkeit">
+      <div class="h"></div><div class="h">biologisch abbaubar</div><div class="h">nicht biologisch abbaubar</div>
+      <div class="rh">aus nachwachsenden Rohstoffen</div>
+      <div class="c bio"><span class="ml">nachwachsend, biologisch abbaubar</span><b>Biokunststoff</b><span>pflanzlich: Stärkeblends, Cellulose, PLA<br>tierisch: Casein, Chitosan<br>durch Mikroorganismen: PHB</span></div>
+      <div class="c bio"><span class="ml">nachwachsend, nicht abbaubar</span><b>Biokunststoff</b><span>naturfaserverstärkte Kunststoffe, Holz-Kunststoff-Verbundwerkstoffe, Bio-PE aus Zuckerrohr</span></div>
+      <div class="rh">aus fossilen Rohstoffen</div>
+      <div class="c bio"><span class="ml">fossil, biologisch abbaubar</span><b>Biokunststoff</b><span>abbaubare Polyester aus Erdöl, z.&nbsp;B. PBAT</span></div>
+      <div class="c no"><span class="ml">fossil, nicht abbaubar</span><b>kein Biokunststoff</b><span>herkömmliche Kunststoffe wie PE, PP, PET, PVC</span></div>
+    </div>`},
+    {type:'steps',title:'Beispiele und Probleme',items:[
+      {t:'Verbundwerkstoffe',h:`<p>Naturfaserverstärkte Kunststoffe und Holz-Kunststoff-Verbundwerkstoffe enthalten Naturfasern oder Holzmehl. Diese Füllstoffe sind eingebettet in eine Matrix aus einem <b>herkömmlichen Kunststoff</b>, oft PP oder PE. Sie zählen wegen des nachwachsenden Anteils zu den Biokunststoffen, sind aber nicht biologisch abbaubar, weil die Kunststoffmatrix nicht abgebaut wird.</p>`},
+      {t:'Biomüll-Folienbeutel',h:`<p>Kompostierbare Biomüllbeutel bestehen meist aus einem abbaubaren Polyester, dem Maisstärke, Cellulose und Polymilchsäure beigemischt sind. Laut Hersteller sind sie kompostierbar. Mit Lugol’scher Lösung (Iod-Kaliumiodid-Lösung) lässt sich die enthaltene Stärke nachweisen: Sie färbt sich blauschwarz.</p>`},
+      {t:'Warum manche Kommunen sie verbieten',h:`<p>Viele Kompostieranlagen arbeiten mit kurzen Rottezeiten von wenigen Wochen. In dieser Zeit zersetzen sich die Beutel oft nicht vollständig. Außerdem können die Anlagen sie nicht von herkömmlichen Plastiktüten unterscheiden und sortieren sie als Störstoff aus. Deshalb sind kompostierbare Tüten im Biomüll in manchen Orten nicht erlaubt.</p>`}
+    ]},
+    {type:'merke',html:`<p>„Biobasiert“ beschreibt den Rohstoff, „biologisch abbaubar“ das Verhalten am Ende der Nutzung. Ein Kunststoff aus nachwachsenden Rohstoffen ist nicht automatisch abbaubar, und ein abbaubarer Kunststoff kann aus Erdöl stammen.</p>`}
+  ],
+  exercises:[
+    {type:'sort',q:'Ordne jeden Kunststoff in die Vierfeldertafel ein.',options:['biobasiert, abbaubar','biobasiert, nicht abbaubar','fossil, abbaubar','fossil, nicht abbaubar'],
+     items:[['Polymilchsäure (PLA)',0],['PHB, von Mikroorganismen gebildet',0],['Holz-Kunststoff-Verbund aus Holzmehl und PE',1],['Bio-PE aus Zuckerrohr',1],['Abbaubarer Polyester aus Erdöl (PBAT)',2],['PET-Flasche aus Erdöl',3],['Stärkeblend',0]],
+     hint:'Prüfe die beiden Merkmale nacheinander: Woraus wird der Kunststoff hergestellt? Und können Mikroorganismen ihn abbauen?',
+     okText:'Rohstoff und Abbaubarkeit sind zwei getrennte Fragen. Nur fossile, nicht abbaubare Kunststoffe sind keine Biokunststoffe.'},
+    {type:'mc',q:'Ist Bio-PE aus Zuckerrohr biologisch abbaubar?',options:['Ja, weil es aus Pflanzen stammt','Nein, chemisch ist es dasselbe Polyethylen wie aus Erdöl.','Ja, aber nur im Meer'],correct:1,
+     explain:'Die Abbaubarkeit hängt von der chemischen Struktur ab, nicht von der Herkunft der Rohstoffe. Polyethylen hat keine Bindungen, die Mikroorganismen leicht spalten können.'}
+  ]},
+
+{ id:'s9', title:'Abschluss: alles im Zusammenhang',
+  intro:'Hier wiederholst du die Inhalte der Pflichtstationen 1, 2, 5 und 6. Wenn du unsicher bist, schau in der passenden Station nach.',
+  blocks:[
+    {type:'merke',html:`<div class="tablewrap"><table><tbody>
+      <tr><td>Verarbeitung</td><td>Urformen (Extrudieren, Spritzgießen, Hohlkörperblasen, Folienblasen), Umformen (nur Thermoplaste), Fügen (Schweißen nur Thermoplaste, Kleben alle)</td></tr>
+      <tr><td>Abfall</td><td>vier Wege mit Vorrang: vermeiden, werkstofflich (Makromoleküle bleiben), rohstofflich (werden zerlegt), energetisch (werden oxidiert)</td></tr></tbody></table></div>`}
+  ],
+  exercises:[
+    {type:'mc',q:'Ein Unternehmen will 50 000 identische Deckel für Marmeladengläser herstellen. Welches Verfahren ist am besten geeignet?',options:['3D-Druck','Spritzgießen','Rotationsformen'],correct:1,
+     explain:'Spritzgießen liefert maßgenaue Teile in großer Stückzahl. 3D-Druck lohnt sich nur für Einzelstücke, Rotationsformen für große Hohlkörper.'},
+    {type:'mc',q:'Aus einem Duromer-Abfall soll etwas Neues entstehen. Welche Möglichkeit gibt es?',options:['Einschmelzen und neu spritzgießen','Zermahlen und als Füllstoff verwenden','Erwärmen und zu einer Folie tiefziehen'],correct:1,
+     explain:'Duromere schmelzen nicht. Ihnen bleibt das Partikelrecycling oder eine rohstoffliche bzw. energetische Verwertung.'},
+    {type:'sort',q:'Trifft die Aussage zu?',options:['richtig','falsch'],
+     items:[['PVC kann man schweißen.',0],['Duromere lassen sich nach dem Erwärmen umformen.',1],['Bei der werkstofflichen Verwertung werden die Kunststoffe verbrannt.',1],['Bei der Pyrolyse werden Makromoleküle unter Luftausschluss gespalten.',0],['Die rohstoffliche Verwertung eignet sich auch für verschmutzte Mischkunststoffe.',0],['Bei der energetischen Verwertung bleibt der Rohstoff Kunststoff erhalten.',1]],
+     hint:'Denke an die Unterschiede zwischen Thermoplasten und Duromeren und daran, was bei den Verwertungswegen mit den Makromolekülen geschieht.',
+     okText:'Du hast die zentralen Begriffe sicher auseinandergehalten.'},
+    {type:'cloze',q:'Vom Granulat zur Shampooflasche und zurück: Ergänze den Lebensweg einer Flasche aus Polyethylen.',
+     text:'Das Granulat wird im {0} geschmolzen. Daraus wird ein Schlauch extrudiert, den eine zweiteilige Hohlform einschließt. {1} presst den Schlauch an die Wand der Form. Dieses Verfahren heißt {2}. Weil Polyethylen ein {3} ist, kann die gebrauchte, saubere Flasche eingeschmolzen und {4} verwertet werden.',
+     gaps:[{o:['Extruder','Kalander','Hochofen'],a:0},{o:['Ein Stempel','Druckluft','Unterdruck'],a:1},{o:['Spritzgießen','Hohlkörperblasen','Folienblasen'],a:1},{o:['Thermoplast','Duromer','Elastomer'],a:0},{o:['werkstofflich','rohstofflich','energetisch'],a:0}],
+     explain:'Weil Thermoplaste beim Erwärmen wieder schmelzen, lassen sie sich sowohl leicht formen als auch werkstofflich verwerten.'},
+    {type:'mc',q:'Ein Entsorger erhält verschmutzte Mischkunststoffe mit Essensresten. Vermeiden ist nicht mehr möglich. Welcher Weg erhält dabei noch am meisten vom Rohstoff?',
+     options:['Werkstoffliche Verwertung, weil die Makromoleküle erhalten bleiben','Rohstoffliche Verwertung, weil sie auch für gemischte und verschmutzte Kunststoffe geeignet ist und Rohstoffe für die Chemie liefert','Energetische Verwertung, weil sie für alle Kunststoffe geeignet ist'],correct:1,
+     explain:'Für die werkstoffliche Verwertung müsste der Abfall sortenrein und sauber sein. Die energetische Verwertung wäre möglich, nutzt aber nur noch die Energie. Die rohstoffliche Verwertung hat Vorrang vor der energetischen.'},
+    {type:'num',q:'Ein Recyclingbetrieb trennt 2,0 t zerkleinerte Abfälle aus PE und PVC in Wasser. 1,4 t schwimmen oben. Berechne den Massenanteil w(PVC) im Gemisch in Prozent.',ans:30,tol:0.5,unit:'%',
+     explain:'In Wasser schwimmt PE (ρ unter 1 g/cm³), PVC sinkt. m(PVC) = 2,0 t − 1,4 t = 0,6 t. w(PVC) = 0,6 t : 2,0 t = 0,30 = 30 %.',wrong:'Überlege zuerst, welcher Kunststoff schwimmt. Die Masse des anderen erhältst du als Differenz. Teile sie dann durch die Gesamtmasse.'}
+  ]}
+];
+
+/* ---------- Fortschritt (nur auf diesem Gerät) ---------- */
+const KEY='lp-kunststoffe';
+let done={};
+try{done=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){done={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}}
+function markDone(id,box){if(!done[id]){done[id]=true;save()}box.classList.add('done');const s=box.querySelector('.ex-state');if(s)s.textContent='gelöst';renderNav();melde()}
+let fehler=0;
+try{fehler=Math.max(0,parseInt(localStorage.getItem(KEY+'-fehler'),10)||0)}catch(e){fehler=0}
+function zaehleFehler(){fehler++;try{localStorage.setItem(KEY+'-fehler',String(fehler))}catch(e){}melde()}
+/* Klassencode: Station und Zähler anonym melden (nur bei gültigem Klassencode aktiv) */
+function melde(){
+  if(!window.Klassencode)return;
+  const richtig=STATIONS.reduce((a,s)=>a+s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length,0);
+  Klassencode.position(`Station ${current+1}`,{richtig,falsch:fehler});
+}
+
+/* ---------- Navigation ---------- */
+let current=0;
+function renderNav(){
+  document.getElementById('nav').innerHTML=STATIONS.map((s,i)=>{
+    const n=s.exercises.length, d=s.exercises.filter((_,j)=>done[`${s.id}-${j}`]).length;
+    const ext=s.group==='ext';
+    return `<li><button type="button" data-i="${i}" aria-current="${i===current}" class="${d===n?'complete':''}${ext?' ext':''}"><span class="n">${i+1}</span><span>${s.title}</span><span class="p">${ext?'<span class="ek">Exkurs</span> · ':''}${d} von ${n} gelöst</span></button></li>`}).join('');
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>show(+b.dataset.i,true));
+}
+function show(i,scroll){
+  current=i; renderNav(); renderStation(STATIONS[i],i); melde();
+  try{localStorage.setItem(KEY+'-station',String(i))}catch(e){}
+  if(scroll)document.getElementById('main').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- Station rendern ---------- */
+function renderStation(s,i){
+  const m=document.getElementById('main');
+  const isExt=s.group==='ext';
+  let h=`<section class="station${isExt?' ext':''}"><div class="st-head"><p class="kicker">${isExt?'Exkurs · ':''}Station ${i+1} von ${STATIONS.length}</p><h2>${s.title}</h2><p class="lead">${s.intro}${isExt?' Dieser Exkurs ist freiwillig und kann übersprungen werden.':''}</p></div>`;
+  h+=`<p class="part-title">Erklärung</p>`;
+  s.blocks.forEach(b=>{
+    if(b.type==='text')h+=`<div class="text">${b.html}</div>`;
+    if(b.type==='fig')h+=b.html;
+    if(b.type==='merke')h+=`<div class="merke"><b class="lbl">Merke</b>${b.html}</div>`;
+    if(b.type==='steps'){
+      h+=`<div class="steps" data-steps><div class="steps-head"><h3>${b.title}</h3><span class="small" data-count></span></div>`;
+      b.items.forEach((it,k)=>{h+=`<div class="step" ${k>0?'hidden':''}><span class="sn">${k+1}</span><div class="sb"><p class="st">${it.t}</p>${it.h}</div></div>`});
+      h+=`<div class="steps-foot"><button type="button" class="btn" data-next>Nächster Schritt</button><button type="button" class="btn sec" data-all>Alle Schritte zeigen</button></div></div>`;
+    }
+  });
+  h+=`<p class="part-title">Übungen</p><div class="ex-list" id="exlist"></div>`;
+  const nx=i+1<STATIONS.length?i+1:-1, skip=STATIONS.findIndex((t,k)=>k>i&&t.group!=='ext');
+  h+=`<div class="pager">${i>0?`<button type="button" class="btn sec" id="prev">Zurück: ${STATIONS[i-1].title}</button>`:'<span></span>'}<span class="right">${nx>=0&&STATIONS[nx].group==='ext'&&skip>0?`<button type="button" class="btn sec" id="skip">Exkurs überspringen: ${STATIONS[skip].title}</button>`:''}${nx>=0?`<button type="button" class="btn" id="next">${STATIONS[nx].group==='ext'?'Weiter zum Exkurs: ':'Weiter: '}${STATIONS[nx].title}</button>`:''}</span></div></section>`;
+  m.innerHTML=h;
+  m.querySelectorAll('[data-steps]').forEach(box=>{
+    const steps=[...box.querySelectorAll('.step')]; const cnt=box.querySelector('[data-count]');
+    const upd=()=>{const v=steps.filter(x=>!x.hidden).length;cnt.textContent=`Schritt ${v} von ${steps.length}`;
+      const all=v===steps.length;box.querySelector('[data-next]').disabled=all;box.querySelector('[data-all]').disabled=all};
+    box.querySelector('[data-next]').onclick=()=>{const n=steps.find(x=>x.hidden);if(n){n.hidden=false}upd()};
+    box.querySelector('[data-all]').onclick=()=>{steps.forEach(x=>x.hidden=false);upd()};
+    upd();
+  });
+  const list=m.querySelector('#exlist');
+  s.exercises.forEach((ex,j)=>list.appendChild(buildExercise(ex,`${s.id}-${j}`,j+1)));
+  const p=m.querySelector('#prev'),n=m.querySelector('#next');
+  const sk=m.querySelector('#skip');
+  if(p)p.onclick=()=>show(i-1,true); if(n)n.onclick=()=>show(i+1,true); if(sk)sk.onclick=()=>show(skip,true);
+}
+
+/* ---------- Übungstypen ---------- */
+const KIND={mc:'Auswahl',multi:'Mehrfachauswahl',num:'Rechnen',sort:'Zuordnen',order:'Reihenfolge',cloze:'Lückentext'};
+function shell(id,no,ex){
+  const box=document.createElement('div');box.className='ex'+(done[id]?' done':'');
+  box.innerHTML=`<div class="ex-top"><span class="ex-no">Übung ${no} <span class="ex-kind">· ${KIND[ex.type]}</span></span><span class="ex-state">${done[id]?'gelöst':''}</span></div><div class="ex-q">${ex.q}</div>`;
+  return box;
+}
+function say(box,cls,html){let f=box.querySelector(':scope > .fb');if(!f){f=document.createElement('p');box.appendChild(f)}f.className='fb '+cls;f.innerHTML=html;f.setAttribute('role','status');if(cls==='bad')zaehleFehler()}
+function shuffled(arr,seed){const r=rng(seed),a=arr.map((x,i)=>i);for(let k=a.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[a[k],a[j]]=[a[j],a[k]]}
+  if(a.every((v,i)=>v===i)&&a.length>1)a.push(a.shift());return a}
+
+function buildExercise(ex,id,no){
+  const box=shell(id,no,ex);
+  if(ex.type==='mc'){
+    const o=document.createElement('div');o.className='opts';
+    ex.options.forEach((t,k)=>{const b=document.createElement('button');b.type='button';b.className='opt';b.innerHTML=t;
+      b.onclick=()=>{o.querySelectorAll('.opt').forEach(x=>x.classList.remove('right','wrong'));
+        if(k===ex.correct){b.classList.add('right');say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+        else{b.classList.add('wrong');say(box,'bad','<b>Noch nicht.</b> Lies die Frage noch einmal und versuche eine andere Antwort.')}};
+      o.appendChild(b)});
+    box.appendChild(o);
+  }
+  if(ex.type==='multi'){
+    const o=document.createElement('div');o.className='opts';
+    ex.options.forEach(([t],k)=>{const l=document.createElement('label');l.className='chk';l.innerHTML=`<input type="checkbox" value="${k}"><span>${t}</span>`;o.appendChild(l)});
+    box.appendChild(o);
+    const r=document.createElement('div');r.className='row';r.innerHTML=`<button type="button" class="btn">Prüfen</button>`;box.appendChild(r);
+    o.addEventListener('change',()=>o.querySelectorAll('.chk').forEach(x=>x.classList.remove('right','wrong')));
+    r.firstChild.onclick=()=>{let wrong=0,miss=0;
+      ex.options.forEach(([,a],k)=>{const l=o.children[k],c=l.querySelector('input').checked;l.classList.remove('right','wrong');
+        if(c&&a)l.classList.add('right'); else if(c&&!a){l.classList.add('wrong');wrong++} else if(!c&&a)miss++});
+      if(!wrong&&!miss){say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+      else if(wrong)say(box,'bad',`<b>Noch nicht.</b> ${wrong===1?'Eine ausgewählte Aussage ist':`${wrong} ausgewählte Aussagen sind`} falsch (rot markiert)${miss?', und es fehlt noch mindestens eine richtige':''}.`);
+      else say(box,'bad',`<b>Fast.</b> Alle ausgewählten Aussagen stimmen, aber es fehlt noch ${miss===1?'eine richtige':`${miss} richtige`}.`)};
+  }
+  if(ex.type==='num'){
+    const r=document.createElement('div');r.className='row';
+    r.innerHTML=`<input class="numin" inputmode="decimal" aria-label="Antwort"> ${ex.unit?`<span>${ex.unit}</span>`:''}<button type="button" class="btn">Prüfen</button>`;
+    const inp=r.querySelector('input');
+    const check=()=>{const m=inp.value.replace(/\s/g,'').replace(',','.').match(/-?\d+(\.\d+)?/);
+      if(!m){say(box,'info','Gib eine Zahl ein.');return}
+      if(Math.abs(+m[0]-ex.ans)<=(ex.tol||0)+1e-9){say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+      else say(box,'bad','<b>Noch nicht.</b> '+(ex.wrong||'Rechne noch einmal nach.'))};
+    r.querySelector('button').onclick=check;inp.onkeydown=e=>{if(e.key==='Enter')check()};
+    box.appendChild(r);
+  }
+  if(ex.type==='sort'){
+    const wrapR=document.createElement('div');
+    ex.items.forEach(([lab],k)=>{const row=document.createElement('div');row.className='sortrow';
+      row.innerHTML=`<span class="item">${lab}</span><span class="seg" role="radiogroup">${ex.options.map((o,oi)=>`<label><input type="radio" name="${id}-${k}" value="${oi}"><span>${o}</span></label>`).join('')}</span>`;
+      wrapR.appendChild(row)});
+    box.appendChild(wrapR);
+    const r=document.createElement('div');r.className='row';r.innerHTML=`<button type="button" class="btn">Prüfen</button><button type="button" class="btn sec">Tipp</button>`;
+    r.children[0].onclick=()=>{let wrong=0,open=0;
+      ex.items.forEach(([,a],k)=>{const row=wrapR.children[k];const c=box.querySelector(`input[name="${id}-${k}"]:checked`);
+        row.classList.remove('right','wrong');if(!c){open++;return}
+        if(+c.value===a)row.classList.add('right');else{row.classList.add('wrong');wrong++}});
+      if(open)say(box,'info',open===1?'Es fehlt noch 1 Zuordnung.':`Es fehlen noch ${open} Zuordnungen.`);
+      else if(wrong)say(box,'bad',`<b>${wrong} ${wrong===1?'Zuordnung ist':'Zuordnungen sind'} noch falsch</b> (rot markiert).`);
+      else{say(box,'ok','<b>Alles richtig.</b> '+(ex.okText||''));markDone(id,box)}};
+    r.children[1].onclick=()=>say(box,'info',ex.hint);
+    box.appendChild(r);
+  }
+  if(ex.type==='order'){
+    let ord=shuffled(ex.items,id);
+    const ol=document.createElement('ol');ol.className='orderlist';box.appendChild(ol);
+    const draw=()=>{ol.innerHTML=ord.map((it,p)=>`<li><span class="pos">${p+1}</span><span>${ex.items[it]}</span><span class="mv"><button type="button" data-p="${p}" data-d="-1" aria-label="nach oben" ${p===0?'disabled':''}>↑</button><button type="button" data-p="${p}" data-d="1" aria-label="nach unten" ${p===ord.length-1?'disabled':''}>↓</button></span></li>`).join('');
+      ol.querySelectorAll('button').forEach(b=>b.onclick=()=>{const p=+b.dataset.p,q=p+ +b.dataset.d;[ord[p],ord[q]]=[ord[q],ord[p]];draw();
+        const f=box.querySelector(':scope > .fb');if(f)f.remove();const nb=ol.querySelector(`button[data-p="${q}"][data-d="${b.dataset.d}"]`)||ol.querySelector(`button[data-p="${q}"]`);if(nb&&!nb.disabled)nb.focus()})};
+    draw();
+    const r=document.createElement('div');r.className='row';r.innerHTML=`<button type="button" class="btn">Prüfen</button>`;box.appendChild(r);
+    r.firstChild.onclick=()=>{let wrong=0;[...ol.children].forEach((li,p)=>{const ok=ord[p]===p;li.classList.toggle('right',ok);li.classList.toggle('wrong',!ok);if(!ok)wrong++});
+      if(!wrong){say(box,'ok',`<b>Richtig.</b> ${ex.explain}`);markDone(id,box)}
+      else say(box,'bad',`<b>Noch nicht.</b> ${wrong} ${wrong===1?'Schritt steht':'Schritte stehen'} an der falschen Stelle (rot markiert). Verschiebe sie mit den Pfeilen.`)};
+  }
+  if(ex.type==='cloze'){
+    const p=document.createElement('p');p.className='cloze';
+    p.innerHTML=ex.text.replace(/\{(\d+)\}/g,(m,k)=>{const g=ex.gaps[+k];return `<select data-k="${k}" aria-label="Lücke ${+k+1}"><option value="">auswählen</option>${g.o.map((o,oi)=>`<option value="${oi}">${o}</option>`).join('')}</select>`});
+    box.appendChild(p);
+    p.addEventListener('change',e=>e.target.classList.remove('right','wrong'));
+    const r=document.createElement('div');r.className='row';r.innerHTML=`<button type="button" class="btn">Prüfen</button>`;box.appendChild(r);
+    r.firstChild.onclick=()=>{let wrong=0,open=0;p.querySelectorAll('select').forEach(s=>{s.classList.remove('right','wrong');const g=ex.gaps[+s.dataset.k];
+        if(s.value===''){open++;return} if(+s.value===g.a)s.classList.add('right');else{s.classList.add('wrong');wrong++}});
+      if(open)say(box,'info',open===1?'Es ist noch 1 Lücke offen.':`Es sind noch ${open} Lücken offen.`);
+      else if(wrong)say(box,'bad',`<b>${wrong} ${wrong===1?'Lücke ist':'Lücken sind'} noch falsch</b> (rot markiert).`);
+      else{say(box,'ok',`<b>Alles richtig.</b> ${ex.explain}`);markDone(id,box)}};
+  }
+  return box;
+}
+
+/* ---------- Start ---------- */
+let start=0;try{const v=+localStorage.getItem(KEY+'-station');if(v>=0&&v<STATIONS.length)start=v}catch(e){}
+if(window.Klassencode)Klassencode.start("kunststoffe");
+show(start,false);
+</script>
+</body>
+</html>
