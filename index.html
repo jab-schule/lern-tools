@@ -80,7 +80,7 @@ function render(){
   const c=code();
   clr.hidden=!inp.value;
   document.getElementById('list').innerHTML=tools.map(t=>
-    `<li><a href="${esc(t.pfad)}${c?'#'+c:''}"><span class="fach">${esc(t.fach||'')}</span><span class="name">${esc(t.name)}</span>${t.beschreibung?`<span class="desc">${esc(t.beschreibung)}</span>`:''}</a></li>`).join('')
+    `<li><a href="${esc(t.pfad)}${c&&!t.auftragslink?'#'+c:''}"><span class="fach">${esc(t.fach||'')}</span><span class="name">${esc(t.name)}</span>${t.beschreibung?`<span class="desc">${esc(t.beschreibung)}</span>`:''}</a></li>`).join('')
     ||'<li class="lead">Noch keine Tools vorhanden.</li>';
 }
 inp.addEventListener('input',()=>{inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');render()});

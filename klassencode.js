@@ -13,6 +13,10 @@
   Tools, die ihren Fortschritt selbst speichern, können statt ergebnis() den ganzen Stand melden:
       Klassencode.stand({ "Station 1": { richtig: 4, falsch: 1 }, "Station 2": { richtig: 0, falsch: 2 } });
 
+  Tools mit eigenen Einstellungen im Link (z. B. Aufträge im MatheTrainer) bekommen den Code angehängt:
+      .../mathetrainer/#<Auftrag>&k=K7F2X3
+  Der Code wird dann aus k= gelesen, der Teil davor gehört dem Tool.
+
   Verhalten
   - Steht hinter dem # der Adresse kein gültig aussehender Code, passiert nichts:
     keine Bibliothek wird geladen, kein Kontakt zu Supabase.
@@ -60,10 +64,15 @@
       c.supabaseUrl.indexOf("DEIN-PROJEKT") === -1 && c.supabaseKey.indexOf("DEIN-") !== 0);
   }
 
+  /* Der Code steht entweder allein hinter dem # (#K7F2X3) oder hinter den Einstellungen
+     des Tools als k=... (#<Auftrag>&k=K7F2X3). Den Teil davor wertet das Tool selbst aus. */
   function codeAusAdresse() {
     var h = "";
     try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) { h = location.hash.slice(1); }
-    h = h.trim().toUpperCase();
+    h = h.trim();
+    var m = /(?:^|&)k=([^&]*)$/.exec(h);
+    if (m) h = m[1];
+    h = h.toUpperCase();
     return ZEICHEN.test(h) ? h : null;
   }
 

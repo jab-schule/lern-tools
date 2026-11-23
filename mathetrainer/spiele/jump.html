@@ -1,0 +1,559 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ASCII Jump</title>
+<link rel="stylesheet" href="../../vendor/fonts/fonts.css">
+<style>
+/* Layout: "Tinte" — a single quiet sheet of light grey; ink-black ASCII characters, calm cheerful accent palette, no glow. One centered character grid, one hint line. Deliberate single light look. */
+:root {
+  --paper: #f4f5f7;
+  --ink: #1c1e26;
+  --mute: #a9aebb;
+  --red: #ff4f45;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--mono);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding-inline: 16px; padding-block: 12px; box-sizing: border-box; overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+}
+#stage { flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; }
+canvas { display: block; background: var(--paper); touch-action: none; max-width: 100%; box-sizing: content-box; border: 1.5px solid #d3d7df; border-radius: 14px; box-shadow: 0 1px 0 #fff inset, 0 10px 30px -18px rgba(28,30,38,.25); }
+canvas:focus { outline: none; }
+canvas:focus-visible { outline: none; border-color: #b9bfca; }
+.hint { font-size: 11.5px; color: var(--mute); letter-spacing: .05em; text-align: center; line-height: 1.5; }
+.hint b { color: var(--ink); font-weight: 500; }
+</style>
+
+<div id="stage"><canvas id="c" tabindex="0" aria-label="ASCII Jump Spielfeld"></canvas></div>
+<p class="hint"><b>&larr; &rarr;</b> / <b>A D</b> bewegen &middot; <b>Leertaste</b> starten &middot; Tablet und Handy: links / rechts halten</p>
+
+<script>
+(() => {
+const JOY = ['#ef7a63', '#f2b53a', '#5cb488', '#4f9bd8', '#a283d6']; // coral, sun, leaf, sky, plum
+const COL = { bee:'#f2c230', beeWing:'#c9d3df', urchin:'#4a2e20', urchinTip:'#6b4430', paper:'#f4f5f7', ink:'#1c1e26', mute:'#c3c7d1', soft:'#9aa0ae', red:'#ff4f45', blue:'#3fa9ff', amber:'#ffb020' };
+const COLS = 40, ROWS = 44, GW = COLS, GH = ROWS;
+const PW = 5.4;
+const ZONE = .32; // width share of each side touch zone // player width in columns
+const G = 70, JUMP = -30, SPRING = -50, SPD = 26, ACC = 170;
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const stage = document.getElementById('stage');
+const gl = document.createElement('canvas'), gctx = gl.getContext('2d');
+const gl2 = document.createElement('canvas'), g2 = gl2.getContext('2d');
+const canFilter = 'filter' in ctx;
+const GS = 0.35; // glow layer scale
+let dpr = 1;
+const FONT = getComputedStyle(document.documentElement).getPropertyValue('--mono');
+let f = 16, cw = 10, ch = 18;
+
+// ---------- character buffer: char, ink colour, glow colour ----------
+const N = GW * GH;
+const chars = new Array(N), colors = new Array(N), glows = new Array(N);
+function clear(){ chars.fill(' '); colors.fill(COL.ink); glows.fill(null); free.length = 0; }
+function put(x, y, c, color, glow){
+  x = Math.round(x); y = Math.round(y);
+  if (x < 0 || y < 0 || x >= GW || y >= GH) return;
+  const i = y * GW + x; chars[i] = c; colors[i] = color; glows[i] = glow || null;
+}
+function text(x, y, s, color, glow){
+  for (let i = 0; i < s.length; i++) if (s[i] !== ' ')
+    put(x + i, y, s[i], typeof color === 'function' ? color(i) : color, typeof glow === 'function' ? glow(i) : glow);
+}
+const center = (s, y, c, g) => text(Math.floor((GW - s.length) / 2), y, s, c, g);
+const free = [];
+function putW(wx, wy, c, color, glow, size, rot, alpha){
+  const sy = wy - camY; if (sy < (state === 'title' ? -1 : 2.6) || sy >= ROWS) return;
+  const sx = ((wx % COLS) + COLS) % COLS;
+  free.push({ x: sx, y: sy, c, color, glow: glow || null, s: size || 0, r: rot || 0, a: alpha || 0 });
+  if (sx > COLS - 1) free.push({ x: sx - COLS, y: sy, c, color, glow: glow || null, s: size || 0, r: rot || 0, a: alpha || 0 });
+}
+
+// ---------- state ----------
+let state = 'title', camY, player, plats, foes = [], lastFoeY = 0, parts, lastY, maxH, score, best = 0, overT = 0, newBest = false, t = 0;
+try { best = +localStorage.getItem('asciijump-best') || 0; } catch(e){}
+const input = { l:false, r:false, pl:false, pr:false };
+
+function diff(){ return Math.min(1, Math.sqrt(maxH / 300)); } // max difficulty at 3000 points, steep early ramp
+function reset(full){
+  player = { x: COLS/2 - PW/2, y: -3, vx: 0, vy: JUMP, face: 1, land: 0, dead: false };
+  plats = [{ x: 0, y: 0, w: COLS, type: 'ground', hit: 0 }];
+  parts = []; foes = []; lastFoeY = 0; lastY = 0; maxH = 0; score = 0; newBest = false;
+  camY = -ROWS + 3;
+  if (full) gen();
+}
+function gen(){
+  while (lastY > camY - 8){
+    const d = diff();
+    const gap = 2.5 + Math.random() * (1 + 2.3 * d);
+    lastY -= gap;
+    // obstacles: none in the first ~300 points, then steadily more often (up to ~1 in 4 gaps)
+    const foeChance = Math.max(0, d - .3) * .36;
+    if (lastY < -40 && lastFoeY - lastY > 9 - 3 * d && Math.random() < foeChance){
+      const fy = lastY + gap * .5 - 1.2;
+      if (Math.random() < .5) foes.push({ kind: 'spike', x: 3 + Math.random() * (COLS - 6), y: fy, ph: Math.random() * 6 });
+      else foes.push({ kind: 'bug', x: 3 + Math.random() * (COLS - 6), y: fy, dx: (Math.random() < .5 ? -1 : 1) * (4 + 7 * d), ph: Math.random() * 6 });
+      lastFoeY = fy;
+    }
+    const w = Math.round(8 - 2 * d + Math.random() * 2);
+    const p = { x: Math.random() * (COLS - w), y: lastY, w, type: 'n', hit: 0 };
+    if (Math.random() < 0.08 + 0.27 * d){ p.type = 'm'; p.dx = (Math.random() < .5 ? -1 : 1) * (5 + 9 * d); }
+    else if (Math.random() < 0.08){ p.spring = 1 + Math.floor(Math.random() * (w - 2)); }
+    plats.push(p);
+    if (Math.random() < 0.10 + 0.18 * d){
+      const fw = 7, fy = lastY - 1.3;
+      let fx = Math.random() * (COLS - fw);
+      if (Math.abs(fx - p.x) < w + 2) fx = (p.x + COLS / 2) % (COLS - fw);
+      plats.push({ x: fx, y: fy, w: fw, type: 'f', hit: 0, broken: false, vy: 0 });
+    }
+  }
+  plats = plats.filter(p => p.y < camY + ROWS + 6);
+  foes = foes.filter(e => e.y < camY + ROWS + 6);
+}
+// glow hue drifts slowly with altitude: blue -> violet -> pink -> amber -> mint ...
+function platGlow(p){ return `hsl(${((-p.y * 7) % 360 + 190 + 360) % 360}, 100%, 58%)`; }
+function burst(x, y, glow, n, up, o = {}){
+  const spread = o.spread || 18, life = o.life || .8;
+  for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * spread, vy: -Math.random() * (up || 8) - 2,
+    life: life * (.6 + Math.random() * .4), max: life, size: (o.size || 1) * (.8 + Math.random() * .4), spin: o.size ? (Math.random() - .5) * 8 : 0, glow: glow === 'rand' ? JOY[Math.floor(Math.random() * JOY.length)] : glow });
+}
+// player is 3 columns wide: x .. x+3
+function overlapX(px, a, w){
+  for (const o of [-COLS, 0, COLS]){ const x = px + o; if (x + PW - .6 > a && x + .6 < a + w) return true; }
+  return false;
+}
+function start(){ reset(true); state = 'play'; }
+
+// ---------- title tutorial: a finger taps left / right, the blob follows ----------
+// straight · left · straight · right · straight · long right (out over the edge, back in on the left) · straight · long left (back across)
+const SEQ = [[.9, 0], [.5, -1], [.9, 0], [.5, 1], [.9, 0], [1.3, 1], [.9, 0], [1.3, -1]], SEQT = SEQ.reduce((a, s) => a + s[0], 0);
+const TUT = { fx: 0, fy: 0, init: false };
+function tutState(){
+  let tt = t % SEQT;
+  for (let i = 0; i < SEQ.length; i++){
+    const [d, v] = SEQ[i];
+    if (tt < d){
+      let next = 0;
+      for (let k = 1; k <= SEQ.length; k++){ const nv = SEQ[(i + k) % SEQ.length][1]; if (nv){ next = nv; break; } }
+      return { cur: v, el: tt, next, dur: d };
+    }
+    tt -= d;
+  }
+  return { cur: 0, el: 0, next: -1, dur: 0 };
+}
+function rr(x, y, w, h, r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+function finger(x, y, sc){
+  ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); ctx.rotate(-.18);
+  ctx.fillStyle = '#f3cdb0'; ctx.strokeStyle = '#c98f6a'; ctx.lineWidth = 1.5;
+  rr(-12, 38, 46, 60, 16); ctx.fill(); ctx.stroke();
+  rr(-9, 0, 18, 64, 9); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fbe6d8'; rr(-5.5, 3, 11, 11, 5); ctx.fill();
+  ctx.strokeStyle = '#d9a582'; ctx.lineWidth = 1.2; ctx.beginPath();
+  ctx.moveTo(-5, 25); ctx.lineTo(5, 25); ctx.moveTo(-4, 29); ctx.lineTo(4, 29); ctx.stroke();
+  ctx.restore();
+}
+let frameDt = .016;
+const TUT_TOP = 32.6; // first row of the demo area
+function drawTutorialBack(){
+  const st = tutState(), W = GW * cw, H = GH * ch, top = TUT_TOP * ch;
+  if (st.cur){ ctx.fillStyle = 'rgba(239,122,99,.10)'; ctx.fillRect(st.cur < 0 ? 0 : W / 2, top, W / 2, H - top); }
+  ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = 'rgba(154,160,174,.55)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W / 2, top + ch * .9); ctx.lineTo(W / 2, H - 4); ctx.stroke(); ctx.restore();
+  // long presses carry the blob over the edge: show it with arrows on both sides
+  if (st.cur && st.dur > 1){
+    const py = (player.y - camY + 1.8) * ch, c = st.cur > 0 ? '>' : '<', blink = Math.floor(t * 6) % 2 ? JOY[0] : COL.soft;
+    for (const x of [cw * 1.1, W - cw * 1.1]){ pg(c, x - cw * .35, py, f * 1.2, blink, 0, 700); pg(c, x + cw * .35, py, f * 1.2, blink, 0, 700); }
+  }
+  pg('LINKS', W * .25, top + ch * .5, f * .62, st.cur < 0 ? JOY[0] : COL.soft, 0, 400);
+  pg('RECHTS', W * .75, top + ch * .5, f * .62, st.cur > 0 ? JOY[0] : COL.soft, 0, 400);
+}
+function drawTutorialFront(dt){
+  const st = tutState(), side = st.cur || st.next, W = GW * cw, H = GH * ch, sc = f / 14;
+  const tx = side > 0 ? W * .75 : W * .25, ty = st.cur ? H - ch * 3.6 : H - ch * 4.4;
+  if (!TUT.init){ TUT.fx = tx; TUT.fy = ty; TUT.init = true; }
+  TUT.fx += (tx - TUT.fx) * Math.min(1, dt * 7);
+  TUT.fy += (ty - TUT.fy) * Math.min(1, dt * 14);
+  if (st.cur){
+    for (const off of [0, .25]){
+      const k = ((st.el + off) % .5) / .5, r = (8 + k * 22) * sc;
+      ctx.strokeStyle = `rgba(239,122,99,${(1 - k) * .7})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(TUT.fx, TUT.fy + 2, r, r * .45, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+  finger(TUT.fx, TUT.fy, sc);
+}
+
+// ---------- update ----------
+function update(dt){
+  t += dt;
+  const p = player;
+  if (state === 'title'){
+    const dir = tutState().cur;
+    const dv = dir * SPD * .8 - p.vx, a = ACC * dt;
+    p.vx += Math.max(-a, Math.min(a, dv));
+    if (dir) p.face = dir;
+  } else if (state === 'play' && !p.dead){
+    const dir = ((input.r || input.pr) ? 1 : 0) - ((input.l || input.pl) ? 1 : 0);
+    const dv = dir * SPD - p.vx, a = ACC * dt;
+    p.vx += Math.max(-a, Math.min(a, dv));
+    if (dir) p.face = dir;
+  } else p.vx *= 0.9;
+  p.x = ((p.x + p.vx * dt) % COLS + COLS) % COLS;
+  const prevFeet = p.y + 3;
+  p.vy += G * dt; p.y += p.vy * dt;
+  if (p.land > 0) p.land -= dt;
+  if (p.cheer > 0){ p.cheer -= dt; if (Math.random() < dt * 45) parts.push({ x: p.x + PW / 2 + (Math.random() - .5) * 3, y: p.y + 3, vx: (Math.random() - .5) * 6, vy: 4 + Math.random() * 4,
+    life: .7, max: .7, alpha: .2, size: 1.2 + Math.random() * .5, spin: (Math.random() - .5) * 6, glow: JOY[Math.floor(Math.random() * JOY.length)] }); }
+  const feet = p.y + 3;
+
+  for (const q of plats){
+    if (q.type === 'm'){ q.x += q.dx * dt; if (q.x < 0){ q.x = 0; q.dx *= -1; } if (q.x > COLS - q.w){ q.x = COLS - q.w; q.dx *= -1; } }
+    if (q.broken){ q.vy += G * dt; q.y += q.vy * dt; q.tilt += dt * 2.2; }
+    if (q.hit > 0) q.hit -= dt;
+    if (q.springT > 0) q.springT -= dt;
+  }
+  if (p.vy > 0 && state !== 'over' && !p.dead){
+    for (const q of plats){
+      if (q.broken || !(prevFeet <= q.y + .05 && feet >= q.y) || !overlapX(p.x, q.x, q.w)) continue;
+      if (q.type === 'f'){ q.broken = true; q.vy = 2; q.tilt = 0; burst(q.x + q.w/2, q.y, 'rand', 6, 4); continue; }
+      p.y = q.y - 3; q.hit = .25; p.land = .14; p.landY = p.y;
+      const sx = q.x + (q.spring ?? -99);
+      if (q.spring !== undefined && overlapX(p.x, sx - 1.5, 4)){
+        p.vy = SPRING; q.springT = .35; burst(sx, q.y - 1, 'rand', 36, 22, { spread: 46, life: 1.3, size: 1.9 });
+        burst(sx, q.y - 1, 'rand', 18, 30, { spread: 14, life: 1.1, size: 1.4 }); p.cheer = .9;
+      } else {
+        p.vy = JUMP;
+        burst(p.x + PW / 2, q.y, 'rand', 8, 6);
+      }
+      break;
+    }
+  }
+  for (const e of foes){
+    if (e.dead){ e.vy += G * dt; e.y += e.vy * dt; e.rot += dt * 6; continue; }
+    if (e.kind === 'bug'){ e.x += e.dx * dt; if (e.x < 2.5 || e.x > COLS - 2.5){ e.dx *= -1; e.x = Math.max(2.5, Math.min(COLS - 2.5, e.x)); } }
+    if (state !== 'play' || p.dead) continue;
+    // distance in column units (rows are ~1.87 columns tall)
+    const cx = p.x + PW / 2, cy = p.y + 1.8, rr = ch / cw;
+    let dx = Math.abs(cx - e.x); dx = Math.min(dx, COLS - dx);
+    const dy = (cy - e.y) * rr;
+    if (Math.hypot(dx, dy) > (e.kind === 'bug' ? 3.6 : 3.3)) continue;
+    if (p.vy < -42) continue; // spring boost carries you safely through
+    if (e.kind === 'bug' && p.vy > 0 && dy < -1){
+      e.dead = true; e.vy = -6; e.rot = 0;
+      p.vy = JUMP * 1.15; p.land = .14; p.landY = p.y;
+      burst(e.x, e.y, 'rand', 16, 12);
+    } else {
+      p.dead = true; p.vy = Math.max(p.vy, 4); p.vx *= .2;
+      burst(cx, cy, 'rand', 20, 10);
+    }
+  }
+  foes = foes.filter(e => !e.dead || e.y < camY + ROWS + 6);
+  for (const s of parts){ s.vy += 30 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; }
+  parts = parts.filter(s => s.life > 0);
+
+  if (state === 'play'){
+    const target = p.y - ROWS * 0.42;
+    if (target < camY && !p.dead) camY += (target - camY) * Math.min(1, dt * 12);
+    maxH = Math.max(maxH, -(p.y + 3));
+    score = Math.floor(maxH * 10);
+    gen();
+    if (p.y > camY + ROWS + 1){
+      state = 'over'; overT = 0;
+      if (score > best){ best = score; newBest = true; try { localStorage.setItem('asciijump-best', best); } catch(e){} }
+    }
+  } else if (state === 'over') overT += dt;
+}
+
+// ---------- draw ----------
+const LOGO = (() => {
+  const L = {
+    J: ["    _ ", " _ | |", "| || |", " \\__/ "],
+    U: [" _   _ ", "| | | |", "| |_| |", " \\___/ "],
+    M: [" __  __ ", "|  \\/  |", "| |\\/| |", "|_|  |_|"],
+    P: [" ___ ", "| _ \\", "|  _/", "|_|  "]
+  };
+  return [0,1,2,3].map(r => ['J','U','M','P'].map(k => L[k][r]).join(''));
+})();
+const pad = n => String(n).padStart(4, '0');
+
+function drawHud(){
+  text(2, 1, pad(score), COL.ink);
+  const b = `HI ${pad(best)}`;
+  text(GW - b.length - 2, 1, b, COL.soft);
+}
+function drawWorld(){
+  // altitude ticks on the right edge, every 250 points
+  if (state !== 'title'){
+    const top = Math.floor(-(camY + ROWS) / 25), bot = Math.ceil(-camY / 25) + 1;
+    for (let k = Math.max(1, top); k <= bot; k++){
+      const lab = `${k * 250} -`;
+      for (let i = 0; i < lab.length; i++) if (lab[i] !== ' ') putW(COLS - lab.length + i, -k * 25 - 3, lab[i], COL.mute);
+    }
+  }
+  for (const s of parts){
+    const k = s.life / s.max;
+    putW(s.x, s.y, k > .6 ? '*' : k > .3 ? '+' : '.', s.glow, null, s.size > 1 ? s.size * (.6 + k * .5) : 0, s.spin ? s.spin * (1 - k) : 0, s.alpha);
+  }
+}
+// ---------- planks: overlapped '=' with [ ] caps, drawn free-form ----------
+function pg(c, x, y, size, color, rot, w){
+  ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot);
+  ctx.font = `${w || 800} ${size}px ${FONT}`; ctx.fillStyle = color; ctx.fillText(c, 0, 0); ctx.restore();
+}
+function plank(x, y, w, type, q){
+  const n = Math.round(w / cw);
+  if (type === 'f'){
+    const tilt = q && q.broken ? q.tilt : 0, drop = q && q.broken ? tilt * ch * .6 : 0;
+    for (let i = 0; i < n; i += 2){
+      const side = i < n / 2 ? -1 : 1, spread = tilt * cw * 1.2 * side;
+      pg('-', x + (i + .5) * cw + spread, y + drop + Math.abs(i - n / 2) * tilt * 1.5, f, COL.soft, side * tilt * .4, 400);
+    }
+    return;
+  }
+  for (let i = 0; i < n; i++){
+    const c = type === 'm' && i === 0 ? '<' : type === 'm' && i === n - 1 ? '>' : '-';
+    pg(c, x + (i + .5) * cw, y, f, COL.ink, 0, 400);
+  }
+}
+function coil(x, y, stretch){
+  const st = ch * (.22 + stretch * .28);
+  for (let i = 0; i < 5; i++) pg('-', x, y - ch * .3 - i * st, f * .85, COL.ink, i % 2 ? -.45 : .45, 500);
+  pg('-', x, y - ch * .3 - 5 * st, f * 1.1, COL.ink, 0, 700);
+}
+function drawFoes(){
+  const minY = state === 'title' ? -2 : 2.6;
+  for (const e of foes){
+    const sy = e.y - camY; if (sy < (state === 'title' ? -2 : 3.6) || sy > ROWS + 2) continue;
+    drawFoe(e.kind, e.x * cw, (sy + .5) * ch, e);
+  }
+}
+function drawFoe(kind, x, y, e){
+  const ph = e ? e.ph : 0, rot = e && e.dead ? e.rot : 0;
+  ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot);
+  if (kind === 'spike'){
+    const a = t * 1.6 + ph, bob = Math.sin(t * 2 + ph) * ch * .15;
+    ctx.translate(0, bob);
+    for (let i = 0; i < 10; i++){ const an = a + i / 10 * Math.PI * 2; pg('^', Math.cos(an) * cw * 1.45, Math.sin(an) * cw * 1.45, f * 1.05, COL.urchinTip, an + Math.PI / 2); pg('|', Math.cos(an) * cw * 1.1, Math.sin(an) * cw * 1.1, f * .6, COL.urchin, an + Math.PI / 2); }
+    for (let yy = -.8; yy <= .8; yy += .4) for (let xx = -.8; xx <= .8; xx += .4)
+      if (xx * xx + yy * yy <= .7) pg('#', xx * cw * 1.2, yy * cw * 1.2, f * .62, COL.urchin);
+    pg('x', -cw * .42, -cw * .1, f * .55, COL.paper); pg('x', cw * .42, -cw * .1, f * .55, COL.paper);
+  } else {
+    const dir = e ? Math.sign(e.dx) || 1 : 1, flap = Math.sin(t * 28 + ph), bob = Math.sin(t * 5 + ph) * ch * .12;
+    ctx.translate(0, bob); ctx.scale(dir, 1);
+    // wings: two big rotated ( flapping
+    pg('(', -cw * .5, -ch * .75, f * 1.6, COL.beeWing, Math.PI / 2 + flap * .55);
+    pg('(', cw * .7, -ch * .8, f * 1.6, COL.beeWing, Math.PI / 2 - flap * .55);
+    // body: wide oval of stacked #, with paper stripes
+    for (let yy = -.5; yy <= .5; yy += .25) for (let xx = -1.6; xx <= 1.6; xx += .25)
+      if ((xx / 1.6) ** 2 + (yy / .55) ** 2 <= 1) pg('#', xx * cw, yy * ch, f * .62, COL.bee);
+    for (const sx of [-1.05, -.35, .3]) { pg('|', sx * cw, 0, f * 1.05, COL.ink); pg('|', sx * cw + cw * .12, 0, f * 1.05, COL.ink); }
+    pg('>', -cw * 2.05, ch * .05, f * .9, COL.ink);              // stinger
+    pg('o', cw * .95, -ch * .08, f * .55, COL.ink);              // eye
+    pg('\\', cw * .8, -ch * .42, f * .5, COL.ink);               // angry brow
+  }
+  ctx.restore();
+}
+function drawPlanks(){
+  const minY = state === 'title' ? -2 : 2.6;
+  for (const q of plats){
+    const sy = q.y - camY; if (sy < minY - .5 || sy > ROWS + 2) continue;
+    const dip = q.hit > 0 ? Math.sin(q.hit / .25 * Math.PI) * ch * .35 : 0;
+    const y = (sy + .5) * ch + dip;
+    if (q.type === 'ground'){ for (let i = 0; i < COLS; i++) pg('-', (i + .5) * cw, y, f, COL.ink, 0, 400); continue; }
+    plank(q.x * cw, y, q.w * cw, q.type, q);
+    if (q.spring !== undefined){
+      const k = q.springT > 0 ? Math.sin(q.springT / .35 * Math.PI) : 0;
+      coil((q.x + q.spring + .5) * cw, y, k);
+    }
+  }
+  if (state === 'title'){
+    const lx = 10 * cw, w = 8 * cw;
+    plank(lx, 18.5 * ch, w, 'f');
+    drawFoe('spike', lx + w / 2, 21.5 * ch, null); drawFoe('bug', lx + w / 2, 24.6 * ch, null);
+  }
+}
+// ---------- Klecks: a body of densely stacked '#' plus a face, drawn free-form ----------
+let blobCache = null, blobKey = '';
+function blobBody(R){
+  const key = R.toFixed(2) + ':' + dpr;
+  if (blobKey === key) return blobCache;
+  const pad = R * .4, w = Math.ceil((2.1 * R + pad * 2) * dpr), h = Math.ceil((1.72 * R + pad * 2) * dpr);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  g.font = `700 ${.26 * R * 1.6}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const ox = 1.05 * R + pad, oy = .86 * R + pad;
+  for (let y = -.86; y <= .86; y += .12) for (let x = -1.05; x <= 1.05; x += .1){
+    const k = (x / 1.05) ** 2 + (y / .86) ** 2; if (k > 1) continue;
+    g.fillStyle = k > .8 ? '#ba6354' : JOY[0]; // coral body, slightly darker rim
+    g.fillText('#', ox + (x + (Math.round(y * 8) % 2 ? .05 : 0)) * R, oy + y * R);
+  }
+  blobCache = { c, ox, oy, w: w / dpr, h: h / dpr }; blobKey = key;
+  return blobCache;
+}
+function glyph(c, x, y, size, color){
+  ctx.font = `800 ${size}px ${FONT}`; ctx.fillStyle = color; ctx.fillText(c, x, y);
+}
+function drawPlayer(){
+  const p = player;
+  if (state === 'over' && p.y > camY + ROWS + 1) return;
+  const R = PW * cw / 2.1;
+  // squash & stretch
+  const up = Math.min(1, Math.max(0, -p.vy / 30));
+  const k = p.land > 0 ? Math.sin((1 - p.land / .14) * Math.PI) : 0;
+  const sy = 1 + .14 * up - .28 * k, sx = 1 - .1 * up + .3 * k;
+  const eyes = p.dead ? 'dead' : k > .05 ? 'closed' : p.vy < -6 ? 'happy' : 'open';
+  const lag = p.land > 0 ? (p.land / .14) ** 2 : 0; // hold the blob on the plank while it squashes
+  const vy = p.land > 0 ? p.landY + (p.y - p.landY) * (1 - lag) : p.y;
+  const footY = (vy - camY + 3) * ch + ch * .38;
+  const baseX = ((p.x % COLS) + COLS) % COLS * cw + PW * cw / 2;
+  const B = blobBody(R);
+  for (const shift of [-COLS * cw, 0, COLS * cw]){
+    const cx = baseX + shift;
+    if (cx < -R * 2 || cx > COLS * cw + R * 2) continue;
+    ctx.save();
+    ctx.translate(cx, footY); ctx.scale(sx, sy); ctx.translate(0, -.86 * R);
+    ctx.drawImage(B.c, -B.ox, -B.oy, B.w, B.h);
+    // face, nudged toward the direction of travel
+    const fx = p.face * .07 * R, ey = -.05 * R, gp = .33 * R, S = R * 1.6;
+    if (eyes === 'happy'){ glyph('^', fx - gp, ey, .5 * S, COL.ink); glyph('^', fx + gp, ey, .5 * S, COL.ink); }
+    else if (eyes === 'dead'){ glyph('x', fx - gp, ey, .5 * S, COL.ink); glyph('x', fx + gp, ey, .5 * S, COL.ink); }
+    else if (eyes === 'closed'){ glyph('-', fx - gp, ey, .5 * S, COL.ink); glyph('-', fx + gp, ey, .5 * S, COL.ink); }
+    else for (const e of [-gp, gp]){ glyph('O', fx + e, ey, .5 * S, COL.ink); glyph('.', fx + e + .03 * R, ey - .12 * R, .5 * S, COL.ink); }
+    glyph('v', fx, ey + .28 * R, .32 * S, COL.ink);
+    ctx.restore();
+  }
+}
+function drawTitle(){
+  const w = LOGO[0].length, x0 = Math.floor((GW - w) / 2);
+  center('A S C I I', 7, COL.soft);
+  LOGO.forEach((row, r) => text(x0, 9 + r, row, i => JOY[i < 6 ? 0 : i < 13 ? 1 : i < 21 ? 2 : 3]));
+  const lx = 10, ly = 18;
+  text(lx + 11, ly,     'bricht weg', COL.soft);
+  text(lx + 11, ly + 3, 'meiden', COL.soft);
+  text(lx + 11, ly + 6, 'draufspringen', COL.soft);
+  const blink = Math.floor(t * 1.6) % 2 === 0;
+  center('leertaste / tippen', 28, blink ? COL.ink : COL.soft);
+}
+function drawOver(){
+  const y = 15;
+  center('game over', y, JOY[0]);
+  center(pad(score), y + 3, COL.ink);
+  center(`HI ${pad(best)}`, y + 5, COL.soft);
+  if (newBest) center('* neuer rekord *', y + 7, i => JOY[[1, 0, 2, 3, 4][i % 5]]);
+  if (overT > .5) center('tippen: zurück zu den aufgaben', y + 10, Math.floor(t * 1.6) % 2 === 0 ? COL.ink : COL.soft);
+}
+function render(){
+  clear();
+  drawWorld();
+  if (state === 'title') drawTitle();
+  if (state === 'over') drawOver();
+  drawHud();
+  ctx.fillStyle = COL.paper; ctx.fillRect(0, 0, GW * cw, GH * ch);
+  ctx.font = `400 ${f}px ${FONT}`;
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  if (state === 'title') drawTutorialBack();
+  drawPlanks(); drawFoes(); drawPlayer();
+  if (state === 'over'){
+    ctx.save(); ctx.globalAlpha = Math.min(.92, overT * 3); ctx.fillStyle = COL.paper;
+    ctx.fillRect(7 * cw, 13 * ch, (GW - 14) * cw, 13 * ch); ctx.restore();
+  }
+  const list = [];
+  for (let i = 0; i < N; i++) if (chars[i] !== ' ') list.push({ x: i % GW, y: (i / GW) | 0, c: chars[i], color: colors[i], glow: glows[i] });
+  for (const g of free) list.push(g);
+  // pass 1: colour glow, drawn small and upscaled (cheap, soft, no frame drops)
+  gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.clearRect(0, 0, gl.width, gl.height);
+  gctx.setTransform(GS, 0, 0, GS, 0, 0);
+  gctx.font = `700 ${f * 1.25}px ${FONT}`; gctx.textBaseline = 'middle'; gctx.textAlign = 'center';
+  let any = false;
+  for (const g of list){
+    if (!g.glow) continue; any = true;
+    const x = g.x * cw + cw / 2, y = g.y * ch + ch / 2;
+    gctx.fillStyle = g.glow;
+    gctx.fillText(g.c, x, y);
+    gctx.fillRect(x - cw * .45, y - ch * .2, cw * .9, ch * .4);
+  }
+  if (any){
+    g2.setTransform(1, 0, 0, 1, 0, 0); g2.clearRect(0, 0, gl2.width, gl2.height);
+    if (canFilter){
+      g2.filter = `blur(${f * .9 * GS}px)`; g2.globalAlpha = .9; g2.drawImage(gl, 0, 0);
+      g2.filter = `blur(${f * .35 * GS}px)`; g2.globalAlpha = .6; g2.drawImage(gl, 0, 0);
+      g2.filter = 'none'; g2.globalAlpha = 1;
+    } else { g2.globalAlpha = .5; g2.drawImage(gl, 0, 0); g2.globalAlpha = 1; }
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(gl2, 0, 0, GW * cw, GH * ch);
+  }
+  // pass 2: crisp ink
+  const baseFont = ctx.font;
+  for (const g of list){
+    ctx.fillStyle = g.color;
+    if (g.s){
+      ctx.save(); ctx.translate(g.x * cw + cw / 2, g.y * ch + ch / 2); if (g.r) ctx.rotate(g.r); if (g.a) ctx.globalAlpha = g.a;
+      ctx.font = `700 ${f * g.s}px ${FONT}`; ctx.fillText(g.c, 0, 0); ctx.restore();
+    } else ctx.fillText(g.c, g.x * cw + cw / 2, g.y * ch + ch / 2);
+  }
+  ctx.font = baseFont;
+  if (state === 'title') drawTutorialFront(frameDt);
+}
+
+// ---------- sizing ----------
+function resize(){
+  const r = stage.getBoundingClientRect();
+  ctx.font = `400 100px ${FONT}`;
+  const ratio = ctx.measureText('M').width / 100, lh = 1.12;
+  f = Math.max(6, Math.min((r.width - 4) / (GW * ratio), (r.height - 4) / (GH * lh))); // leave room for the frame
+  cw = f * ratio; ch = f * lh;
+  const W = GW * cw, H = GH * ch; dpr = window.devicePixelRatio || 1;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  gl.width = gl2.width = Math.ceil(W * GS); gl.height = gl2.height = Math.ceil(H * GS);
+}
+window.addEventListener('resize', resize);
+
+// ---------- input ----------
+const KEYS_L = ['ArrowLeft','a','A'], KEYS_R = ['ArrowRight','d','D'];
+let finished = false;
+function finish(){ if (finished) return; finished = true; try { parent.postMessage({ spielrunde: 'done', game: 'jump', score }, '*'); } catch(e){} }
+function act(){ if (state === 'title') start(); else if (state === 'over' && overT > .5) finish(); }
+window.addEventListener('keydown', e => {
+  if (KEYS_L.includes(e.key)) input.l = true;
+  if (KEYS_R.includes(e.key)) input.r = true;
+  if (e.key === ' ' || e.key === 'Enter') act();
+  if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+});
+window.addEventListener('keyup', e => {
+  if (KEYS_L.includes(e.key)) input.l = false;
+  if (KEYS_R.includes(e.key)) input.r = false;
+});
+const pointers = new Map();
+function syncPointers(){
+  input.pl = input.pr = false;
+  const rect = cv.getBoundingClientRect();
+  for (const x of pointers.values()){ if (x < rect.left + rect.width / 2) input.pl = true; else input.pr = true; }
+}
+cv.addEventListener('pointerdown', e => {
+  cv.focus(); act();
+  pointers.set(e.pointerId, e.clientX); syncPointers();
+  try { cv.setPointerCapture(e.pointerId); } catch(_){}
+});
+cv.addEventListener('pointermove', e => { if (pointers.has(e.pointerId)){ pointers.set(e.pointerId, e.clientX); syncPointers(); } });
+['pointerup','pointercancel','lostpointercapture'].forEach(ev => cv.addEventListener(ev, e => { pointers.delete(e.pointerId); syncPointers(); }));
+window.addEventListener('blur', () => { input.l = input.r = false; pointers.clear(); syncPointers(); });
+
+// ---------- loop ----------
+reset(false);
+let last = performance.now();
+function frame(now){
+  let dt = Math.min(0.05, (now - last) / 1000); last = now; frameDt = dt;
+  while (dt > 0){ const step = Math.min(dt, 1 / 120); update(step); dt -= step; }
+  render();
+  requestAnimationFrame(frame);
+}
+resize();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

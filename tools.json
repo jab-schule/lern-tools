@@ -14,5 +14,14 @@
     "fach": "Chemie",
     "beschreibung": "Klasse 12 (Basisfach): Verarbeitung von Kunststoffen und die vier Wege für Kunststoffabfall, mit Exkursen zu Kunststoffmüll im Meer und Biokunststoffen.",
     "positionen": ["Station 1", "Station 2", "Station 3", "Station 4", "Station 5", "Station 6", "Station 7", "Station 8", "Station 9"]
+  },
+  {
+    "kurzname": "mathetrainer",
+    "name": "MatheTrainer",
+    "pfad": "mathetrainer/",
+    "fach": "Mathematik",
+    "beschreibung": "Übungsaufträge mit Tastenfeld: Terme mit Klammern (Klasse 7) und Ableiten mit e-Funktionen (Kursstufe), mit Spielrunden als Belohnung.",
+    "auftragslink": true,
+    "positionen": []
   }
 ]

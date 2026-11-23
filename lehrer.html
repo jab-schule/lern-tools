@@ -73,6 +73,7 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-size:.95rem}
 th,td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:center;white-space:nowrap;background:var(--surface)}
 tbody tr:last-child td{border-bottom:0}
 th{font-weight:600;color:var(--muted);font-size:.85rem}
+thead th:not(.dev){white-space:normal;max-width:8.5rem;line-height:1.25}   /* lange Positionsnamen umbrechen */
 thead tr.grp th{padding-bottom:0;border-bottom:0;font-weight:400}
 th.dev,td.dev{position:sticky;left:0;z-index:1;text-align:left;padding-left:12px;border-right:1px solid var(--line)}
 tfoot td{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);border-bottom:0}
@@ -139,7 +140,12 @@ body.beamer .link{font-size:1.2rem}
         <label class="f grow">Tool<select id="tool"></select></label>
         <button type="button" class="btn" id="start-btn">Stunde starten</button>
       </div>
+      <div id="uebergabe" class="facts" hidden>
+        <p><span class="muted">Auftrag aus dem Tool:</span> <span id="uebergabe-info"></span></p>
+        <div class="row"><button type="button" class="btn sec" id="auftrag-btn" hidden>In laufende Stunde übernehmen</button></div>
+      </div>
       <p class="muted small">Der Code gilt bis „Stunde beenden“, höchstens 90 Minuten. Eine noch laufende Stunde wird dabei beendet.</p>
+      <p class="muted small" id="auftrag-hinweis" hidden>Bei diesem Tool erstellst du den Auftrag im Tool selbst und wählst dort „Auftrag in Stunde starten“. Dann öffnet sich diese Seite mit dem Auftrag.</p>
       <p id="start-msg" class="msg bad" hidden></p>
     </section>
 
@@ -151,6 +157,7 @@ body.beamer .link{font-size:1.2rem}
           <p class="code" id="code" aria-label="Klassencode"></p>
           <a class="link" id="link" target="_blank" rel="noopener"></a>
           <p class="muted small hide-beamer" id="valid"></p>
+          <p class="msg bad hide-beamer" id="lesson-msg" hidden></p>
           <div class="row hide-beamer" style="margin-top:8px">
             <button type="button" class="btn sec" id="copy">Link kopieren</button>
             <button type="button" class="btn sec" id="beamer">Beameransicht</button>
@@ -232,8 +239,45 @@ const fmtTime=d=>new Date(d).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'
 async function loadTools(){
   try{const r=await fetch('tools.json',{cache:'no-cache'});TOOLS=await r.json()}catch(e){TOOLS=[]}
   $('tool').innerHTML=TOOLS.map(t=>`<option value="${esc(t.kurzname)}">${esc(t.name)}</option>`).join('');
-  $('start-btn').disabled=!TOOLS.length;
+  if(uebergabe&&TOOLS.some(t=>t.kurzname===uebergabe.tool&&t.auftragslink))$('tool').value=uebergabe.tool;
+  toolGewaehlt();
 }
+
+/* ---------- Auftrag aus einem Tool (z. B. MatheTrainer) ----------
+   Das Tool öffnet diese Seite mit lehrer.html#tool=<kurzname>&auftrag=<Teil hinter dem #>&info=<Beschreibung>.
+   Beim Start wird der Code als &k=... an den Auftrag angehängt. Supabase erfährt davon nichts;
+   gespeichert wird der Auftrag nur hier im Browser. */
+const AUFTRAG_OK=/^[A-Za-z0-9_\-.~=,]{1,600}$/;
+let uebergabe=null;   /* {tool, auftrag, info} */
+/* Auch beim erneuten Öffnen aus dem Tool: Ist diese Seite schon offen, ändert sich nur der Teil hinter dem #. */
+function uebergabeLesen(){
+  const h=location.hash.slice(1); if(!h)return;
+  const q=new URLSearchParams(h), tool=q.get('tool')||'', a=q.get('auftrag')||'';
+  if(/^[a-z0-9-]{1,60}$/.test(tool)&&AUFTRAG_OK.test(a))uebergabe={tool,auftrag:a,info:String(q.get('info')||'').slice(0,200)};
+  history.replaceState(null,'',location.pathname+location.search);
+  if(uebergabe&&TOOLS.some(t=>t.kurzname===uebergabe.tool&&t.auftragslink)){$('tool').value=uebergabe.tool;msg($('start-msg'),'');toolGewaehlt()}
+}
+window.addEventListener('hashchange',uebergabeLesen);
+const auftragKey=c=>'lt-auftrag:'+c;
+function auftragLaden(c){try{const o=JSON.parse(localStorage.getItem(auftragKey(c))||'null');return o&&AUFTRAG_OK.test(o.a)?o:null}catch(e){return null}}
+function auftragSpeichern(c,a,info){try{
+  for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.startsWith('lt-auftrag:')&&k!==auftragKey(c))localStorage.removeItem(k)}
+  if(a)localStorage.setItem(auftragKey(c),JSON.stringify({a,info:info||''}));else localStorage.removeItem(auftragKey(c));
+}catch(e){}}
+function toolGewaehlt(){
+  const t=toolInfo($('tool').value), mit=!!t.auftragslink, ue=mit&&uebergabe&&uebergabe.tool===t.kurzname;
+  show($('auftrag-hinweis'),mit&&!ue);
+  show($('uebergabe'),!!ue);
+  if(ue)$('uebergabe-info').textContent=uebergabe.info||'ohne Beschreibung';
+  show($('auftrag-btn'),!!ue&&!!lesson&&lesson.tool===t.kurzname);
+  $('start-btn').disabled=!TOOLS.length||(mit&&!ue);
+}
+$('tool').onchange=()=>{msg($('start-msg'),'');toolGewaehlt()};
+uebergabeLesen();
+$('auftrag-btn').onclick=()=>{
+  if(!lesson||!uebergabe||uebergabe.tool!==lesson.tool)return;
+  auftragSpeichern(lesson.code,uebergabe.auftrag,uebergabe.info); uebergabe=null; render();
+};
 
 /* ---------- Anmeldung ---------- */
 $('login').addEventListener('submit',async e=>{
@@ -267,10 +311,18 @@ async function loadRunning(){
 }
 
 $('start-btn').onclick=async()=>{
-  msg($('start-msg'),''); $('start-btn').disabled=true;
-  const {data,error}=await sb.rpc('stunde_starten',{p_tool:$('tool').value});
+  msg($('start-msg'),'');
+  const t=toolInfo($('tool').value);
+  let auftrag='', info='';
+  if(t.auftragslink){
+    if(!uebergabe||uebergabe.tool!==t.kurzname){msg($('start-msg'),'Bei diesem Tool startest du die Stunde im Tool über „Auftrag in Stunde starten“.');return}
+    auftrag=uebergabe.auftrag; info=uebergabe.info;
+  }
+  $('start-btn').disabled=true;
+  const {data,error}=await sb.rpc('stunde_starten',{p_tool:t.kurzname});
   $('start-btn').disabled=false;
   if(error||!data||!data[0]){msg($('start-msg'),'Die Stunde konnte nicht gestartet werden'+(error?': '+error.message:'.'));return}
+  auftragSpeichern(data[0].code,auftrag,info); if(auftrag)uebergabe=null;
   await stopLive(); lesson=data[0]; resetLive(); render(); startLive();
 };
 
@@ -284,16 +336,20 @@ $('end').onclick=async()=>{
 
 function lessonUrl(){
   const t=toolInfo(lesson.tool);
-  return new URL(t.pfad,location.href).href.split('#')[0]+'#'+lesson.code;
+  const basis=new URL(t.pfad,location.href).href.split('#')[0];
+  const a=t.auftragslink?auftragLaden(lesson.code):null;
+  return basis+'#'+(a?a.a+'&k=':'')+lesson.code;
 }
 
 function render(){
   clearInterval(clockTimer);
   show($('lesson'),!!lesson); show($('live'),!!lesson);
   $('start-btn').textContent=lesson?'Neue Stunde starten':'Stunde starten';
-  if(!lesson)return;
+  if(!lesson){toolGewaehlt();return}
   const t=toolInfo(lesson.tool), url=lessonUrl();
-  $('lesson-tool').textContent=t.name;
+  const gespeichert=t.auftragslink?auftragLaden(lesson.code):null;
+  $('lesson-tool').textContent=t.name+(gespeichert&&gespeichert.info?': '+gespeichert.info:'');
+  msg($('lesson-msg'),t.auftragslink&&!gespeichert?'Zu dieser Stunde ist in diesem Browser kein Auftrag gespeichert. Erstelle den Auftrag im Tool, wähle dort „Auftrag in Stunde starten“ und hier dann „In laufende Stunde übernehmen“.':'');
   $('code').textContent=lesson.code;
   $('link').textContent=url; $('link').href=url;
   const q=qrcode(0,'M'); q.addData(url); q.make();
@@ -302,6 +358,7 @@ function render(){
     $('valid').textContent=`Gültig bis ${fmtTime(lesson.gueltig_bis)} Uhr (noch ${left} min)`};
   tick(); clockTimer=setInterval(tick,30000);
   if([...$('tool').options].some(o=>o.value===t.kurzname))$('tool').value=t.kurzname;
+  toolGewaehlt();
 }
 
 $('copy').onclick=async()=>{
@@ -382,9 +439,11 @@ function renderLive(){
   const devs=geraeteListe();
   $('total').textContent=devs.length;
 
-  /* Spalten: Positionen aus tools.json, dazu unbekannte Positionen der Geräte */
+  /* Spalten: Positionen aus tools.json, dazu die Stationen, für die Geräte einen Stand melden.
+     Eine Position ohne eigene Spalte (z. B. „Spielrunde“) steht als Text in der Spalte „Aktiv“. */
   const spalten=[...(t.positionen||[])];
-  devs.forEach(d=>{[d.pos,...Object.keys(d.st)].forEach(p=>{if(p&&!spalten.includes(p))spalten.push(p)})});
+  devs.forEach(d=>{Object.keys(d.st).forEach(p=>{if(p&&!spalten.includes(p))spalten.push(p)})});
+  devs.forEach(d=>{if(d.pos&&!spalten.includes(d.pos)&&!(t.positionen||[]).length&&!Object.keys(d.st).length)spalten.push(d.pos)});
   const alleStation=spalten.length&&spalten.every(p=>/^Station\s+\S/.test(p));
   const kopf=(alleStation?`<tr class="grp"><th class="dev"></th><th colspan="${spalten.length}">Station</th><th></th><th></th></tr>`:'')+
     `<tr><th class="dev">Gerät</th>${spalten.map(p=>`<th title="${esc(p)}">${esc(alleStation?kurz(p):p)}</th>`).join('')}<th>Aktiv</th><th style="text-align:left">Hinweis</th></tr>`;
@@ -403,7 +462,8 @@ function renderLive(){
       return `<td class="c${p===d.pos?' cur':''}">${v?`<span class="r">${zahl(v[0])}</span> · <span class="f">${zahl(v[1])}</span>`:'<span class="n">–</span>'}</td>`;
     }).join('');
     const m=Math.floor(d.min);
-    const aktiv=d.inaktiv?`<span class="badge warn">${m} min</span>`:`<span class="quiet">${m<1?'gerade':m+' min'}</span>`;
+    const ort=d.pos&&!spalten.includes(d.pos)?`<span class="quiet">${esc(d.pos)}</span><br>`:'';
+    const aktiv=ort+(d.inaktiv?`<span class="badge warn">${m} min</span>`:`<span class="quiet">${m<1?'gerade':m+' min'}</span>`);
     const h=hinweise.get(d.key);
     const rest=h?Math.ceil(SPERRE_S-(jetzt-h.um)/1000):0;
     const knopf=rest>0

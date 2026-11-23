@@ -16,9 +16,14 @@ Lehrerseite: https://jab-schule.github.io/lern-tools/lehrer.html
 | `supabase/update-hinweise.sql` | Nachtrag für die Hinweis-Funktion, falls `setup.sql` schon früher ausgeführt wurde |
 | `vendor/supabase.js` | Supabase-Bibliothek 2.118.0 (MIT-Lizenz), lokal statt über ein CDN |
 | `vendor/qrcode.js` | QR-Code-Bibliothek von Kazuhiko Arase (MIT-Lizenz), nur für die Lehrerseite |
-| `reaktionsgleichungen/` | erstes Tool: Lernpfad Reaktionsgleichungen |
+| `vendor/mathjax-tex-svg-full.js` | MathJax 3.2.2 (Apache-Lizenz 2.0) für Formeln, genutzt vom MatheTrainer |
+| `vendor/nacl-fast.min.js` | TweetNaCl 1.0.3 (Public Domain) für die gestempelten Auftragslinks des MatheTrainers |
+| `vendor/fonts/` | Schriften Instrument Sans und JetBrains Mono (SIL Open Font License) mit `fonts.css` |
+| `reaktionsgleichungen/` | Lernpfad Reaktionsgleichungen |
+| `kunststoffe/` | Lernpfad Kunststoffe |
+| `mathetrainer/` | MatheTrainer mit Auftragslinks, Spielrunden (`spiele/`), Erklärungen (`erklaerungen/`) und `spielrunden.json` |
 
-Schriften: Es werden nur Systemschriften verwendet. Es gibt keine Verbindungen zu Google Fonts, CDNs oder anderen Diensten außer GitHub Pages und Supabase.
+Schriften: Systemschriften oder Schriftdateien aus `vendor/fonts/`. Es gibt keine Verbindungen zu Google Fonts, CDNs oder anderen Diensten außer GitHub Pages und Supabase.
 
 ---
 
@@ -103,6 +108,22 @@ Wer `setup.sql` neu ausführt, braucht diesen Schritt nicht; die Regeln sind dor
 
 Ein Schülergerät meldet nur: Tool-Kurzname, aktuelle Station, je Station die Anzahl richtig und falsch bearbeiteter Übungen (nur aus dem Speicher dieses Geräts), den Zeitpunkt der letzten Aktivität und ob ein Hinweis bestätigt wurde. Unten rechts im Tool zeigt eine kleine Pille den Status: **grün** = verbunden, **grau** = Code ungültig, abgelaufen, Stunde beendet oder Verbindung gestört. Ohne Code erscheint keine Pille. Die Pille ist nicht anklickbar; den genauen Grund liest VoiceOver vor, außerdem steht er in der Browser-Konsole.
 
+### Stunde mit dem MatheTrainer
+
+Der MatheTrainer hat eigene Aufträge: Aufgabentypen, Anzahl, Spielrunden. Sie stecken, mit dem Passwort des Trainers gestempelt, im Link. Für eine Stunde:
+
+1. Den MatheTrainer öffnen (`mathetrainer/`), mit dem Passwort des Trainers anmelden und den Auftrag zusammenstellen.
+2. **Auftrag in Stunde starten** wählen. Die Lehrerseite öffnet sich in einem eigenen Tab, das Tool MatheTrainer ist gewählt und der Auftrag wird angezeigt (z. B. „Kettenregel (5), Produktregel (5)“).
+3. Dort **Stunde starten**. Link und QR-Code enthalten dann Auftrag und Klassencode: `.../mathetrainer/#<Auftrag>&k=K7F2X3`.
+
+Ohne Auftrag aus dem Trainer lässt sich auf der Lehrerseite keine Stunde mit dem MatheTrainer starten. Der Auftrag wird nicht an Supabase übertragen, sondern nur im Browser der Lehrerseite gespeichert. Öffnet man die laufende Stunde auf einem anderen Gerät, erscheint ein Hinweis. Dann im Trainer erneut **Auftrag in Stunde starten** wählen und auf der Lehrerseite **In laufende Stunde übernehmen**. Auf dieselbe Weise lässt sich der Auftrag auch während der Stunde austauschen; der Code bleibt dabei gleich, die Schüler brauchen aber den neuen Link oder QR-Code.
+
+Die Live-Übersicht zeigt eine Spalte pro Aufgabentyp des Auftrags: grün die gelösten Aufgaben, rot die Aufgaben mit Fehlversuch oder angezeigter Lösung. Die Zahlen kommen aus dem Speicher des Geräts und enthalten also auch, was vorher mit demselben Auftrag geübt wurde. In der Spalte **Aktiv** steht zusätzlich „Übersicht“, „Spielrunden“ oder „Spielrunde“, wenn das Gerät gerade nicht übt.
+
+Auftragslinks ohne Code funktionieren weiterhin, etwa als Hausaufgabe. Den Klassencode auf der Startseite einzutippen, reicht beim MatheTrainer nicht, weil dabei der Auftrag fehlt.
+
+Spielrunden eines Auftrags abschalten: die fünfstellige Kennung des Auftrags in `mathetrainer/spielrunden.json` eintragen, z. B. `{"spieleAus": ["K7Q2M"]}`, oder `"alle"` für alle Aufträge.
+
 Ohne Code (oder mit ungültigem Code) funktioniert jedes Tool vollständig und nimmt keinen Kontakt zu Supabase auf; die Supabase-Bibliothek wird dann nicht einmal geladen.
 
 ---
@@ -158,7 +179,7 @@ Die Hinweise der Lehrkraft erscheinen in jedem angeschlossenen Tool automatisch;
 }
 ```
 
-`fach`, `beschreibung` und `positionen` sind optional. `positionen` legt die Spalten der Live-Übersicht fest, auch wenn dort gerade niemand arbeitet. Heißen alle Positionen „Station …“, zeigt die Tabelle nur die Nummern.
+`fach`, `beschreibung`, `positionen` und `auftragslink` sind optional. `"auftragslink": true` bedeutet, dass das Tool seine Einstellungen selbst im Link hinter dem `#` mitgibt (wie der MatheTrainer). Eine Stunde wird dann aus dem Tool heraus gestartet: Das Tool öffnet `lehrer.html#tool=<kurzname>&auftrag=<Teil hinter dem #>&info=<Beschreibung>`, die Lehrerseite hängt den Code als `&k=CODE` an, und `klassencode.js` liest ihn dort. `positionen` legt die Spalten der Live-Übersicht fest, auch wenn dort gerade niemand arbeitet. Heißen alle Positionen „Station …“, zeigt die Tabelle nur die Nummern.
 
 An Supabase ändert sich dabei nichts.
 

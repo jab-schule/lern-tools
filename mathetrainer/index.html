@@ -1,0 +1,1703 @@
+<!doctype html><html lang="de"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MatheTrainer</title>
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<style>
+/* Drei Ansichten: Lehrkraft stellt Auftrag zusammen, Schüler sehen Übersicht, Üben mit Aufgabe links und Tastenfeld rechts */
+:root{
+  --bg:#FFFFFF;
+  --ink:#16181D;
+  --muted:#6B717C;
+  --line:#E5E7EB;
+  --soft:#F3F4F6;
+  --soft-hover:#E8EAEE;
+  --accent:#2F55D4;
+  --ok:#22A05A;
+  --warn:#EE8A17;
+  --bad:#DA4436;
+  --on-ink:#FFFFFF;
+  --font:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111317;--ink:#ECEEF2;--muted:#9AA1AD;--line:#272B32;--soft:#1B1E24;--soft-hover:#252930;
+    --accent:#8AA5FF;--ok:#3BBF73;--warn:#F5A13C;--bad:#EF6253;--on-ink:#111317;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111317;--ink:#ECEEF2;--muted:#9AA1AD;--line:#272B32;--soft:#1B1E24;--soft-hover:#252930;
+  --accent:#8AA5FF;--ok:#3BBF73;--warn:#F5A13C;--bad:#EF6253;--on-ink:#111317;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-block:28px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+main{max-width:440px;margin:0 auto}
+.view{display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.lead{margin:0;color:var(--muted);font-size:14.5px;max-width:60ch}
+.muted{color:var(--muted)}
+
+/* Listen: Lehrer-Auswahl und Schüler-Übersicht */
+.list{display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border-top:1.5px solid var(--line);background:var(--bg)}
+.row:first-child{border-top:0}
+.row .name{font-weight:600;font-size:15.5px}
+.row .ex{color:var(--muted);font-size:15px;overflow-x:auto;min-width:0}
+.row .ex mjx-container{font-size:15px}
+.row input[type=checkbox]{width:20px;height:20px;accent-color:var(--ink);margin:0;cursor:pointer}
+.row.off .stepper{opacity:.35;pointer-events:none}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:36px;height:36px;border:0;border-radius:10px;background:var(--soft);color:var(--ink);font:500 18px var(--font);cursor:pointer}
+.stepper button:hover{background:var(--soft-hover)}
+.stepper output{min-width:30px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.unit{color:var(--muted);font-size:13px;text-align:right}
+
+.pick{cursor:pointer;grid-template-columns:minmax(0,1fr) auto;text-align:left;font:inherit;color:inherit;border-left:0;border-right:0;border-bottom:0;width:100%}
+.pick:first-child{border-top:0}
+.pick:hover{background:var(--soft)}
+.pick[aria-pressed="true"]{background:var(--soft);box-shadow:inset 0 0 0 2px var(--ink)}
+.pick .info{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pick .stat{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pick .stat.done{color:var(--ok);font-weight:600}
+.pick .num{font-variant-numeric:tabular-nums;font-size:15px;white-space:nowrap}
+
+.track{height:6px;border-radius:3px;background:var(--soft);overflow:hidden}
+.track span{display:block;height:100%;background:var(--ok);border-radius:3px;transition:width .35s ease}
+@media (prefers-reduced-motion:reduce){.track span{transition:none}}
+
+.linkbox{display:flex;flex-direction:column;gap:10px}
+.linkbox label{font-size:14px;color:var(--muted)}
+.linkbox input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);padding:0 12px;font:14px ui-monospace,SFMono-Regular,Menlo,monospace}
+.note{font-size:13.5px;color:var(--muted);margin:0;max-width:62ch}
+.textlink{background:none;border:0;padding:0;color:var(--muted);font:inherit;font-size:13.5px;text-decoration:underline;cursor:pointer;align-self:flex-start}
+
+/* Üben */
+.ptop{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
+.back{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;height:36px;padding:0 12px;font:500 14px var(--font);cursor:pointer}
+.back:hover{border-color:var(--muted)}
+.ptitle{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.count{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.task{display:flex;flex-direction:column;gap:6px}
+.label{color:var(--muted);font-size:14px}
+.expr{font-size:24px;min-height:52px;display:flex;align-items:center;overflow-x:auto}
+.answer{display:flex;align-items:center;gap:12px;background:var(--soft);border-radius:12px;padding:14px 16px;min-height:76px;font-size:23px;overflow-x:auto}
+.answer .eq,.prev .eq{color:var(--muted);font-size:18px;flex:none;font-family:"Times New Roman",Georgia,serif;font-style:italic}
+.answer .in{min-width:0}
+.answer.locked{opacity:.65}
+.cur-mark{color:var(--accent);fill:var(--accent);animation:blink 1.06s steps(1) infinite}
+.ph{color:var(--muted);fill:var(--muted);opacity:.6}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cur-mark{animation:none}}
+
+.feedback{min-height:24px;font-size:14.5px;display:flex;gap:8px;align-items:flex-start}
+.feedback::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;margin-top:7px;background:transparent}
+.feedback.ok{color:var(--ok)} .feedback.ok::before{background:var(--ok)}
+.feedback.wrong{color:var(--warn)} .feedback.wrong::before{background:var(--warn)}
+.feedback.hint{color:var(--ink)} .feedback.hint::before{background:var(--accent)}
+.feedback.shown{color:var(--bad)} .feedback.shown::before{background:var(--bad)}
+.solution{border-top:1.5px solid var(--line);padding:12px 0 4px;font-size:19px;overflow-x:auto;display:flex;flex-direction:column;gap:6px}
+.solution .note{font-size:13.5px}
+
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.k{height:52px;border:0;border-radius:12px;background:var(--soft);color:var(--ink);font:500 20px var(--font);cursor:pointer;
+  touch-action:manipulation;transition:background .1s,transform .06s;display:flex;align-items:center;justify-content:center}
+.k:hover{background:var(--soft-hover)}
+.k:active{transform:scale(.97)}
+.k.var{font-style:italic;font-family:"Times New Roman",Georgia,serif;font-size:23px}
+.k.nav{color:var(--muted);font-size:18px}
+.k.w2{grid-column:span 2}.k.w3{grid-column:span 3}
+.keys.off{opacity:.4;pointer-events:none}
+.keys.terms .kd{display:none}
+.keys.terms .k0{grid-column:span 2}
+.keys.nofrac .kfrac{display:none}
+.keys.nofrac .kparen{grid-column:span 2}
+.keyhint:empty{display:none}
+.grades{display:flex;flex-direction:column;gap:22px}
+.grade{display:flex;flex-direction:column;gap:10px}
+.grade h2{margin:0;font-size:16px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.grade h2 span{font-weight:400;font-size:14px;color:var(--muted)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);background:var(--soft);border-radius:10px;padding:3px;gap:3px;max-width:420px}
+.seg button{font:500 14px var(--font);border:0;background:transparent;color:var(--muted);padding:8px 4px;border-radius:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.gamesrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px}
+.gamesrow .name{font-weight:600;font-size:15.5px}
+.gamesrow .stat{font-size:13.5px;color:var(--muted)}
+.glist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
+.gcard{display:flex;flex-direction:column;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:18px}
+.gcard h2{margin:0;font:600 17px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.gcard p{margin:0;font-size:14.5px}
+.gcard .ctrl,.gcard .best{font-size:13.5px;color:var(--muted)}
+.gcard .best{font-variant-numeric:tabular-nums;flex:1}
+.gcard .btn{margin-top:4px}
+.note.err{color:var(--bad)}
+.pwform{display:flex;flex-direction:column;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:18px}
+.pwform h2{margin:0;font-size:16px;font-weight:600}
+.pwform label,.datepick label{font-size:14px;color:var(--muted)}
+.pwform input[type=password],.datepick input{height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);padding:0 12px;font:15px var(--font)}
+.pwform .btn{margin-top:4px}
+.dur{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.dur .seg{grid-template-columns:repeat(4,1fr)}
+.datepick{display:flex;align-items:center;gap:10px}
+.datepick input{height:40px}
+.textlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note.err:empty{display:none}
+.gamelayer{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
+.gamelayer[hidden]{display:none}
+.gamebar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;
+  padding-top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:8px;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));border-bottom:1.5px solid var(--line)}
+.gamelayer iframe{flex:1;width:100%;border:0;display:block;background:#f4f5f7}
+.k mjx-container{font-size:21px}
+.keyhint{color:var(--muted);font-size:13px;margin:8px 0 0}
+.play{display:grid;grid-template-columns:minmax(0,1fr);row-gap:18px}
+.work,.pad{min-width:0}
+.prev{display:flex;align-items:center;gap:12px;padding:6px 16px;font-size:21px;overflow-x:auto}
+.lines{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.prev.shownline{color:var(--bad)}
+.prev.given{color:var(--muted)}
+.prev .txt{font-size:14px;font-family:var(--font)}
+.prompt{font-size:14.5px;margin:0 0 8px;max-width:60ch}
+a.textlink.explain{display:block;margin:14px auto 0;width:max-content}
+a.textlink.explain[hidden]{display:none}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{height:50px;border-radius:12px;font:600 15px var(--font);cursor:pointer;border:1.5px solid var(--line);background:transparent;color:var(--ink);padding:0 16px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.btn.primary:hover{opacity:.88}
+.btn.full{grid-column:1/-1}
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none}
+a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
+.btn:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media (min-width:740px){
+  main{max-width:940px}
+  #gate,#teacher,#overview{max-width:620px}
+  .play{grid-template-columns:minmax(0,1.1fr) minmax(320px,1fr);column-gap:48px;align-items:start}
+  .pad{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+  .expr{font-size:28px}
+  .k{height:58px}
+}
+</style>
+
+<script>
+window.MathJax = {
+  tex: { packages: { '[+]': ['html'] } },
+  svg: { fontCache: 'none' },
+  startup: {
+    typeset: false,
+    ready() {
+      MathJax.startup.defaultReady();
+      MathJax.startup.promise.then(() => { window.__mjReady = true; if (typeof window.onMathReady === 'function') window.onMathReady(); });
+    }
+  }
+};
+</script>
+<script src="../vendor/mathjax-tex-svg-full.js"></script>
+<script src="../vendor/nacl-fast.min.js"></script>
+<script src="../config.js"></script>
+<script src="../klassencode.js"></script>
+
+<main>
+  <!-- Start ohne gültigen Link: Hinweis für Schüler, Anmeldung für Lehrkräfte -->
+  <section class="view" id="gate" hidden>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1 id="gateTitle">MatheTrainer</h1>
+      <p class="lead" id="gateLead">Öffne den Link, den du von deiner Lehrkraft bekommen hast.</p>
+    </div>
+    <form class="pwform" id="loginForm" autocomplete="on">
+      <h2>Lehrkraft-Zugang</h2>
+      <input type="text" name="username" value="Lehrkraft" autocomplete="username" hidden>
+      <label for="pw">Passwort</label>
+      <input type="password" id="pw" autocomplete="current-password" required>
+      <button type="submit" class="btn primary" id="loginBtn">Anmelden</button>
+      <p class="note err" id="loginErr" aria-live="polite"></p>
+    </form>
+    <button type="button" class="textlink" id="setupToggle">Neue Lehrkraft einrichten</button>
+    <form class="pwform" id="setupForm" hidden>
+      <h2>Lehrkraft einrichten</h2>
+      <p class="note">Lege ein Passwort mit mindestens 12 Zeichen fest, am besten einen kurzen Satz. Daraus wird ein Prüfschlüssel berechnet, der einmalig in die Seite eingetragen wird. Das Passwort selbst wird nirgends gespeichert und lässt sich nicht wiederherstellen.</p>
+      <input type="text" name="username" value="Lehrkraft" autocomplete="username" hidden>
+      <label for="pw1">Neues Passwort</label>
+      <input type="password" id="pw1" autocomplete="new-password" minlength="12" required>
+      <label for="pw2">Passwort wiederholen</label>
+      <input type="password" id="pw2" autocomplete="new-password" minlength="12" required>
+      <button type="submit" class="btn primary" id="setupBtn">Prüfschlüssel erzeugen</button>
+      <p class="note err" id="setupErr" aria-live="polite"></p>
+      <div class="linkbox" id="setupOut" hidden>
+        <label for="pubkey">Prüfschlüssel (nicht geheim)</label>
+        <input id="pubkey" readonly>
+        <button type="button" class="btn" id="pubCopy">Prüfschlüssel kopieren</button>
+        <p class="note" id="pubNote">Dieser Schlüssel muss jetzt einmalig in die Seite eingetragen werden. Danach kannst du dich mit deinem Passwort anmelden.</p>
+      </div>
+    </form>
+  </section>
+
+  <!-- Lehrkraft: Auftrag zusammenstellen -->
+  <section class="view" id="teacher" hidden>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h1>Auftrag erstellen</h1><button type="button" class="textlink" id="logoutBtn">Abmelden</button></div>
+      <p class="lead">Wähle die Aufgabentypen aus und lege fest, wie viele Aufgaben die Schüler jeweils richtig lösen sollen. Der Link enthält die Auswahl.</p>
+    </div>
+    <div class="grades" id="tlist"></div>
+    <section class="grade">
+      <h2>Spielrunden<span>als Belohnung</span></h2>
+      <div class="seg" id="tgames" role="group" aria-label="Spielrunde nach wie vielen richtigen Aufgaben"></div>
+      <p class="note" id="tgamesNote"></p>
+      <div class="dur" id="tdurBox">
+        <span class="note">Gültig</span>
+        <div class="seg" id="tdur" role="group" aria-label="Wie lange die Spielrunden gelten"></div>
+        <div class="datepick"><label for="tdate">oder bis</label><input type="date" id="tdate"></div>
+        <p class="note" id="tdurNote"></p>
+      </div>
+    </section>
+    <div class="linkbox">
+      <label for="link">Link für die Klasse</label>
+      <input id="link" readonly>
+      <div class="actions">
+        <button type="button" class="btn" id="tryBtn">Als Schüler testen</button>
+        <button type="button" class="btn primary" id="copyBtn">Link kopieren</button>
+        <a class="btn full" id="lessonBtn" target="lern-tools-lehrer" aria-disabled="true">Auftrag in Stunde starten</a>
+      </div>
+      <p class="note" id="copyNote" aria-live="polite"></p>
+      <p class="note" id="idNote"></p>
+    </div>
+  </section>
+
+  <!-- Schüler: Übersicht -->
+  <section class="view" id="overview" hidden>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1 id="ovTitle">Dein Auftrag</h1>
+      <p class="lead" id="ovLead">Wähle einen Aufgabentyp und starte. Dein Fortschritt wird auf diesem Gerät gespeichert.</p>
+    </div>
+    <div class="list" id="olist" role="group" aria-label="Aufgabentypen"></div>
+    <button type="button" class="btn primary" id="startBtn">Start</button>
+    <div class="gamesrow" id="ogames" hidden>
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+        <span class="name">Spielrunden</span>
+        <span class="stat" id="ogStat"></span>
+      </div>
+      <button type="button" class="btn" id="ogBtn">Spielrunde einlösen</button>
+    </div>
+    <button type="button" class="textlink" id="newBtn" hidden>Zurück zur Lehreransicht</button>
+  </section>
+
+  <!-- Spielauswahl mit Kurzanleitung -->
+  <section class="view" id="games" hidden>
+    <div class="ptop" style="grid-template-columns:auto minmax(0,1fr)">
+      <button type="button" class="back" id="gBack">Zurück</button>
+      <span class="ptitle">Spielrunde</span>
+    </div>
+    <p class="lead" id="gLead"></p>
+    <div class="glist" id="glist"></div>
+    <p class="note err" id="gError" aria-live="polite"></p>
+  </section>
+
+  <!-- Üben -->
+  <section class="view" id="practice" hidden>
+    <div class="ptop">
+      <button type="button" class="back" id="backBtn">Übersicht</button>
+      <span class="ptitle" id="pTitle"></span>
+      <span class="count" id="pCount"></span>
+    </div>
+    <div class="track" aria-hidden="true"><span id="pBar" style="width:0"></span></div>
+
+    <div class="play">
+     <div class="work">
+      <div class="task">
+        <div class="label" id="plabel"></div>
+        <div class="expr" id="expr"></div>
+      </div>
+      <div style="height:14px"></div>
+      <div class="lines" id="lines"></div>
+      <p class="prompt" id="sprompt" hidden></p>
+      <div class="answer" id="answerBox"><span class="eq">f′(x) =</span><div class="in" id="answer"></div></div>
+      <div style="height:12px"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="solution" id="solution" hidden></div>
+     </div>
+     <div class="pad">
+      <div class="keys" id="keys">
+        <button class="k" type="button" data-c="7">7</button>
+        <button class="k" type="button" data-c="8">8</button>
+        <button class="k" type="button" data-c="9">9</button>
+        <button class="k" type="button" data-c="+">+</button>
+        <button class="k nav" type="button" data-cmd="back" aria-label="Löschen">⌫</button>
+        <button class="k" type="button" data-c="4">4</button>
+        <button class="k" type="button" data-c="5">5</button>
+        <button class="k" type="button" data-c="6">6</button>
+        <button class="k" type="button" data-c="-" aria-label="Minus">−</button>
+        <button class="k nav" type="button" data-cmd="left" aria-label="Cursor nach links">←</button>
+        <button class="k" type="button" data-c="1">1</button>
+        <button class="k" type="button" data-c="2">2</button>
+        <button class="k" type="button" data-c="3">3</button>
+        <button class="k var" type="button" data-c="x">x</button>
+        <button class="k nav" type="button" data-cmd="right" aria-label="Cursor nach rechts">→</button>
+        <button class="k k0" type="button" data-c="0">0</button>
+        <button class="k kd" type="button" data-c="," aria-label="Komma">,</button>
+        <button class="k" type="button" data-c="\cdot" aria-label="Mal" style="font-size:34px;font-family:'Times New Roman',Georgia,serif">·</button>
+        <button class="k kparen" type="button" data-cmd="paren" aria-label="Klammer">( )</button>
+        <button class="k kfrac" type="button" data-cmd="frac" data-tex="\frac{\square}{\square}" aria-label="Bruch">a/b</button>
+        <button class="k w2 kd" type="button" data-cmd="exp" data-tex="e^{\square}" aria-label="e hoch">e^</button>
+        <button class="k w3 kd" type="button" data-cmd="pow" data-tex="\square^{\square}" aria-label="Hochzahl">Hochzahl</button>
+      </div>
+      <p class="keyhint" id="keyhint"></p>
+      <div style="height:10px"></div>
+      <div class="actions" id="actions"></div>
+      <a class="textlink explain" id="explain" href="erklaerungen/ableiten-ausklammern.html" target="_blank" rel="noopener" hidden>Erklärung ansehen</a>
+     </div>
+    </div>
+  </section>
+</main>
+
+<div class="gamelayer" id="gameLayer" hidden>
+  <div class="gamebar">
+    <span id="gameName"></span>
+    <button type="button" class="back" id="gameQuit">Spiel beenden</button>
+  </div>
+  <iframe id="gameFrame" title="Spielrunde"></iframe>
+</div>
+
+<script>
+/* ================= Eingabe-Modell: Zeichen, Klammern, Brüche, Hochzahlen ================= */
+const KIDS={paren:1, frac:2, pow:1};
+function mkSeq(parent){ return {items:[], parent}; }
+function mkNode(t){ const n={t, kids:[], parentSeq:null}; for(let k=0;k<KIDS[t];k++) n.kids.push(mkSeq(n)); return n; }
+let root, cur;
+function resetInput(){ root=mkSeq(null); cur={seq:root, i:0}; }
+resetInput();
+
+function insertItem(it){ if(it.t) it.parentSeq=cur.seq; cur.seq.items.splice(cur.i,0,it); }
+function typeChar(c){ insertItem({c}); cur.i++; }
+function typeNode(t){ const n=mkNode(t); insertItem(n); cur={seq:n.kids[0], i:0}; }
+function moveRight(){
+  const s=cur.seq;
+  if(cur.i<s.items.length){ const it=s.items[cur.i]; if(!it.t) cur.i++; else cur={seq:it.kids[0], i:0}; }
+  else if(s.parent){
+    const n=s.parent, k=n.kids.indexOf(s);
+    if(k+1<n.kids.length) cur={seq:n.kids[k+1], i:0};
+    else cur={seq:n.parentSeq, i:n.parentSeq.items.indexOf(n)+1};
+  }
+}
+function moveLeft(){
+  const s=cur.seq;
+  if(cur.i>0){
+    const it=s.items[cur.i-1];
+    if(!it.t) cur.i--; else { const l=it.kids[it.kids.length-1]; cur={seq:l, i:l.items.length}; }
+  } else if(s.parent){
+    const n=s.parent, k=n.kids.indexOf(s);
+    if(k>0) cur={seq:n.kids[k-1], i:n.kids[k-1].items.length};
+    else cur={seq:n.parentSeq, i:n.parentSeq.items.indexOf(n)};
+  }
+}
+const nodeEmpty=n=>n.kids.every(s=>s.items.length===0);
+function backspace(){
+  const s=cur.seq;
+  if(cur.i>0){
+    const it=s.items[cur.i-1];
+    if(!it.t || nodeEmpty(it)){ s.items.splice(cur.i-1,1); cur.i--; }
+    else { const l=it.kids[it.kids.length-1]; cur={seq:l, i:l.items.length}; }
+  } else if(s.parent){
+    const n=s.parent, ps=n.parentSeq, idx=ps.items.indexOf(n), k=n.kids.indexOf(s);
+    if(nodeEmpty(n)){ ps.items.splice(idx,1); cur={seq:ps, i:idx}; }
+    else if(n.t==='paren'){ // Klammer auflösen, Inhalt bleibt stehen
+      const inner=n.kids[0].items;
+      inner.forEach(it=>{ if(it.t) it.parentSeq=ps; });
+      ps.items.splice(idx,1,...inner); cur={seq:ps, i:idx};
+    }
+    else if(k>0) cur={seq:n.kids[k-1], i:n.kids[k-1].items.length};
+    else cur={seq:ps, i:idx};
+  }
+}
+
+const CUR='\\class{cur-mark}{\\vert}';
+function kidTex(k){ return (k.items.length===0 && cur.seq!==k) ? '\\class{ph}{\\square}' : inputTex(k); }
+function inputTex(seq){
+  let out='';
+  for(let i=0;i<=seq.items.length;i++){
+    const here = cur.seq===seq && cur.i===i;
+    if(i===seq.items.length){ if(here) out+=CUR; break; }
+    const it=seq.items[i];
+    if(it.t==='pow'){
+      const prev=seq.items[i-1];
+      const detached = here || !prev || prev.t==='pow' || (prev.c && /^[+\-,]$|\\cdot/.test(prev.c));
+      if(here) out+=CUR;
+      out+=(detached?'{}':'')+'^{'+kidTex(it.kids[0])+'}';
+      continue;
+    }
+    if(here) out+=CUR;
+    if(!it.t) out+= it.c===',' ? '{,}' : it.c+(it.c[0]==='\\'?' ':'');
+    else if(it.t==='paren') out+='\\left('+kidTex(it.kids[0])+'\\right)';
+    else out+='\\frac{'+kidTex(it.kids[0])+'}{'+kidTex(it.kids[1])+'}';
+  }
+  return out;
+}
+
+/* ================= Rationale Zahlen und Polynome (für die Aufgaben) ================= */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function R(n,d=1){ if(d===0) throw new Error('div0'); if(d<0){ n=-n; d=-d; } const g=gcd(n,d)||1; return [n/g, d/g]; }
+const toR=c=>Array.isArray(c)?c:R(c);
+const radd=(a,b)=>R(a[0]*b[1]+b[0]*a[1], a[1]*b[1]);
+const rmul=(a,b)=>R(a[0]*b[0], a[1]*b[1]);
+const rzero=a=>a[0]===0;
+const Z=()=>R(0);
+const trim=a=>{ a=a.slice(); while(a.length>1 && rzero(a[a.length-1])) a.pop(); return a; };
+const P=(...a)=>trim(a.map(toR));                       // Koeffizienten aufsteigend: P(c0, c1, c2 …)
+const xPow=(n,c=1)=>{ const a=Array(n+1).fill(0); a[n]=c; return P(...a); };
+const padd=(a,b)=>{ const r=[]; for(let i=0;i<Math.max(a.length,b.length);i++) r.push(radd(a[i]||Z(), b[i]||Z())); return trim(r); };
+const pmul=(a,b)=>{ const r=Array.from({length:a.length+b.length-1}, Z); a.forEach((x,i)=>b.forEach((y,j)=>{ r[i+j]=radd(r[i+j], rmul(x,y)); })); return trim(r); };
+const pder=p=>p.length<=1 ? [Z()] : trim(p.slice(1).map((c,i)=>rmul(c,R(i+1))));
+const peval=(p,x)=>p.reduce((s,c,i)=>s+c[0]/c[1]*Math.pow(x,i),0);
+const pzero=p=>p.every(rzero);
+const nterms=p=>p.filter(c=>!rzero(c)).length;
+
+function absTex(r){ const n=Math.abs(r[0]); return r[1]===1 ? String(n) : '\\frac{'+n+'}{'+r[1]+'}'; }
+function polyTex(p){
+  let out='', first=true;
+  for(let d=p.length-1; d>=0; d--){
+    const c=p[d]; if(rzero(c)) continue;
+    const one=Math.abs(c[0])===1 && c[1]===1 && d>0;
+    out+=(c[0]<0?'-':(first?'':'+')) + (one?'':absTex(c)) + (d===0?'':d===1?'x':'x^{'+d+'}');
+    first=false;
+  }
+  return out||'0';
+}
+const paren=t=>'\\left('+t+'\\right)';
+const joinT=(a,b)=>!a ? b : !b ? a : (b[0]==='-' ? a+b : a+'+'+b);
+const lead=p=>{ for(let d=p.length-1; d>=0; d--) if(!rzero(p[d])) return p[d]; return Z(); };
+
+/* Faktor u vor e^g als TeX */
+function ePart(u, E, eFirst){
+  if(nterms(u)===1 && u.length===1){
+    const c=u[0];
+    if(c[0]===1 && c[1]===1) return E;
+    if(c[0]===-1 && c[1]===1) return '-'+E;
+    return polyTex(u)+E;
+  }
+  if(nterms(u)===1){
+    if(eFirst) return E+'\\cdot '+(lead(u)[0]<0 ? paren(polyTex(u)) : polyTex(u));
+    return polyTex(u)+'\\cdot '+E;
+  }
+  return eFirst ? E+'\\cdot '+paren(polyTex(u)) : paren(polyTex(u))+'\\cdot '+E;
+}
+
+/* ================= Aufgaben: f(x) = p0 + u·e^g ================= */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{ let v; do v=rnd(a,b); while(v===0); return v; };
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+const coprime=(q,max)=>{ let p; do p=rnd(1,max); while(gcd(p,q)!==1); return p; };
+const sgn=()=>pick([1,-1]);
+const fracC=()=>{ const q=pick([2,3,4,5]); return R(sgn()*coprime(q,7), q); };
+
+function makeTask(kind, p0, u, g, eFirst){
+  const up=pder(u), gp=pder(g), w=padd(up, pmul(u,gp)), p0p=pder(p0);
+  if(pzero(w)) return null;
+  if([...w, ...p0p].some(c=>Math.abs(c[0])>90 || c[1]>20)) return null;
+  const E='e^{'+polyTex(g)+'}';
+  const tex=joinT(pzero(p0)?'':polyTex(p0), ePart(u,E,eFirst));
+  const fin=joinT(pzero(p0p)?'':polyTex(p0p), ePart(w,E,false));
+  const gpT=(nterms(gp)>1 || lead(gp)[0]<0) ? paren(polyTex(gp)) : polyTex(gp);
+  const p0s=pzero(p0)?'':(pzero(p0p)?'0':polyTex(p0p));
+  const steps=[];
+  if(u.length===1){ // u konstant: Kettenregel (auch die einfachen Aufgaben)
+    steps.push(joinT(p0s, ePart(u,E,false)+'\\cdot '+gpT));
+  } else {           // Produktregel
+    const upT=(nterms(up)>1 || lead(up)[0]<0) ? paren(polyTex(up)) : polyTex(up);
+    const uT=nterms(u)>1 ? paren(polyTex(u)) : polyTex(u);
+    steps.push(joinT(p0s, joinT(upT+'\\cdot '+E, uT+'\\cdot '+E+'\\cdot '+gpT)));
+    if(nterms(w)>1) steps.push(joinT(pzero(p0p)?'':polyTex(p0p), E+'\\cdot '+paren(polyTex(w))));
+  }
+  if(steps[steps.length-1]!==fin) steps.push(fin);
+  const f=x=>peval(p0,x)+peval(u,x)*Math.exp(peval(g,x));
+  const fp=x=>peval(p0p,x)+peval(w,x)*Math.exp(peval(g,x));
+  return {kind, tex, f, fp, steps};
+}
+
+function genSimple(i){
+  for(;;){
+    let p0, u=P(nz(-6,6)), g;
+    if(i<2)      { p0=P(nz(-9,9)); g=P(0,nz(-4,4)); }
+    else if(i<4) { p0=P(nz(-9,9)); g=P(0,fracC()); }
+    else if(i<6) { p0=P(nz(-9,9)); g=P(nz(-5,5),nz(-4,4)); }
+    else if(i<8) { p0=pick([P(nz(-9,9),0,nz(-4,4)), P(0,nz(-6,6))]); g=P(nz(-4,4),nz(-3,3)); }
+    else         { p0=pick([P(nz(-5,5),0,0,nz(-3,3)), P(0,nz(-6,6),nz(-3,3))]); g=P(0,fracC()); }
+    const t=makeTask('simple',p0,u,g,false); if(t) return t;
+  }
+}
+function genChain(i){
+  for(;;){
+    let u=P(pick([1,-1,2,3,-2,4,-3])), g;
+    if(i<2)      g=P(0,0,nz(-3,3));
+    else if(i<4) g=P(nz(-5,5),0,nz(-3,3));
+    else if(i<6) g=P(0,nz(-5,5),nz(-3,3));
+    else if(i<8) g=P(nz(-4,4),0,0,nz(-2,2));
+    else         g=P(0,nz(-4,4),0,nz(-2,2));
+    const p0=(i>=4 && Math.random()<.35) ? P(nz(-9,9)) : P(0);
+    const t=makeTask('chain',p0,u,g,false); if(t) return t;
+  }
+}
+function genProduct(i){
+  for(;;){
+    let u, g;
+    if(i<2)      { u=xPow(rnd(1,3)); g=P(0,nz(-4,4)); }
+    else if(i<4) { u=P(nz(-9,9),1); g=P(0,nz(-4,4)); }
+    else if(i<6) { u=xPow(rnd(2,3), pick([1,1,2,-1,3])); g=P(nz(-4,4),nz(-3,3)); }
+    else if(i<8) { u=P(nz(-9,9),nz(-4,4)); g=P(nz(-4,4),nz(-3,3)); }
+    else         { u=pick([P(nz(-5,5),0,1), P(0,nz(-5,5),1)]); g=P(0,nz(-3,3)); }
+    const t=makeTask('product',P(0),u,g,Math.random()<.4); if(t) return t;
+  }
+}
+
+/* ================= Parser für die Eingabe ================= */
+function tokenize(seq){
+  const toks=[]; let num=null;
+  const flush=()=>{ if(num!==null){ if(/,$|^,/.test(num)) throw new Error('komma'); toks.push({t:'n', v:parseFloat(num.replace(',','.')), s:num}); num=null; } };
+  for(const it of seq.items){
+    if(it.t){ flush();
+      if(it.t==='paren') toks.push({t:'g', seq:it.kids[0]});
+      else if(it.t==='frac') toks.push({t:'f', num:it.kids[0], den:it.kids[1]});
+      else toks.push({t:'p', seq:it.kids[0]});
+      continue; }
+    if(/[0-9,]/.test(it.c)){ if(it.c===',' && num!==null && num.includes(',')) throw new Error('komma'); num=(num??'')+it.c; continue; }
+    flush();
+    if(it.c==='x') toks.push({t:'x'});
+    else if(it.c==='e') toks.push({t:'e'});
+    else if(it.c==='\\cdot') toks.push({t:'mul'});
+    else toks.push({t:'op', v:it.c});
+  }
+  flush();
+  return toks;
+}
+function parseSum(seq){
+  const toks=tokenize(seq); let p=0; const terms=[];
+  if(toks.length===0) throw new Error('leer');
+  let sign=1;
+  if(toks[p].t==='op'){ sign=toks[p].v==='-'?-1:1; p++; }
+  while(true){
+    const factors=[];
+    while(p<toks.length && toks[p].t!=='op'){
+      const t=toks[p++];
+      if(t.t==='mul'){
+        if(factors.length===0 || p>=toks.length || ['op','mul','p'].includes(toks[p].t)) throw new Error('unvollständig');
+        continue;
+      }
+      if(t.t==='p'){
+        const last=factors[factors.length-1];
+        if(!last || last.pow) throw new Error('hoch');
+        last.pow=parseSum(t.seq); continue;
+      }
+      if(t.t==='g') factors.push({t:'g', sum:parseSum(t.seq)});
+      else if(t.t==='f') factors.push({t:'f', num:parseSum(t.num), den:parseSum(t.den)});
+      else factors.push({...t});
+    }
+    if(factors.length===0) throw new Error('unvollständig');
+    terms.push({sign, factors});
+    if(p>=toks.length) break;
+    sign=toks[p].v==='-'?-1:1; p++;
+    if(p>=toks.length) throw new Error('unvollständig');
+  }
+  return {terms};
+}
+function evalSum(sum,x){ return sum.terms.reduce((s,t)=>s+t.sign*t.factors.reduce((m,f)=>m*evalFactor(f,x),1),0); }
+function evalFactor(f,x){
+  if(f.t==='e') return f.pow ? Math.exp(evalSum(f.pow,x)) : Math.E;
+  let b = f.t==='n' ? f.v : f.t==='x' ? x : f.t==='g' ? evalSum(f.sum,x) : evalSum(f.num,x)/evalSum(f.den,x);
+  return f.pow ? Math.pow(b, evalSum(f.pow,x)) : b;
+}
+const PTS=[-1.3,-0.7,-0.25,0.35,0.8,1.15,1.6];
+function sameFn(sum, fn){
+  return PTS.every(x=>{ const a=evalSum(sum,x), b=fn(x); return isFinite(a) && Math.abs(a-b)<=1e-7*(1+Math.abs(b)); });
+}
+
+/* ================= Ist die Eingabe vereinfacht? ================= */
+const factorsOf=f=>[f.t, f.pow?1:0];
+function hasSym(sum, t){ return sum.terms.some(tm=>tm.factors.some(f=>f.t===t || (f.pow && hasSym(f.pow,t)) ||
+  (f.t==='g' && hasSym(f.sum,t)) || (f.t==='f' && (hasSym(f.num,t)||hasSym(f.den,t))))); }
+const isConst=s=>!hasSym(s,'x') && !hasSym(s,'e');
+const singleNum=s=>s.terms.length===1 && s.terms[0].factors.length===1 && s.terms[0].factors[0].t==='n' && !s.terms[0].factors[0].pow;
+
+/* Ein Summand: wie viele Zahlen, x-Potenzen, Klammern, e-Potenzen stecken darin? */
+function termInfo(t){
+  const info={nums:0, val:t.sign, xs:0, deg:0, groups:[], exps:[], bad:false, reduce:false};
+  const add=f=>{
+    if(f.t==='n'){ if(f.pow){ info.bad=true; return; } info.nums++; info.val*=f.v; }
+    else if(f.t==='x'){
+      info.xs++;
+      if(!f.pow) info.deg+=1;
+      else if(isConst(f.pow) && Number.isInteger(evalSum(f.pow,0)) && evalSum(f.pow,0)>=2 && singleNum(f.pow)) info.deg+=evalSum(f.pow,0);
+      else info.bad=true;
+    }
+    else if(f.t==='e'){ if(f.pow) info.exps.push(f.pow); else info.bad=true; }
+    else if(f.t==='g'){
+      if(f.pow || hasSym(f.sum,'e')) info.bad=true;
+      else if(isConst(f.sum)){ if(!singleNum(f.sum)) info.bad=true; else { info.nums++; info.val*=evalSum(f.sum,0); } }
+      else info.groups.push(f.sum);
+    }
+    else if(f.t==='f'){
+      if(f.pow || !singleNum(f.den) || f.num.terms.length!==1){ info.bad=true; return; }
+      const dv=f.den.terms[0].factors[0].v, nt=f.num.terms[0];
+      if(!Number.isInteger(dv) || dv<=1) info.reduce=true;
+      if(nt.sign<0 && t.factors.length>1) {/* Minus im Zähler ist erlaubt */}
+      const numF=nt.factors.filter(q=>q.t==='n' && !q.pow);
+      if(numF.length>1){ info.bad=true; return; }
+      const nv=numF.length ? numF[0].v : 1;
+      if(Number.isInteger(nv) && Number.isInteger(dv) && gcd(nv,dv)>1) info.reduce=true;
+      info.nums++; info.val*=nt.sign*nv/dv;
+      nt.factors.filter(q=>!(q.t==='n' && !q.pow)).forEach(add);
+    }
+  };
+  t.factors.forEach(add);
+  if(info.nums>1 || info.xs>1 || info.groups.length>1 || info.exps.length>1) info.bad=true;
+  return info;
+}
+function polyClean(sum){
+  const degs=new Set();
+  for(const t of sum.terms){
+    const i=termInfo(t);
+    if(i.bad || i.groups.length || i.exps.length || i.reduce) return false;
+    if(i.val===0 && sum.terms.length>1) return false;
+    if(degs.has(i.deg)) return false; degs.add(i.deg);
+  }
+  return true;
+}
+const sig=s=>PTS.slice(0,3).map(x=>evalSum(s,x).toFixed(6)).join('|');
+/* '' = fertig, sonst ein Grund für den Hinweis */
+function simplifyState(sum){
+  const infos=sum.terms.map(termInfo);
+  if(infos.some(i=>i.bad)) return 'multiply';
+  if(infos.some(i=>i.val===0) && sum.terms.length>1) return 'combine';
+  for(const i of infos){
+    for(const ex of i.exps) if(!polyClean(ex)) return 'exp';
+    for(const g of i.groups) if(!polyClean(g)) return 'group';
+  }
+  const eSigs={}, pDegs={};
+  for(const i of infos){
+    if(i.exps.length){ const s=sig(i.exps[0]); if(eSigs[s]) return 'factorE'; eSigs[s]=1; }
+    else if(!i.groups.length){ if(pDegs[i.deg]) return 'combine'; pDegs[i.deg]=1; }
+  }
+  if(infos.some(i=>i.reduce)) return 'reduce';
+  return '';
+}
+
+/* ================= Prüfen ================= */
+const HINTS={
+  multiply:'Richtig abgeleitet. Rechne jetzt die Zahlen aus und fasse zusammen.',
+  combine:'Richtig abgeleitet. Fasse jetzt noch gleichartige Terme zusammen.',
+  factorE:'Richtig abgeleitet. Klammere jetzt den e-Term aus.',
+  group:'Richtig abgeleitet. Fasse noch den Inhalt der Klammer zusammen.',
+  exp:'Richtig abgeleitet. Vereinfache noch den Exponenten.',
+  reduce:'Richtig abgeleitet. Kürze noch den Bruch.'
+};
+function check(task){
+  if(root.items.length===0) return {kind:'invalid', msg:'Tippe zuerst deine Antwort ein.'};
+  let sum;
+  try{ sum=parseSum(root); }catch(e){ return {kind:'invalid', msg:'Der Term ist noch unvollständig. Prüfe Vorzeichen, Klammern, Hochzahlen und Brüche.'}; }
+  if(!sameFn(sum, task.fp)){
+    if(sameFn(sum, task.f)) return {kind:'wrong', msg:'Das ist noch f(x) selbst. Leite den Term ab.'};
+    return {kind:'wrong'};
+  }
+  const st=simplifyState(sum);
+  if(st) return {kind:'hint', msg:HINTS[st]};
+  return {kind:'ok'};
+}
+const TIPS={
+  simple:'Tipp: Konstante Summanden fallen weg. Die Ableitung von e^(ax+b) ist a·e^(ax+b).',
+  chain:'Tipp: Leite e^(g(x)) ab, indem du mit der inneren Ableitung g′(x) multiplizierst.',
+  product:'Tipp: (u·v)′ = u′·v + u·v′. Klammere am Ende den e-Term aus.'
+};
+const RULES={
+  simple:'Konstante Summanden fallen weg, e^(ax+b) wird zu a·e^(ax+b).',
+  chain:'Kettenregel: äußere Ableitung e^(g(x)) mal innere Ableitung g′(x).',
+  product:'Produktregel u′·v + u·v′, danach den e-Term ausklammern.'
+};
+
+/* ================= Klasse 7: Klammertrainer (eigener Bereich) ================= */
+const KT=(function(){
+/* ================= Brüche (rationale Zahlen) ================= */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+const lcm=(a,b)=>a/gcd(a,b)*b;
+function R(n,d=1){ if(d===0) throw new Error('div0'); if(d<0){ n=-n; d=-d; } const g=gcd(n,d)||1; return [n/g, d/g]; }
+const toR=c=>Array.isArray(c)?c:R(c);
+const radd=(a,b)=>R(a[0]*b[1]+b[0]*a[1], a[1]*b[1]);
+const rmul=(a,b)=>R(a[0]*b[0], a[1]*b[1]);
+const rinv=a=>R(a[1], a[0]);
+const rzero=a=>a[0]===0;
+
+/* ================= Parser und Polynome ================= */
+function tokenize(seq){
+  const toks=[]; let num=null;
+  const flush=()=>{ if(num!==null){ toks.push({t:'n', v:parseInt(num,10)}); num=null; } };
+  for(const it of seq.items){
+    if(it.t==='paren'){ flush(); toks.push({t:'g', seq:it.kids[0]}); continue; }
+    if(it.t==='frac'){ flush(); toks.push({t:'f', num:it.kids[0], den:it.kids[1]}); continue; }
+    if(/[0-9]/.test(it.c)){ num=(num??'')+it.c; continue; }
+    flush();
+    if(it.c==='x') toks.push({t:'x'});
+    else if(it.c==='\\cdot') toks.push({t:'mul'});
+    else toks.push({t:'op', v:it.c});
+  }
+  flush();
+  return toks;
+}
+function parseSum(seq){
+  const toks=tokenize(seq); let p=0; const terms=[];
+  if(toks.length===0) throw new Error('leer');
+  let sign=1;
+  if(toks[p].t==='op'){ sign=toks[p].v==='-'?-1:1; p++; }
+  while(true){
+    const factors=[]; let hasMul=false;
+    while(p<toks.length && toks[p].t!=='op'){
+      const t=toks[p++];
+      if(t.t==='mul'){ // ausdrückliches Malzeichen: muss zwischen zwei Faktoren stehen
+        if(factors.length===0 || p>=toks.length || toks[p].t==='op' || toks[p].t==='mul') throw new Error('unvollständig');
+        hasMul=true; continue;
+      }
+      if(t.t==='g') factors.push({t:'g', sum:parseSum(t.seq)});
+      else if(t.t==='f') factors.push({t:'f', num:parseSum(t.num), den:parseSum(t.den)});
+      else factors.push(t);
+    }
+    if(factors.length===0) throw new Error('unvollständig');
+    terms.push({sign, factors, hasMul});
+    if(p>=toks.length) break;
+    sign=toks[p].v==='-'?-1:1; p++;
+    if(p>=toks.length) throw new Error('unvollständig');
+  }
+  return {terms};
+}
+const Z=()=>R(0);
+const trim=a=>{ a=a.slice(); while(a.length>1 && rzero(a[a.length-1])) a.pop(); return a; };
+const padd=(a,b)=>{ const r=[]; for(let i=0;i<Math.max(a.length,b.length);i++) r.push(radd(a[i]||Z(), b[i]||Z())); return trim(r); };
+const pmul=(a,b)=>{ const r=Array.from({length:a.length+b.length-1}, Z); a.forEach((x,i)=>b.forEach((y,j)=>{ r[i+j]=radd(r[i+j], rmul(x,y)); })); return trim(r); };
+const peq=(a,b)=>{ a=trim(a); b=trim(b); return a.length===b.length && a.every((x,i)=>x[0]===b[i][0] && x[1]===b[i][1]); };
+function polyOf(sum){
+  let r=[Z()];
+  for(const t of sum.terms){
+    let p=[R(t.sign)];
+    for(const f of t.factors){
+      let q;
+      if(f.t==='n') q=[R(f.v)];
+      else if(f.t==='x') q=[Z(), R(1)];
+      else if(f.t==='g') q=polyOf(f.sum);
+      else {
+        const d=polyOf(f.den);
+        if(d.length!==1 || rzero(d[0])) throw new Error('nenner');
+        q=polyOf(f.num).map(c=>rmul(c, rinv(d[0])));
+      }
+      p=pmul(p,q);
+    }
+    r=padd(r,p);
+  }
+  return r;
+}
+/* Vorzeichenklammer wie (-5) oder (-2x): nur ein Summand, keine weitere Klammer darin */
+const isSimpleGroup=f=>f.t==='g' && f.sum.terms.length===1 && f.sum.terms[0].factors.every(q=>q.t!=='g');
+const hasGroup=sum=>sum.terms.some(t=>t.factors.some(f=>f.t==='g' && !isSimpleGroup(f)));
+
+/* Bruch in Normalform? Zähler: Zahl, x oder Zahl·x; Nenner: Zahl */
+function plainFrac(f){
+  const nt=f.num.terms, dt=f.den.terms;
+  if(nt.length!==1 || dt.length!==1 || nt[0].sign<0 || dt[0].sign<0) return null;
+  const ns=nt[0].factors.map(q=>q.t).join(''), ds=dt[0].factors.map(q=>q.t).join('');
+  if(ds!=='n') return null;
+  let nv;
+  if(ns==='n' || ns==='nx') nv=nt[0].factors[0].v; else if(ns==='x') nv=1; else return null;
+  const dv=dt[0].factors[0].v;
+  return {x:ns!=='n', reduce: dv<=1 || nv===0 || gcd(nv,dv)>1};
+}
+/* '' = fertig, 'multiply' = Produkte ausrechnen, 'combine' = noch zusammenfassen, 'reduce' = Bruch kürzen */
+function simplifyState(sum){
+  let xs=0, cs=0, reduce=false;
+  for(const t of sum.terms){
+    const nums=t.factors.filter(q=>q.t==='n'||q.t==='f').length;
+    if(t.hasMul || nums>1 || t.factors.some(isSimpleGroup)) return 'multiply';
+  }
+  for(const t of sum.terms){
+    const f=t.factors, sig=f.map(q=>q.t).join('');
+    if(sig==='n'){ if(f[0].v===0 && sum.terms.length>1) return 'combine'; cs++; }
+    else if(sig==='x') xs++;
+    else if(sig==='nx'){ if(f[0].v===0 || f[0].v===1) return 'combine'; xs++; }
+    else if(sig==='f' || sig==='fx'){
+      const s=plainFrac(f[0]); if(!s) return 'combine';
+      if(sig==='fx' && s.x) return 'combine';
+      if(s.reduce) reduce=true;
+      if(sig==='fx' || s.x) xs++; else cs++;
+    }
+    else return 'combine';
+  }
+  if(xs>1 || cs>1) return 'combine';
+  return reduce ? 'reduce' : '';
+}
+
+/* ================= Aufgaben ================= */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const nz=(a,b)=>{ let v; do v=rnd(a,b); while(v===0); return v; };
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+const coprime=(q,max)=>{ let p; do p=rnd(1,max); while(gcd(p,q)!==1); return p; };
+
+function absTex(r){ const n=Math.abs(r[0]); return r[1]===1 ? String(n) : '\\frac{'+n+'}{'+r[1]+'}'; }
+function sumTex(monos){
+  let out='', first=true;
+  for(const m of monos){
+    const c=toR(m.c);
+    if(rzero(c)) continue;
+    const body = m.x ? ((Math.abs(c[0])===1 && c[1]===1) ? 'x' : absTex(c)+'x') : absTex(c);
+    out+=(c[0]<0?'-':(first?'':'+')) + body;
+    first=false;
+  }
+  return out||'0';
+}
+const inner=(a,b,swap)=> swap ? [{c:b},{c:a,x:true}] : [{c:a,x:true},{c:b}];
+
+/* prod: Faktor k mal Klammer mit den Summanden m; right=true stellt den Faktor rechts neben die Klammer */
+function buildExpand(parts){
+  let t=''; const exp=[];
+  parts.forEach((p,j)=>{
+    if(p.t==='lin'){
+      const m=[{c:p.a,x:true},{c:p.b}].filter(q=>!rzero(toR(q.c)));
+      let s=sumTex(m); if(j>0 && s[0]!=='-') s='+'+s;
+      t+=s; exp.push(...m.map(q=>({c:toR(q.c), x:!!q.x})));
+    } else {
+      const k=toR(p.k), neg=k[0]<0, ka=absTex(k), br='('+sumTex(p.m)+')';
+      if(p.right) t+=(j===0?'':'+') + br + '\\cdot ' + (neg ? '\\left(-'+ka+'\\right)' : ka);
+      else        t+=(j===0 ? (neg?'-':'') : (neg?'-':'+')) + ka + br;
+      exp.push(...p.m.map(q=>({c:rmul(k,toR(q.c)), x:!!q.x})));
+    }
+  });
+  const A=exp.filter(m=>m.x).reduce((s,m)=>radd(s,m.c), Z());
+  const B=exp.filter(m=>!m.x).reduce((s,m)=>radd(s,m.c), Z());
+  return {t, exp, A, B};
+}
+function finishExpand(parts, needFraction){
+  const r=buildExpand(parts);
+  if(rzero(r.A) || rzero(r.B)) return null;
+  if([...r.exp.map(m=>m.c), r.A, r.B].some(c=>c[1]>20 || Math.abs(c[0])>150)) return null;
+  if(needFraction && r.A[1]===1 && r.B[1]===1) return null;
+  const final=sumTex([{c:r.A,x:true},{c:r.B}]);
+  const simple=sumTex(r.exp);
+  const steps = (simple!==final) ? [r.t, simple, final] : [r.t, final];
+  return {type:'expand', tex:r.t, target:[r.B, r.A], steps};
+}
+const two=(swap)=>inner(rnd(1,6), nz(-9,9), swap);
+function three(){
+  const m=[{c:rnd(1,6),x:true},{c:nz(-9,9)}, Math.random()<.5 ? {c:nz(-6,6),x:true} : {c:nz(-9,9)}];
+  if(Math.random()<.4){ [m[0],m[1]]=[m[1],m[0]]; m[0].c=Math.abs(m[0].c); }
+  return m;
+}
+const side=()=>Math.random()<.5;
+
+/* Ausmultiplizieren, normales Level */
+function genExpand(i){
+  for(;;){
+    let parts, needFrac=false;
+    const sw=Math.random()<.3 && i>=3;
+    if(i<3)      parts=[{t:'prod', k:rnd(2,9),  m:two(false)}];
+    else if(i<4) parts=[{t:'prod', k:-rnd(2,9), m:two(sw)}];
+    else if(i<5) parts=[{t:'prod', k:pick([1,-1])*rnd(2,9), m:two(sw), right:true}];   // Faktor rechts
+    else if(i<7){ // Bruch als Faktor, Ergebnis ganzzahlig
+      const q=pick([2,3,4,5]), p=coprime(q,3);
+      parts=[{t:'prod', k:R((i===6?-1:1)*p,q), m:inner(q*rnd(1,3), q*nz(-3,3), sw), right:side()}];
+    }
+    else if(i<8){ // Brüche in der Klammer, ganze Zahl als Faktor
+      const q1=pick([2,3,4]), q2=pick([2,3,4]), L=lcm(q1,q2);
+      parts=[{t:'prod', k:L*(L<=4?rnd(1,2):1)*pick([1,-1]), m:inner(R(coprime(q1,5),q1), R(pick([1,-1])*coprime(q2,5),q2), sw), right:side()}];
+    }
+    else if(i<9){ // Bruch als Faktor, Ergebnis mit Brüchen
+      const q=pick([2,3,4,5]);
+      parts=[{t:'prod', k:R(coprime(q,4),q), m:two(sw), right:side()}]; needFrac=true;
+    }
+    else { // negativer Bruch als Faktor, Bruch in der Klammer
+      const q=pick([2,3,4]), s=pick([2,3]);
+      parts=[{t:'prod', k:R(-coprime(q,4),q), m:inner(rnd(1,6), R(pick([1,-1])*coprime(s,4),s), sw), right:side()}]; needFrac=true;
+    }
+    const t=finishExpand(parts, needFrac); if(t) return t;
+  }
+}
+/* Profi: weiterer Summand, drei Summanden, zweite Klammer */
+function genProfi(i){
+  for(;;){
+    let parts;
+    const sw=()=>Math.random()<.3, kpm=()=>pick([1,-1])*rnd(2,9);
+    const linC={t:'lin', a:0, b:nz(-15,15)}, linX={t:'lin', a:nz(-9,9), b:0};
+    if(i===0)      parts=[linC, {t:'prod', k:rnd(2,9), m:two(sw())}];
+    else if(i===1) parts=[linX, {t:'prod', k:-rnd(2,9), m:two(sw())}];
+    else if(i===2) parts=side() ? [{t:'prod', k:kpm(), m:two(sw()), right:true}, pick([linC,linX])] : [pick([linC,linX]), {t:'prod', k:kpm(), m:two(sw()), right:true}];
+    else if(i===3) parts=[pick([linC,linX]), {t:'prod', k:-rnd(2,9), m:two(sw()), right:side()}];
+    else if(i===4) parts=[{t:'prod', k:rnd(2,6), m:three()}];
+    else if(i===5) parts=[{t:'prod', k:pick([1,-1])*rnd(2,6), m:three(), right:true}];
+    else if(i===6) parts=[{t:'prod', k:-rnd(2,6), m:three(), right:side()}];
+    else if(i===7) parts=[{t:'prod', k:rnd(2,9), m:two(sw())}, {t:'prod', k:kpm(), m:two(sw())}];
+    else if(i===8) parts=[{t:'prod', k:rnd(2,9), m:two(sw()), right:side()}, {t:'prod', k:-rnd(2,8), m:two(sw()), right:side()}];
+    else           parts=[{t:'prod', k:rnd(2,6), m:three(), right:side()}, {t:'prod', k:kpm(), m:two(sw()), right:side()}];
+    const t=finishExpand(parts, false); if(t) return t;
+  }
+}
+function genFactor(i){
+  for(;;){
+    const g = i<4 ? rnd(2,6) : i<7 ? rnd(2,9) : rnd(3,12);
+    const a = i<7 ? rnd(1,7) : nz(-7,7);
+    const b = i<4 ? rnd(1,9) : nz(-9,9);
+    if(gcd(a,b)!==1) continue;
+    const swap = i>=5 && Math.random()<.35;
+    const tex=sumTex(inner(g*a,g*b,swap));
+    const sol=g+'('+sumTex(inner(a,b,swap))+')';
+    return {type:'factor', tex, target:[R(g*b), R(g*a)], steps:[tex, sol], g, coefs:[g*a,g*b]};
+  }
+}
+
+/* ================= Prüfen ================= */
+function check(task){
+  if(root.items.length===0) return {kind:'invalid', msg:'Tippe zuerst deine Antwort ein.'};
+  let sum, poly;
+  try{ sum=parseSum(root); }catch(e){ return {kind:'invalid', msg:'Der Term ist noch unvollständig. Prüfe Vorzeichen, Klammern und Brüche.'}; }
+  try{ poly=polyOf(sum); }catch(e){ return {kind:'invalid', msg:'Im Nenner muss eine Zahl stehen, die nicht 0 ist.'}; }
+  const equal=peq(poly, task.target);
+  if(!equal) return {kind:'wrong'};
+  if(task.type==='expand'){
+    if(hasGroup(sum)) return {kind:'hint', msg:'Der Wert stimmt, aber es steht noch eine Klammer da. Multipliziere sie aus.'};
+    const st=simplifyState(sum);
+    if(st==='multiply') return {kind:'hint', msg:'Gut aufgeschrieben. Rechne jetzt die Produkte aus.'};
+    if(st==='combine') return {kind:'hint', msg:'Richtig ausmultipliziert. Fasse jetzt noch gleichartige Terme zusammen.'};
+    if(st==='reduce')  return {kind:'hint', msg:'Richtig ausmultipliziert. Kürze jetzt noch den Bruch.'};
+    return {kind:'ok'};
+  }
+  const t=sum.terms.length===1 ? sum.terms[0] : null;
+  const groups=t ? t.factors.filter(f=>f.t==='g' && !isSimpleGroup(f)) : [];
+  const xOutside=t && t.factors.some(f=>f.t==='x' || (isSimpleGroup(f) && polyOf(f.sum).length>1));
+  if(!t || groups.length!==1 || xOutside)
+    return {kind:'hint', msg:'Der Term ist gleichwertig, aber noch nicht ausgeklammert. Schreib ihn als Zahl mal Klammer.'};
+  const grp=groups[0].sum;
+  if(['combine','multiply'].includes(simplifyState(grp))) return {kind:'hint', msg:'Fasse den Inhalt der Klammer noch zusammen.'};
+  const p=polyOf(grp);
+  if(p.some(c=>c[1]!==1)) return {kind:'hint', msg:'Klammere so aus, dass in der Klammer nur ganze Zahlen stehen.'};
+  if(gcd(p[0][0], (p[1]||Z())[0])>1) return {kind:'hint', msg:'Richtig ausgeklammert, aber da geht noch mehr. Nimm den größten gemeinsamen Teiler.'};
+  return {kind:'ok'};
+}
+
+
+return {genExpand, genFactor, genProfi, check};
+})();
+/* ================= Aufgabentypen nach Klassenstufe ================= */
+const DERIV={label:()=> 'Berechne die Ableitung und vereinfache.', expr:t=>'f(x)='+t.tex, prefix:'f′(x) =', pad:'deriv',
+  check:t=>check(t), tip:t=>TIPS[t.kind],
+  solution:t=>({lines:t.steps.map((s,j)=>(j===0?"f'(x)=":'=')+s), note:RULES[t.kind]})};
+const TERMS={label:t=>t.type==='expand' ? 'Multipliziere aus und fasse zusammen.' : 'Klammere den größten gemeinsamen Faktor aus.',
+  expr:t=>t.tex, prefix:'=', pad:'terms', check:t=>KT.check(t),
+  tip:t=>t.type==='expand' ? 'Tipp: Jeder Summand in der Klammer wird mit dem Faktor multipliziert, Vorzeichen eingeschlossen.'
+                           : 'Tipp: Suche die größte Zahl, durch die beide Zahlen teilbar sind.',
+  solution:t=>({lines:[t.steps.join('=')], note: t.type==='factor'
+    ? 'Größter gemeinsamer Teiler von '+Math.abs(t.coefs[0])+' und '+Math.abs(t.coefs[1])+' ist '+t.g+'.' : ''})};
+
+/* ================= Kursstufe: f′ und f″ schrittweise, f(x) = K·u(x)·e^(g(x)) =================
+   Pro Ableitung drei Schritte: Produktregel, Ausklammern mit Lückenvorgabe e^g·(☐ + ☐), Klammer zusammenfassen. */
+const ONE=R(1);
+const isOne=r=>r[0]===1&&r[1]===1, isMinusOne=r=>r[0]===-1&&r[1]===1;
+const pscale=(p,k)=>trim(p.map(c=>rmul(c,k)));
+const wrapT=t=>t[0]==='-' ? paren(t) : t;
+const rv=r=>r[0]/r[1];
+const rTex=r=>(r[0]<0?'-':'')+absTex(r);
+const rTxt=r=>(r[0]<0?'−':'')+Math.abs(r[0])+(r[1]===1?'':'/'+r[1]);
+const polyTxt=p=>polyTex(p).replace(/\\frac\{(\d+)\}\{(\d+)\}/g,'$1/$2').replace(/-/g,'−');
+const isUnit=p=>nterms(p)===1 && p.length===1 && Math.abs(rv(p[0]))===1;
+function makeStepTask(K,u,g){
+  const gp=pder(g), c=gp[0], cv=rv(c);
+  const W=[pscale(u,K)];
+  for(let n=1;n<=2;n++) W.push(padd(pder(W[n-1]), pmul(W[n-1],gp)));
+  if(W.flat().some(q=>Math.abs(q[0])>80 || q[1]>8)) return null;
+  if(pzero(W[1]) || pzero(W[2])) return null;
+  const E='e^{'+polyTex(g)+'}', eTxt='e^('+polyTxt(g)+')';
+  const kT=isOne(K)?'':isMinusOne(K)?'-':(K[0]<0?'-':'')+absTex(K);
+  const tex=(nterms(u)===1 ? polyTex(W[0]) : kT+paren(polyTex(u)))+'\\cdot '+E;
+  const eg=x=>Math.exp(peval(g,x));
+  const steps=[];
+  for(let n=1;n<=2;n++){
+    const U=W[n-1], Up=pder(U), pr=n===1?'′':'″';
+    const pU=x=>peval(U,x), pUp=x=>peval(Up,x), pW=x=>peval(W[n],x);
+    const UT=nterms(U)>1?paren(polyTex(U)):polyTex(U);
+    /* Faktoren 1 und −1 werden in den Lösungen ausdrücklich geschrieben */
+    const t1=isUnit(Up) ? rTex(Up[0])+'\\cdot '+E : ePart(Up,E,false);
+    const t2=UT+'\\cdot '+wrapT(rTex(c))+'\\cdot '+E;
+    /* typische Fehler, gemessen am Inhalt der Klammer */
+    const errs=[];
+    if(isMinusOne(c)) errs.push({fn:x=>pUp(x)+pU(x), msg:'Vor dem e-Term steht ein Minus. Das ist der Faktor −1, denn −'+eTxt+' = (−1)·'+eTxt+'. Er bleibt beim Ausklammern in der Klammer.'});
+    else if(!isOne(c)) errs.push({fn:x=>pUp(x)+pU(x), msg:'Im zweiten Summanden fehlt die innere Ableitung '+rTxt(c)+' aus v′.'});
+    if(isUnit(Up)) errs.push({fn:x=>cv*pU(x), msg:'Ein Summand bestand nur aus dem e-Term. Beim Ausklammern bleibt dort '+(rv(Up[0])>0?'eine 1':'−1')+' stehen, nicht nichts.'});
+    errs.push({fn:x=>pUp(x)-cv*pU(x), msg:'Prüfe das Vorzeichen des zweiten Summanden. Der Faktor aus v′ ist '+rTxt(c)+'.'});
+    if(nterms(U)>1){
+      const flip=x=>U.reduce((s,q,i)=>s+(i===U.length-1?1:-1)*rv(q)*Math.pow(x,i),0);
+      errs.push({fn:x=>pUp(x)+cv*flip(x), msg:'Beim Ausmultiplizieren mit '+rTxt(c)+' ist ein Vorzeichen verloren gegangen. Jeder Summand von u wird mit '+rTxt(c)+' multipliziert, Vorzeichen eingeschlossen.'});
+    }
+    steps.push({kind:'prod', pre:'f'+pr+'(x) =',
+      prompt: n===1 ? 'Wende die Produktregel u′·v + u·v′ an. Vereinfachen musst du hier noch nicht.'
+                    : 'Leite f′(x) wieder mit der Produktregel ab. Das neue u ist alles außer dem e-Term, v bleibt der e-Term.',
+      fn:x=>pW(x)*eg(x), prevFn:x=>pU(x)*eg(x), wrongUpVp:x=>pUp(x)*cv*eg(x),
+      sol:joinT(t1,t2),
+      tip:'Tipp: u′·v + u·v′. Dabei ist v′ der e-Term mal die innere Ableitung. Setz Klammern um Terme mit Minus.'});
+    const s1=isUnit(Up) ? rTex(Up[0]) : polyTex(Up), s2=UT+'\\cdot '+wrapT(rTex(c));
+    steps.push({kind:'gap', pre:'=', E, t1:pUp, t2:x=>cv*pU(x), w:pW, errs, up:Up,
+      prompt:'Klammere den e-Term aus. Schreib in jede Lücke, was vom Summanden übrig bleibt, wenn du den e-Term wegnimmst.',
+      sol:E+'\\cdot\\left('+s1+(s2[0]==='-'?'':'+')+s2+'\\right)',
+      tip:'Tipp: In die erste Lücke kommt u′, in die zweite u mal die innere Ableitung'+(isMinusOne(c)?', also mal (−1).':'.')});
+    steps.push({kind:'comb', pre:'=', E, w:pW, errs,
+      prompt:'Fasse jetzt den Inhalt der Klammer zusammen.',
+      sol:E+'\\cdot\\left('+polyTex(W[n])+'\\right)',
+      tip:'Tipp: Multipliziere aus und fasse die x-Terme und die Zahlen jeweils zusammen.'});
+  }
+  return {tex, steps, i:0, lines:[], shown:0, sa:0};
+}
+function genStep(lvl){
+  for(;;){
+    let K=ONE, u, g;
+    if(lvl===0){ u=Math.random()<.2 ? xPow(1) : P(nz(-5,5),1); g=P(0,pick([1,-1])); }
+    else if(lvl===1){ u=P(nz(-6,6),pick([1,2,3,-1,-2])); g=P(0,pick([1,-1,2,-2])); }
+    else if(lvl===2){ K=R(pick([2,3,4,5,-2,-3,-4])); u=Math.random()<.2 ? xPow(1) : P(nz(-6,6),pick([1,2,3])); g=P(0,pick([1,-1,2,-2])); }
+    else { K=pick([R(2),R(-2),R(3),R(-3),R(1,2),R(-1,2)]); u=P(nz(-6,6),pick([1,2,4])); g=Math.random()<.5 ? P(nz(-3,3),pick([1,-1,2,-2])) : P(0,pick([R(1,2),R(-1,2)])); }
+    const t=makeStepTask(K,u,g); if(t) return t;
+  }
+}
+
+/* Eingabe mit zwei Lücken: root zeigt auf die aktive Lücke */
+let slots=null, active=0;
+function useSlot(i){ active=i; root=slots[i]; }
+function startGaps(){ slots=[mkSeq(null), mkSeq(null)]; useSlot(0); cur={seq:root, i:0}; }
+function plainSeq(seq){ const c=cur; cur={seq:null,i:-1}; const t=inputTex(seq); cur=c; return t; }
+function slotTex(i, live){
+  const s=slots[i];
+  if(s.items.length===0 && !(live && i===active)) return '\\class{ph}{\\square}';
+  if(!live || i!==active) return plainSeq(s);
+  return inputTex(s)||CUR;
+}
+function gapTex(live){ const a=slotTex(0,live), b=slotTex(1,live); return '\\left('+a+(b[0]==='-'?'':'+')+b+'\\right)'; }
+function answerTexMulti(){
+  const s=task.steps[task.i];
+  if(s.kind==='gap') return s.E+'\\cdot '+gapTex(true);
+  if(s.kind==='comb') return s.E+'\\cdot\\left('+(inputTex(root)||CUR)+'\\right)';
+  return inputTex(root)||CUR;
+}
+function doneTexMulti(){
+  const s=task.steps[task.i];
+  if(s.kind==='gap') return s.E+'\\cdot '+gapTex(false);
+  if(s.kind==='comb') return s.E+'\\cdot\\left('+(plainSeq(root)||'\\class{ph}{\\square}')+'\\right)';
+  return plainSeq(root);
+}
+function prepMulti(){ slots=null; resetInput(); if(task.i<task.steps.length && task.steps[task.i].kind==='gap') startGaps(); }
+function goRight(){
+  if(slots && active===0 && cur.seq===root && cur.i===root.items.length){ useSlot(1); cur={seq:root, i:0}; return; }
+  moveRight();
+}
+function goLeft(){
+  if(slots && active===1 && cur.seq===root && cur.i===0){ useSlot(0); cur={seq:root, i:root.items.length}; return; }
+  moveLeft();
+}
+function goBack(){
+  if(slots && active===1 && cur.seq===root && cur.i===0){ useSlot(0); cur={seq:root, i:root.items.length}; return; }
+  backspace();
+}
+
+/* Prüfen eines Schritts */
+function factState(sum){
+  if(sum.terms.length!==1) return 'factorE';
+  const i=termInfo(sum.terms[0]);
+  if(i.bad || i.groups.length>1) return 'multiply';
+  if(i.exps.length!==1) return 'factorE';
+  if(!polyClean(i.exps[0])) return 'exp';
+  if(i.groups.length===1 && !polyClean(i.groups[0])) return 'group';
+  if(i.reduce) return 'reduce';
+  return '';
+}
+const parseOr=seq=>{ try{ return parseSum(seq); }catch(e){ return null; } };
+const fnOf=sum=>(x=>evalSum(sum,x));
+const same=(f,g)=>PTS.every(x=>{ const a=f(x), b=g(x); return isFinite(a) && Math.abs(a-b)<=1e-7*(1+Math.abs(b)); });
+const BAD_INPUT='Der Term ist noch unvollständig. Prüfe Vorzeichen, Klammern, Hochzahlen und Brüche.';
+const errMsg=(s,inner)=>{ const e=s.errs.find(e=>same(inner,e.fn)); return e ? e.msg : null; };
+function checkMulti(t){
+  const s=t.steps[t.i];
+  if(s.kind==='gap'){
+    const e=slots.map(q=>q.items.length===0);
+    if(e[0]||e[1]){
+      if(isUnit(s.up)) return {kind:'hint', msg:'Eine Lücke ist leer. Steht in einem Summanden nur der e-Term, bleibt beim Ausklammern '+(rv(s.up[0])>0?'eine 1':'−1')+' stehen.'};
+      return {kind:'invalid', msg:'Fülle beide Lücken aus. Mit → springst du in die zweite Lücke.'};
+    }
+    const A=parseOr(slots[0]), B=parseOr(slots[1]);
+    if(!A||!B) return {kind:'invalid', msg:BAD_INPUT};
+    const a=fnOf(A), b=fnOf(B), ab=x=>a(x)+b(x);
+    if((same(a,s.t1)&&same(b,s.t2)) || (same(a,s.t2)&&same(b,s.t1)) || same(ab,s.w)) return {kind:'ok'};
+    const m=errMsg(s,ab); if(m) return {kind:'wrong', msg:m};
+    if(same(a,s.t1)||same(b,s.t1)) return {kind:'wrong', msg:'Eine Lücke stimmt. Prüfe die andere: Dort steht u mal die innere Ableitung.'};
+    if(same(a,s.t2)||same(b,s.t2)) return {kind:'wrong', msg:'Eine Lücke stimmt. Prüfe die andere: Dort steht u′.'};
+    return {kind:'wrong'};
+  }
+  if(root.items.length===0) return {kind:'invalid', msg:'Tippe zuerst deine Antwort ein.'};
+  const sum=parseOr(root); if(!sum) return {kind:'invalid', msg:BAD_INPUT};
+  if(s.kind==='comb'){
+    const f=fnOf(sum);
+    if(same(f,s.w)){
+      if(hasSym(sum,'e')) return {kind:'invalid', msg:'Der e-Term steht schon vor der Klammer. Gib nur den Inhalt der Klammer ein.'};
+      return polyClean(sum) ? {kind:'ok'} : {kind:'hint', msg:'Richtig. Fasse noch weiter zusammen, bis nur ein x-Term und eine Zahl übrig sind.'};
+    }
+    const m=errMsg(s,f); return m ? {kind:'wrong', msg:m} : {kind:'wrong'};
+  }
+  if(sameFn(sum, s.fn)) return {kind:'ok', factored: factState(sum)===''};
+  if(sameFn(sum, s.wrongUpVp)) return {kind:'wrong', msg:'Das ist u′·v′. Die Produktregel lautet u′·v + u·v′.'};
+  if(sameFn(sum, s.prevFn)) return {kind:'wrong', msg:'Das ist noch die Funktion vor dem Ableiten. Leite sie ab.'};
+  return {kind:'wrong'};
+}
+const STEPS={multi:true, label:()=> 'Bilde f′(x) und f″(x) mit der Produktregel und klammere jeweils den e-Term aus.',
+  expr:t=>'f(x)='+t.tex, prefix:'f′(x) =', pad:'deriv', check:t=>checkMulti(t), tip:t=>t.steps[t.i].tip};
+const GRADES=[
+  {name:'Klasse 7', topic:'Terme mit Klammern', keys:['x','f','m','r']},
+  {name:'Kursstufe', topic:'Ableiten mit e-Funktionen', keys:['s','c','p','a','b','d','g']}
+];
+const TYPES={
+  x:{...TERMS, name:'Ausmultiplizieren', ex:'-3(2x-5)', gen:l=>KT.genExpand(l)},
+  f:{...TERMS, name:'Ausklammern', ex:'12x-18', gen:l=>KT.genFactor(l), nofrac:true},
+  m:{...TERMS, name:'Ausmultiplizieren und Ausklammern', ex:'4(x+3)\\quad 6x+9', gen:l=>Math.random()<.5 ? KT.genExpand(l) : KT.genFactor(l)},
+  r:{...TERMS, name:'Profi: mehrere Klammern', ex:'2(3x-1)-4(x+5)', gen:l=>KT.genProfi(l)},
+  s:{...DERIV, name:'Einfache e-Funktionen', ex:'f(x)=-5+2e^{\\frac{5}{4}x}', gen:genSimple},
+  c:{...DERIV, name:'Kettenregel',           ex:'f(x)=3e^{-2x^{2}+x}',      gen:genChain},
+  p:{...DERIV, name:'Produktregel',          ex:'f(x)=x^{2}\\cdot e^{2x+2}', gen:genProduct},
+  a:{...STEPS, name:'Zweite Ableitung, Stufe 1', ex:'f(x)=(x-3)\\cdot e^{-x}', gen:()=>genStep(0)},
+  b:{...STEPS, name:'Zweite Ableitung, Stufe 2', ex:'f(x)=(2x+5)\\cdot e^{-2x}', gen:()=>genStep(1)},
+  d:{...STEPS, name:'Zweite Ableitung, Stufe 3', ex:'f(x)=-3(2x+1)\\cdot e^{2x}', gen:()=>genStep(2)},
+  g:{...STEPS, name:'Zweite Ableitung, Stufe 4', ex:'f(x)=\\frac{1}{2}(4x-3)\\cdot e^{-2x+1}', gen:()=>genStep(3)}
+};
+const ORDER=GRADES.flatMap(g=>g.keys);
+
+/* ================= Gestempelte Links =================
+   Prüfschlüssel der Lehrkräfte. Ein Eintrag pro Lehrkraft, erzeugt über "Neue Lehrkraft einrichten".
+   Die Schlüssel sind nicht geheim. Wer ein Passwort kennt, kann damit Links stempeln. */
+const TEACHER_KEYS=['pxzF1sFgOn72uP5VJbQ7VzRsSimhKtyPsHypVuHl9Z4'];
+const SALT='uebungstrainer-v1';
+const DAY0=Date.UTC(2026,0,1)/864e5;
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+const b64u={
+  enc:u=>btoa(String.fromCharCode(...u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+  dec:s=>{ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); }
+};
+async function deriveKeys(pw){
+  const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey('raw', enc.encode(pw.normalize('NFC')), 'PBKDF2', false, ['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2', hash:'SHA-256', salt:enc.encode(SALT), iterations:300000}, base, 256);
+  return nacl.sign.keyPair.fromSeed(new Uint8Array(bits));
+}
+const idText=id=>{ const v=(id[0]<<16)|(id[1]<<8)|id[2]; let s=''; for(let i=0;i<5;i++) s=B32[(v>>(5*i))&31]+s; return s; };
+
+/* Inhalt: Version, Lehrkraft, Kennung (3 Byte), Spielrunde nach g, Ablauftag (2 Byte, 0 = unbegrenzt), Aufgabentypen */
+function packAssignment(a){
+  const b=[1, a.ki, ...a.id, a.g, a.exp>>8, a.exp&255, a.list.length];
+  a.list.forEach(e=>b.push(ORDER.indexOf(e.k), e.n));
+  return new Uint8Array(b);
+}
+function makeLink(a, kp){
+  const body=packAssignment(a), sig=nacl.sign.detached(body, kp.secretKey);
+  const all=new Uint8Array(body.length+64); all.set(body); all.set(sig, body.length);
+  return 'a'+b64u.enc(all);
+}
+function parseCode(h){
+  const m=/^#?a([A-Za-z0-9_-]{40,})(?:&.*)?$/.exec(h||''); if(!m) return null;
+  let u; try{ u=b64u.dec(m[1]); }catch(e){ return {invalid:true}; }
+  if(u.length<9+64 || u[0]!==1) return {invalid:true};
+  const body=u.slice(0,u.length-64), sig=u.slice(u.length-64), ki=body[1], pk=TEACHER_KEYS[ki];
+  if(typeof nacl==='undefined') return {pending:true};
+  if(!pk || !nacl.sign.detached.verify(body, sig, b64u.dec(pk))) return {invalid:true};
+  const n=body[8]; if(body.length!==9+2*n) return {invalid:true};
+  const list=[];
+  for(let i=0;i<n;i++){ const k=ORDER[body[9+2*i]], c=body[10+2*i]; if(k && c>0 && !list.some(e=>e.k===k)) list.push({k, n:c}); }
+  if(!list.length) return {invalid:true};
+  return {list, g:body[5], exp:(body[6]<<8)|body[7], id:idText(body.slice(2,5)), key:m[1].slice(0,24)+sum32(m[1])};
+}
+const listCode=list=>list.map(e=>e.k+e.n).join('-');
+
+/* Uhrzeit: auf GitHub Pages die Serverzeit, sonst die Geräteuhr */
+let clockOffset=0, config={spieleAus:[]};
+async function syncClock(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  try{ const r=await fetch(location.pathname, {method:'HEAD', cache:'no-store'}); const d=r.headers.get('Date'); if(d){ const t=new Date(d).getTime(); if(t) clockOffset=t-Date.now(); } }catch(e){}
+}
+async function loadConfig(){
+  try{ const r=await fetch('spielrunden.json', {cache:'no-store'}); if(r.ok){ const c=await r.json(); if(c && Array.isArray(c.spieleAus)) config=c; } }catch(e){}
+}
+const dayOf=d=>Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())/864e5-DAY0;
+const today=()=>dayOf(new Date(Date.now()+clockOffset));
+const dateOfDay=n=>new Date((n+DAY0)*864e5);
+const fmtDay=(n,long)=>dateOfDay(n).toLocaleDateString('de-DE', long ? {weekday:'long', day:'numeric', month:'numeric', year:'numeric', timeZone:'UTC'} : {weekday:'short', day:'numeric', month:'numeric', timeZone:'UTC'});
+function baseUrl(){ return location.href.split('#')[0]; }
+
+/* Fortschritt pro Link im Browserspeicher, mit Prüfsumme gegen Bearbeiten. Ein neuer Link beginnt bei null. */
+function sum32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h.toString(36); }
+function loadProg(key){
+  try{ const o=JSON.parse(localStorage.getItem('abl2:'+key)||'null'); if(o && o.s===sum32(SALT+key+JSON.stringify(o.d))) return o.d; }catch(e){}
+  return {};
+}
+function saveProg(key, p){ try{ localStorage.setItem('abl2:'+key, JSON.stringify({d:p, s:sum32(SALT+key+JSON.stringify(p))})); }catch(e){} melden(); }
+const stat=(p,k)=>p[k]||(p[k]={done:0, first:0, multi:0, shown:0});
+
+/* Spiele als Belohnung */
+const GAMES=[
+  {id:'drache', file:'spiele/drache.html', name:'ASCII Drache', best:'asciiDracheBest', unit:'Münzen',
+   rules:'Sammle Münzen ($). Jede Münze macht deinen Drachen ein Glied länger. Weiche Gewitterwolken, Vögeln, dem Rand und deinem eigenen Schwanz aus.'},
+  {id:'jump', file:'spiele/jump.html', name:'ASCII Jump', best:'asciijump-best', unit:'Punkte',
+   rules:'Spring von Brett zu Brett so hoch du kannst. Gestrichelte Bretter brechen weg, Igel meidest du, auf Bienen darfst du draufspringen. Federn schleudern dich nach oben, und wer seitlich hinausläuft, kommt auf der anderen Seite wieder herein.'}
+];
+const CONTROLS='Linke oder rechte Bildschirmhälfte gedrückt halten. Tastatur: ← → oder A / D.';
+const GAME_STEPS=[0,3,5,10];
+
+
+/* ================= Ansichten ================= */
+const $=id=>document.getElementById(id);
+let mathReady=false, view='', assignment=null, code='', prog={}, selected=null, G=0, EXP=0, AID='', gamesFrom='overview', gameOpen=false, teacher=null;
+let curKey=null, task=null, attempts=0, phase='input', lines=[];
+
+function math(el, tex){
+  if(!mathReady){ el.textContent=tex.replace(/\\class\{[^}]*\}\{\\vert\}/g,'|'); return; }
+  el.replaceChildren(MathJax.tex2svg(tex, {display:false}));
+}
+function show(v){ view=v; ['gate','teacher','overview','practice','games'].forEach(id=>$(id).hidden = id!==v); window.scrollTo(0,0); melden(); }
+
+/* Klassencode: Aufgabentyp und Stand anonym melden (nur bei gültigem Klassencode aktiv).
+   richtig = gelöste Aufgaben, falsch = Aufgaben mit Fehlversuch oder angezeigter Lösung. */
+function melden(){
+  if(!window.Klassencode || !assignment) return;
+  const st={};
+  assignment.forEach(e=>{ const s=prog[e.k]||{}; st[TYPES[e.k].name]={richtig:s.done||0, falsch:(s.multi||0)+(s.shown||0)}; });
+  Klassencode.stand(st);
+  Klassencode.position(gameOpen ? 'Spielrunde' : view==='practice' && curKey ? TYPES[curKey].name : view==='games' ? 'Spielrunden' : 'Übersicht');
+}
+
+function route(){
+  const pc=parseCode(location.hash);
+  if(pc && pc.pending){ showGate(false); $('gateLead').textContent='Die Seite konnte nicht vollständig geladen werden. Prüfe die Internetverbindung und lade die Seite neu.'; return; }
+  if(!pc || pc.invalid){
+    assignment=null;
+    if(!pc && teacher){ renderTeacher(); show('teacher'); return; }
+    showGate(pc && pc.invalid); return;
+  }
+  const c=pc.key;
+  if(c!==code || !assignment){ code=c; prog=loadProg(code); selected=null; }
+  assignment=pc.list; G=pc.g; EXP=pc.exp; AID=pc.id;
+  $('newBtn').hidden=!teacher;
+  renderOverview(); show('overview');
+}
+
+/* ---------- Lehrkraft ---------- */
+const tState=Object.fromEntries(ORDER.map(k=>[k,{on:false,n:5}]));
+let tGames=5, tDur=2, tDate='', tId=newId();
+function newId(){ return crypto.getRandomValues(new Uint8Array(3)); }
+function changed(){ tId=newId(); renderTeacher(); }
+function teacherRow(k){
+  const st=tState[k], row=document.createElement('div'); row.className='row'+(st.on?'':' off');
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.id='t-'+k; cb.checked=st.on;
+  cb.addEventListener('change',()=>{ st.on=cb.checked; changed(); });
+  const info=document.createElement('label'); info.htmlFor='t-'+k; info.style.cssText='display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer';
+  const nm=document.createElement('span'); nm.className='name'; nm.textContent=TYPES[k].name;
+  const ex=document.createElement('span'); ex.className='ex'; math(ex, TYPES[k].ex);
+  info.append(nm, ex);
+  const stp=document.createElement('div'); stp.style.cssText='display:flex;flex-direction:column;gap:2px;align-items:flex-end';
+  const s=document.createElement('div'); s.className='stepper';
+  const minus=document.createElement('button'); minus.type='button'; minus.textContent='−'; minus.setAttribute('aria-label','Weniger');
+  const out=document.createElement('output'); out.textContent=st.n;
+  const plus=document.createElement('button'); plus.type='button'; plus.textContent='+'; plus.setAttribute('aria-label','Mehr');
+  minus.addEventListener('click',()=>{ st.n=Math.max(1,st.n-1); changed(); });
+  plus.addEventListener('click',()=>{ st.n=Math.min(50,st.n+1); changed(); });
+  s.append(minus,out,plus);
+  const u=document.createElement('span'); u.className='unit'; u.textContent='richtig lösen';
+  stp.append(s,u);
+  row.append(cb, info, stp);
+  return row;
+}
+function renderTeacher(){
+  const L=$('tlist'); L.replaceChildren();
+  GRADES.forEach(g=>{
+    const sec=document.createElement('section'); sec.className='grade';
+    const h=document.createElement('h2'); h.textContent=g.name;
+    const sub=document.createElement('span'); sub.textContent=g.topic; h.append(sub);
+    const list=document.createElement('div'); list.className='list';
+    g.keys.forEach(k=>list.append(teacherRow(k)));
+    sec.append(h, list); L.append(sec);
+  });
+  const seg=$('tgames'); seg.replaceChildren();
+  GAME_STEPS.forEach(n=>{ const b=document.createElement('button'); b.type='button';
+    b.textContent = n ? 'nach '+n : 'aus'; b.setAttribute('aria-pressed', String(tGames===n));
+    b.addEventListener('click',()=>{ tGames=n; changed(); }); seg.append(b); });
+  $('tgamesNote').textContent = tGames
+    ? 'Nach je '+tGames+' richtig gelösten Aufgaben dürfen die Schüler eine Runde ASCII Drache oder ASCII Jump spielen.'
+    : 'Ohne Spielrunden.';
+  $('tdurBox').hidden=!tGames;
+  const ds=$('tdur'); ds.replaceChildren();
+  [[0,'unbegrenzt'],[1,'1 Tag'],[2,'2 Tage'],[7,'1 Woche']].forEach(([n,t])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=t;
+    b.setAttribute('aria-pressed', String(!tDate && tDur===n));
+    b.addEventListener('click',()=>{ tDur=n; tDate=''; $('tdate').value=''; changed(); }); ds.append(b); });
+  $('tdate').min=dateOfDay(today()).toISOString().slice(0,10);
+  let exp=0;
+  if(tDate){ const [y,m,d]=tDate.split('-').map(Number); exp=Date.UTC(y,m-1,d)/864e5-DAY0; }
+  else if(tDur) exp=today()+tDur;
+  if(exp<0 || exp>65535) exp=0;
+  $('tdurNote').textContent = exp ? 'Spielrunden möglich bis '+fmtDay(exp,true)+', 23:59 Uhr. Danach gilt der Auftrag ohne Spielrunden weiter.' : 'Die Spielrunden gelten ohne Zeitlimit.';
+  const list=ORDER.filter(k=>tState[k].on).map(k=>({k, n:tState[k].n}));
+  $('link').value = list.length && teacher ? baseUrl()+'#'+makeLink({ki:teacher.ki, id:tId, g:tGames, exp:tGames?exp:0, list}, teacher.kp) : '';
+  $('idNote').textContent = list.length && tGames
+    ? 'Kennung dieses Auftrags: '+idText(tId)+'. Damit lassen sich die Spielrunden später über die Datei spielrunden.json abschalten.' : '';
+  $('link').placeholder='Wähle mindestens einen Aufgabentyp aus.';
+  $('copyBtn').disabled=$('tryBtn').disabled=!list.length;
+  /* Lehrerseite mit dem Auftrag öffnen; dort wird die Stunde gestartet und der Klassencode angehängt */
+  const lb=$('lessonBtn'), lnk=$('link').value;
+  if(lnk){
+    const q=new URLSearchParams({tool:'mathetrainer', auftrag:lnk.split('#')[1], info:list.map(e=>TYPES[e.k].name+' ('+e.n+')').join(', ')});
+    lb.href='../lehrer.html#'+q.toString(); lb.removeAttribute('aria-disabled');
+  } else { lb.removeAttribute('href'); lb.setAttribute('aria-disabled','true'); }
+  $('copyNote').textContent='';
+}
+$('copyBtn').addEventListener('click',()=>{
+  const inp=$('link'), v=inp.value; if(!v) return;
+  const fallback=()=>{ inp.focus(); inp.select(); $('copyNote').textContent='Der Link ist markiert. Kopiere ihn mit Strg+C oder über das Menü.'; };
+  try{ navigator.clipboard.writeText(v).then(()=>{ $('copyNote').textContent='Link kopiert.'; }, fallback); }catch(e){ fallback(); }
+});
+$('link').addEventListener('focus',e=>e.target.select());
+$('tdate').addEventListener('change',e=>{ tDate=e.target.value; changed(); });
+$('logoutBtn').addEventListener('click',()=>{ teacher=null; $('pw').value=''; history.pushState(null,'',location.href.split('#')[0]); route(); });
+
+/* ---------- Zugang ---------- */
+function showGate(invalid){
+  $('gateTitle').textContent = invalid ? 'Link ungültig' : 'MatheTrainer';
+  $('gateLead').textContent = invalid
+    ? 'Dieser Link ist ungültig oder wurde verändert. Frag deine Lehrkraft nach dem richtigen Link.'
+    : 'Öffne den Link, den du von deiner Lehrkraft bekommen hast.';
+  const none=!TEACHER_KEYS.length;
+  $('loginForm').hidden=none;
+  $('setupToggle').hidden=none;
+  if(none) $('setupForm').hidden=false;
+  show('gate');
+}
+$('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const pw=$('pw').value; $('loginErr').textContent='';
+  if(!pw){ $('loginErr').textContent='Gib dein Passwort ein.'; return; }
+  $('loginBtn').disabled=true; $('loginBtn').textContent='Wird geprüft …';
+  try{
+    const kp=await deriveKeys(pw), pk=b64u.enc(kp.publicKey), ki=TEACHER_KEYS.indexOf(pk);
+    if(ki<0){ $('loginErr').textContent='Das Passwort stimmt nicht.'; }
+    else { teacher={ki, kp}; $('pw').value=''; tId=newId(); history.pushState(null,'',location.href.split('#')[0]); route(); }
+  }catch(err){ $('loginErr').textContent='Die Anmeldung hat nicht geklappt. Lade die Seite neu und versuche es nochmal.'; }
+  $('loginBtn').disabled=false; $('loginBtn').textContent='Anmelden';
+});
+$('setupToggle').addEventListener('click',()=>{ $('setupForm').hidden=!$('setupForm').hidden; });
+$('setupForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const a=$('pw1').value, b=$('pw2').value; $('setupErr').textContent=''; $('setupOut').hidden=true;
+  if(a.length<12){ $('setupErr').textContent='Das Passwort braucht mindestens 12 Zeichen.'; return; }
+  if(a!==b){ $('setupErr').textContent='Die beiden Passwörter stimmen nicht überein.'; return; }
+  $('setupBtn').disabled=true; $('setupBtn').textContent='Wird berechnet …';
+  try{ const kp=await deriveKeys(a); $('pubkey').value=b64u.enc(kp.publicKey); $('setupOut').hidden=false; $('pw1').value=$('pw2').value=''; }
+  catch(err){ $('setupErr').textContent='Das hat nicht geklappt. Lade die Seite neu und versuche es nochmal.'; }
+  $('setupBtn').disabled=false; $('setupBtn').textContent='Prüfschlüssel erzeugen';
+});
+$('pubCopy').addEventListener('click',()=>{
+  const inp=$('pubkey');
+  const fallback=()=>{ inp.focus(); inp.select(); $('pubNote').textContent='Der Schlüssel ist markiert. Kopiere ihn mit Strg+C oder über das Menü.'; };
+  try{ navigator.clipboard.writeText(inp.value).then(()=>{ $('pubNote').textContent='Prüfschlüssel kopiert. Er muss jetzt einmalig in die Seite eingetragen werden.'; }, fallback); }catch(e){ fallback(); }
+});
+$('tryBtn').addEventListener('click',()=>{
+  const v=$('link').value; if(!v) return;
+  location.hash=v.split('#')[1];
+});
+
+/* ---------- Schüler: Übersicht ---------- */
+function renderOverview(){
+  const L=$('olist'); L.replaceChildren();
+  const open=assignment.filter(e=>stat(prog,e.k).done<e.n);
+  if(selected && !assignment.some(e=>e.k===selected)) selected=null;
+  if(!selected) selected=(open[0]||assignment[0]).k;
+  assignment.forEach(e=>{
+    const st=stat(prog,e.k), done=Math.min(st.done,e.n), fin=st.done>=e.n;
+    const b=document.createElement('button'); b.type='button'; b.className='row pick'; b.setAttribute('aria-pressed', String(selected===e.k));
+    b.addEventListener('click',()=>{ selected=e.k; renderOverview(); });
+    b.addEventListener('dblclick',()=>{ selected=e.k; startType(); });
+    const info=document.createElement('div'); info.className='info';
+    const nm=document.createElement('span'); nm.className='name'; nm.textContent=TYPES[e.k].name;
+    const ex=document.createElement('span'); ex.className='ex'; math(ex, TYPES[e.k].ex);
+    const tr=document.createElement('div'); tr.className='track'; const sp=document.createElement('span'); sp.style.width=(100*done/e.n)+'%'; tr.append(sp);
+    const sx=document.createElement('span'); sx.className='stat'+(fin?' done':'');
+    sx.textContent = fin ? 'Erledigt' : (e.n-done)===1 ? 'Noch 1 Aufgabe' : 'Noch '+(e.n-done)+' Aufgaben';
+    info.append(nm, ex, tr, sx);
+    const num=document.createElement('span'); num.className='num'; num.textContent=done+' von '+e.n;
+    b.append(info, num); L.append(b);
+  });
+  const allDone=!open.length;
+  $('ovTitle').textContent = allDone ? 'Auftrag erledigt' : 'Dein Auftrag';
+  $('ovLead').textContent = allDone
+    ? 'Du hast alle Aufgaben geschafft. Du kannst trotzdem weiter üben.'
+    : 'Wähle einen Aufgabentyp und starte. Dein Fortschritt wird auf diesem Gerät gespeichert.';
+  const selDone=stat(prog,selected).done>=assignment.find(e=>e.k===selected).n;
+  $('startBtn').textContent = selDone ? 'Weiter üben' : 'Start';
+  renderGameRow();
+}
+
+/* ---------- Spielrunden ---------- */
+const gstat=()=>prog.games||(prog.games={earned:0, used:0, since:0});
+const gamesKilled=()=>config.spieleAus.includes('alle') || config.spieleAus.includes(AID);
+const gamesExpired=()=>EXP>0 && today()>EXP;
+const gamesOn=()=>G>0 && !gamesKilled() && !gamesExpired();
+const avail=()=>gamesOn() ? Math.max(0, gstat().earned-gstat().used) : 0;
+const rounds=n=>n===1 ? '1 Spielrunde' : n+' Spielrunden';
+function gameStatus(){
+  if(gamesKilled()) return 'Die Spielrunden wurden von deiner Lehrkraft beendet.';
+  if(gamesExpired()) return 'Die Spielrunden für diesen Auftrag sind am '+fmtDay(EXP)+' abgelaufen.';
+  const a=avail(), left=Math.max(1, G-gstat().since);
+  return (a>0 ? rounds(a)+' verfügbar'
+    : 'Noch '+(left===1 ? '1 richtige Aufgabe' : left+' richtige Aufgaben')+' bis zur nächsten Spielrunde')
+    + (EXP ? '. Möglich bis '+fmtDay(EXP) : '');
+}
+function renderGameRow(){
+  const box=$('ogames'); box.hidden=!G; if(!G) return;
+  $('ogStat').textContent=gameStatus();
+  $('ogBtn').hidden=!gamesOn();
+  $('ogBtn').textContent = avail()>0 ? 'Spielrunde einlösen' : 'Spiele ansehen';
+  $('ogBtn').className = 'btn'+(avail()>0 ? ' primary' : '');
+}
+function openGames(from){ gamesFrom=from; renderGames(); show('games'); }
+function renderGames(){
+  const a=avail();
+  $('gLead').textContent = a>0
+    ? 'Du hast '+rounds(a)+'. Eine Runde dauert, bis du einmal abstürzt. Danach geht es zurück zu den Aufgaben.'
+    : gameStatus()+'. Hier siehst du schon, wie die Spiele funktionieren.';
+  $('gError').textContent='';
+  const L=$('glist'); L.replaceChildren();
+  GAMES.forEach(gm=>{
+    const c=document.createElement('article'); c.className='gcard';
+    const h=document.createElement('h2'); h.textContent=gm.name;
+    const r=document.createElement('p'); r.textContent=gm.rules;
+    const k=document.createElement('p'); k.className='ctrl'; k.textContent=CONTROLS;
+    let best=0; try{ best=+localStorage.getItem(gm.best)||0; }catch(e){}
+    const b=document.createElement('p'); b.className='best'; b.textContent = best ? 'Dein Rekord: '+best+' '+gm.unit : 'Noch kein Rekord';
+    c.append(h, r, k, b);
+    if(a>0) c.append(btn(gm.name.replace('ASCII ','')+' spielen','primary', ()=>playGame(gm)));
+    L.append(c);
+  });
+}
+function playGame(gm){
+  if(avail()<=0 || gameOpen) return;
+  gameOpen=true;
+  fetch(gm.file).then(r=>r.ok ? r.text() : Promise.reject()).then(html=>{
+    gstat().used++; saveProg(code, prog);
+    const fr=$('gameFrame');
+    $('gameName').textContent=gm.name;
+    fr.onload=()=>{ try{ fr.contentWindow.focus(); }catch(e){} };
+    fr.srcdoc=html;
+    $('gameLayer').hidden=false; document.body.style.overflow='hidden'; melden();
+  }).catch(()=>{ gameOpen=false; $('gError').textContent='Das Spiel konnte nicht geladen werden. Prüfe die Internetverbindung und versuche es nochmal.'; });
+}
+function closeGame(){
+  if(!gameOpen) return;
+  gameOpen=false;
+  $('gameLayer').hidden=true; document.body.style.overflow='';
+  $('gameFrame').srcdoc='';
+  if(gamesFrom==='practice'){ show('practice'); render(); }
+  else { renderOverview(); show('overview'); }
+}
+window.addEventListener('message', e=>{
+  if(e.source===$('gameFrame').contentWindow && e.data && e.data.spielrunde==='done') closeGame();
+});
+$('gameQuit').addEventListener('click', closeGame);
+$('ogBtn').addEventListener('click', ()=>openGames('overview'));
+$('gBack').addEventListener('click', ()=>{ if(gamesFrom==='practice'){ show('practice'); render(); } else toOverview(); });
+$('startBtn').addEventListener('click',()=>startType());
+$('newBtn').addEventListener('click',()=>{ history.pushState(null,'',location.href.split('#')[0]); route(); });
+
+/* ---------- Üben ---------- */
+function target(){ return assignment.find(e=>e.k===curKey).n; }
+function startType(){
+  curKey=selected; const T=TYPES[curKey];
+  $('keys').classList.toggle('terms', T.pad==='terms');
+  $('keys').classList.toggle('nofrac', !!T.nofrac);
+  $('keyhint').textContent = T.pad==='deriv' ? 'Mit → verlässt du die Hochzahl oder springst vom Zähler in den Nenner.'
+    : T.nofrac ? '' : 'Im Bruch springst du mit → vom Zähler in den Nenner.';
+  show('practice'); nextTask();
+}
+function nextTask(){
+  const st=stat(prog,curKey), n=target(), lvl=Math.min(9, Math.floor(9*Math.min(st.done,n-1)/Math.max(1,n-1)));
+  task=TYPES[curKey].gen(lvl);
+  attempts=0; phase='input'; lines=[]; resetInput(); slots=null; if(TYPES[curKey].multi) prepMulti();
+  setFeedback('',''); $('solution').hidden=true;
+  render();
+}
+function render(){
+  const st=stat(prog,curKey), n=target(), d=Math.min(st.done,n);
+  $('pTitle').textContent=TYPES[curKey].name;
+  $('pCount').textContent=d+' von '+n+' richtig';
+  $('pBar').style.width=(100*d/n)+'%';
+  const T=TYPES[curKey];
+  $('plabel').textContent=T.label(task);
+  math($('expr'), T.expr(task));
+  math($('answer'), (T.multi && phase==='input' && task.i<task.steps.length) ? answerTexMulti() : phase==='input' ? (inputTex(root)||CUR) : inputTexPlain(root));
+  const L=$('lines'); L.replaceChildren();
+  if(T.multi){
+    task.lines.forEach(l=>{ const row=document.createElement('div'); row.className='prev'+(l.cls?' '+l.cls:'');
+      const eq=document.createElement('span'); eq.className='eq'; eq.textContent=l.pre;
+      const m=document.createElement('div'); if(l.txt){ m.className='txt'; m.textContent=l.txt; } else math(m, l.tex);
+      row.append(eq, m); L.append(row); });
+  } else
+  lines.forEach((tx,j)=>{ const row=document.createElement('div'); row.className='prev';
+    const eq=document.createElement('span'); eq.className='eq'; eq.textContent= j===0 ? T.prefix : '=';
+    const m=document.createElement('div'); math(m, tx); row.append(eq, m); L.append(row); });
+  const stepOpen = T.multi && phase==='input' && task.i<task.steps.length;
+  $('sprompt').hidden=!stepOpen;
+  $('explain').hidden=!T.multi;
+  if(stepOpen) $('sprompt').textContent=task.steps[task.i].prompt;
+  if(T.multi) $('keyhint').textContent = stepOpen && task.steps[task.i].kind==='gap'
+    ? 'Mit → springst du am Ende der ersten Lücke in die zweite, mit ← zurück.'
+    : 'Mit → verlässt du die Hochzahl oder springst vom Zähler in den Nenner.';
+  $('answerBox').hidden = T.multi && phase!=='input';
+  $('answerBox').querySelector('.eq').textContent = stepOpen ? task.steps[task.i].pre : lines.length ? '=' : T.prefix;
+  $('answerBox').classList.toggle('locked', phase!=='input');
+  $('keys').classList.toggle('off', phase!=='input');
+  const act=$('actions'); act.replaceChildren();
+  const play = phase!=='input' && avail()>0 ? btn('Spielrunde einlösen', phase==='goal' ? 'full' : '', ()=>openGames('practice')) : null;
+  if(phase==='input') act.append(T.multi ? btn('Schritt zeigen','', showStepMulti) : btn('Lösung anzeigen','', showSolution), btn('Prüfen','primary', submit));
+  else if(phase==='goal'){ act.append(btn('Weiter üben','', nextTask), btn('Zur Übersicht','primary', toOverview)); if(play) act.append(play); }
+  else if(play) act.append(play, btn('Nächste Aufgabe','primary', nextTask));
+  else act.append(btn('Nächste Aufgabe','primary full', nextTask));
+}
+function inputTexPlain(seq){ const c=cur; cur={seq:null,i:-1}; const t=inputTex(seq); cur=c; return t||'\\class{ph}{\\square}'; }
+function btn(text, cls, fn){ const b=document.createElement('button'); b.type='button'; b.className='btn '+cls; b.textContent=text; b.addEventListener('click', fn); return b; }
+function setFeedback(kind, msg){ const f=$('feedback'); f.className='feedback '+kind; f.textContent=msg; }
+function showSolutionBox(){
+  const s=$('solution'); s.hidden=false; s.replaceChildren();
+  const sol=TYPES[curKey].solution(task);
+  sol.lines.forEach(tx=>{ const m=document.createElement('div'); math(m, tx); s.append(m); });
+  if(sol.note){ const n=document.createElement('div'); n.className='note'; n.textContent=sol.note; s.append(n); }
+}
+function submit(){
+  if(phase!=='input') return;
+  if(TYPES[curKey].multi){ submitMulti(); return; }
+  const r=TYPES[curKey].check(task);
+  if(r.kind==='invalid'){ setFeedback('hint', r.msg); return; }
+  if(r.kind==='hint'){ lines.push(inputTexPlain(root)); resetInput(); setFeedback('hint', r.msg); render(); return; }
+  if(r.kind==='wrong'){
+    attempts++;
+    setFeedback('wrong', (r.msg || 'Das stimmt noch nicht. Versuch es nochmal.')+(attempts>=2 ? ' '+TYPES[curKey].tip(task) : ''));
+    render(); return;
+  }
+  completeTask();
+}
+function completeTask(){
+  const st=stat(prog,curKey), before=st.done;
+  st.done++; if(attempts===0) st.first++; else st.multi++;
+  let earned=false;
+  if(gamesOn()){ const gs=gstat(); gs.since++; if(gs.since>=G){ gs.since=0; gs.earned++; earned=true; } }
+  saveProg(code, prog);
+  const reached = before<target() && st.done>=target();
+  phase = reached ? 'goal' : 'done';
+  const msg = attempts===0 ? 'Richtig.' : TYPES[curKey].multi ? 'Richtig, mit '+attempts+(attempts===1?' Fehlversuch.':' Fehlversuchen.') : 'Richtig, beim '+(attempts+1)+'. Versuch.';
+  setFeedback('ok', (reached ? msg+' Damit hast du alle '+target()+' Aufgaben dieses Typs geschafft.' : msg)
+    + (earned ? ' Du hast dir eine Spielrunde verdient.' : ''));
+  render();
+}
+function showSolution(){
+  if(phase!=='input') return;
+  stat(prog,curKey).shown++; saveProg(code, prog);
+  phase='done';
+  setFeedback('shown', 'Lösung. Diese Aufgabe zählt nicht, du bekommst eine neue.');
+  showSolutionBox(); render();
+}
+function submitMulti(){
+  const r=checkMulti(task);
+  if(r.kind==='invalid' || r.kind==='hint'){ setFeedback('hint', r.msg); return; }
+  if(r.kind==='wrong'){
+    attempts++; task.sa++;
+    setFeedback('wrong', (r.msg || 'Das stimmt noch nicht. Versuch es nochmal.')+(task.sa>=2 ? ' '+task.steps[task.i].tip : ''));
+    render(); return;
+  }
+  const s=task.steps[task.i];
+  task.lines.push({pre:s.pre, tex:doneTexMulti()}); task.i++; task.sa=0;
+  let msg='Richtig.';
+  if(s.kind==='prod' && r.factored && task.i<task.steps.length){
+    task.lines.push({pre:'=', txt:'schon ausgeklammert', cls:'given'});
+    while(task.i<task.steps.length && task.steps[task.i].kind!=='prod') task.i++;
+    msg='Richtig und schon ausgeklammert.';
+  }
+  prepMulti();
+  if(task.i<task.steps.length){ setFeedback('ok', msg); render(); return; }
+  stepsDone();
+}
+function showStepMulti(){
+  if(phase!=='input') return;
+  const s=task.steps[task.i];
+  task.lines.push({pre:s.pre, tex:s.sol, cls:'shownline'}); task.i++; task.sa=0; task.shown++; prepMulti();
+  if(task.i<task.steps.length){ setFeedback('shown', 'Lösung dieses Schritts. Mach mit dem nächsten weiter.'); render(); return; }
+  stepsDone();
+}
+function stepsDone(){
+  if(task.shown){
+    stat(prog,curKey).shown++; saveProg(code, prog); phase='done';
+    setFeedback('shown', 'Aufgabe fertig. Weil ein Schritt angezeigt wurde, zählt sie nicht.'); render(); return;
+  }
+  completeTask();
+}
+function toOverview(){ renderOverview(); show('overview'); }
+$('backBtn').addEventListener('click', toOverview);
+
+/* ================= Bedienung ================= */
+function doCmd(cmd){
+  switch(cmd){
+    case 'paren': typeNode('paren'); break;
+    case 'frac': typeNode('frac'); break;
+    case 'pow': typeNode('pow'); break;
+    case 'exp': typeChar('e'); typeNode('pow'); break;
+    case 'left': goLeft(); break;
+    case 'right': goRight(); break;
+    case 'back': goBack(); break;
+  }
+}
+$('keys').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b || phase!=='input') return;
+  if(b.dataset.c!==undefined) typeChar(b.dataset.c); else doCmd(b.dataset.cmd);
+  render();
+});
+document.addEventListener('keydown', e=>{
+  if(view!=='practice' || gameOpen || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key==='Enter'){ e.preventDefault(); if(phase==='input') submit(); else if(phase==='goal') toOverview(); else nextTask(); return; }
+  if(phase!=='input') return;
+  const k=e.key, deriv=TYPES[curKey].pad==='deriv', map={'+':'+','-':'-','*':'\\cdot','x':'x','X':'x'};
+  if(deriv){ map[',']=','; map['.']=','; }
+  if(!deriv && (k==='e' || k==='^' || (k==='/' && TYPES[curKey].nofrac))){ e.preventDefault(); return; }
+  let done=true;
+  if(/^[0-9]$/.test(k)) typeChar(k);
+  else if(map[k]) typeChar(map[k]);
+  else if(k==='e') doCmd('exp');
+  else if(k==='^') doCmd('pow');
+  else if(k==='(') doCmd('paren');
+  else if(k===')') goRight();
+  else if(k==='/') doCmd('frac');
+  else if(k==='Backspace') doCmd('back');
+  else if(k==='ArrowLeft') doCmd('left');
+  else if(k==='ArrowRight') doCmd('right');
+  else done=false;
+  if(done){ e.preventDefault(); render(); }
+});
+window.addEventListener('hashchange', route);
+window.addEventListener('popstate', route);
+
+function onMathReady(){
+  if(mathReady) return;
+  mathReady=true;
+  try{ document.head.appendChild(MathJax.svgStylesheet()); }catch(e){}
+  document.querySelectorAll('.k[data-tex]').forEach(b=>b.replaceChildren(MathJax.tex2svg(b.dataset.tex,{display:false})));
+  if(view==='teacher') renderTeacher();
+  else if(view==='overview') renderOverview();
+  else if(view==='practice'){ render(); if(!$('solution').hidden) showSolutionBox(); }
+}
+document.documentElement.lang='de';
+window.onMathReady=onMathReady;
+function refresh(){ if(view==='overview') renderOverview(); else if(view==='games') renderGames(); else if(view==='teacher') renderTeacher(); }
+if(window.Klassencode) Klassencode.start('mathetrainer');
+route();
+Promise.allSettled([syncClock(), loadConfig()]).then(refresh);
+if(window.__mjReady) onMathReady();
+</script>
+
+
+</body></html>
