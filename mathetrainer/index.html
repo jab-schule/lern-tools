@@ -124,6 +124,10 @@ h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em;text-wrap:balan
 .gamesrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px}
 .gamesrow .name{font-weight:600;font-size:15.5px}
 .gamesrow .stat{font-size:13.5px;color:var(--muted)}
+.allrow{grid-template-columns:minmax(0,1fr) auto}
+.allctl{display:flex;align-items:center;gap:12px}
+.allctl .btn{height:40px}
+@media (max-width:480px){.allrow{grid-template-columns:minmax(0,1fr)}.allctl{justify-content:space-between}}
 .glist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
 .gcard{display:flex;flex-direction:column;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:18px}
 .gcard h2{margin:0;font:600 17px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
@@ -243,6 +247,17 @@ window.MathJax = {
       <p class="lead">Wähle die Aufgabentypen aus und lege fest, wie viele Aufgaben die Schüler jeweils richtig lösen sollen. Der Link enthält die Auswahl.</p>
     </div>
     <div class="grades" id="tlist"></div>
+    <section class="grade">
+      <h2>Anzahl für die Auswahl</h2>
+      <div class="gamesrow allrow">
+        <span class="name">Alle ausgewählten Typen auf</span>
+        <div class="allctl">
+          <div class="stepper"><button type="button" id="tallMinus" aria-label="Weniger">−</button><output id="tallOut"></output><button type="button" id="tallPlus" aria-label="Mehr">+</button></div>
+          <button type="button" class="btn" id="tallBtn">Übernehmen</button>
+        </div>
+      </div>
+      <p class="note" id="tallNote"></p>
+    </section>
     <section class="grade">
       <h2>Spielrunden<span>als Belohnung</span></h2>
       <div class="seg" id="tgames" role="group" aria-label="Spielrunde nach wie vielen richtigen Aufgaben"></div>
@@ -1284,7 +1299,7 @@ function route(){
 
 /* ---------- Lehrkraft ---------- */
 const tState=Object.fromEntries(ORDER.map(k=>[k,{on:false,n:5}]));
-let tGames=5, tDur=2, tDate='', tId=newId();
+let tGames=5, tDur=2, tDate='', tId=newId(), tAll=2;
 function newId(){ return crypto.getRandomValues(new Uint8Array(3)); }
 function changed(){ tId=newId(); renderTeacher(); }
 function teacherRow(k){
@@ -1308,6 +1323,9 @@ function teacherRow(k){
   row.append(cb, info, stp);
   return row;
 }
+$('tallMinus').addEventListener('click',()=>{ tAll=Math.max(1,tAll-1); renderTeacher(); });
+$('tallPlus').addEventListener('click',()=>{ tAll=Math.min(50,tAll+1); renderTeacher(); });
+$('tallBtn').addEventListener('click',()=>{ ORDER.forEach(k=>{ if(tState[k].on) tState[k].n=tAll; }); changed(); });
 function renderTeacher(){
   const L=$('tlist'); L.replaceChildren();
   GRADES.forEach(g=>{
@@ -1318,6 +1336,12 @@ function renderTeacher(){
     g.keys.forEach(k=>list.append(teacherRow(k)));
     sec.append(h, list); L.append(sec);
   });
+  const sel=ORDER.filter(k=>tState[k].on);
+  $('tallOut').textContent=tAll;
+  $('tallBtn').disabled=!sel.length;
+  $('tallNote').textContent = sel.length
+    ? 'Setzt die Anzahl der richtig zu lösenden Aufgaben für '+(sel.length===1?'den ausgewählten Aufgabentyp':'alle '+sel.length+' ausgewählten Aufgabentypen')+' auf '+tAll+'.'
+    : 'Wähle oben zuerst Aufgabentypen aus.';
   const seg=$('tgames'); seg.replaceChildren();
   GAME_STEPS.forEach(n=>{ const b=document.createElement('button'); b.type='button';
     b.textContent = n ? 'nach '+n : 'aus'; b.setAttribute('aria-pressed', String(tGames===n));
